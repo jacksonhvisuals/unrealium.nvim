@@ -4,11 +4,9 @@ local logPath = vim.fn.stdpath("data") .. "/unrealium.log"
 
 local Commands = {}
 
-local function uGenerateProjectFiles(opts)
+function Commands.uGenerateProjectFiles(opts)
 	print("Generating project files... done.")
 end
-
-Commands.test = uGenerateProjectFiles
 
 function Commands.uBuild(opts)
 	print("Building Unreal project.")

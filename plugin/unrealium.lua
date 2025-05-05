@@ -10,22 +10,10 @@ end
 vim.g.unrealium_loaded = 1
 
 -- Otherwise, register commands.
-vim.api.nvim_create_user_command("UGenProjectFiles", function(opts)
-	require("unrealium.integration").test(opts)
-end, {})
+require("unrealium.commands").register()
 
-vim.api.nvim_create_user_command("UBuild", function(opts)
-	require("unrealium.integration").uBuild(opts)
-end, {})
-
-vim.api.nvim_create_user_command("URun", function(opts)
-	require("unrealium").uRun(opts)
-end, {})
-
-vim.api.nvim_create_user_command("UDebug", function(opts)
-	require("unrealium").uDebug(opts)
-end, {})
-
-function setup(args)
+local function setup(args)
 	print("Setting up Unrealium plugin.")
 end
+
+return { setup = setup }
