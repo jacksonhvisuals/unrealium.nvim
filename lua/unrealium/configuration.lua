@@ -69,8 +69,10 @@ function M.getUnrealiumConfig()
 	if next(data) == nil then
 		print("JSON file was empty.")
 	else
-		print(data)
+		print(tostring(data.secretValue))
 	end
+
+	return data
 end
 
 return M
