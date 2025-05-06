@@ -1,7 +1,7 @@
 local configDirName = ".unrealium"
 local configFileName = "config.json"
 
-local path = require("plenary.path")
+local Path = require("plenary.path")
 local uv = vim.uv
 local cwd = uv.cwd()
 
@@ -17,7 +17,7 @@ local M = {}
 function M._ensureConfigDirectory()
 	local fullDirPath = cwd .. "/" .. configDirName
 
-	local configDir = path:new(fullDirPath) -- path
+	local configDir = Path:new(fullDirPath) -- path
 
 	if not configDir:exists() then
 		print("Unrealium directory (.unrealium) did not exist. Creating...")
@@ -32,7 +32,7 @@ end
 ---@return Path
 function M._ensureConfigFile(fullDirPath)
 	local configFilePath = tostring(fullDirPath) .. "/" .. configFileName
-	local configFile = path:new(configFilePath) -- path
+	local configFile = Path:new(configFilePath) -- path
 
 	if not configFile:exists() then
 		print("Unrealium config JSON did not exist. Generating a new one.")
@@ -73,6 +73,30 @@ function M.getUnrealiumConfig()
 	end
 
 	return data
+end
+
+---Queries whether or not cwd is an Unreal Project
+---@return boolean
+function M._directoryIsUProject()
+	local filetype = ".uproject"
+
+	local found = false
+
+	for name, type in vim.fs.dir(cwd) do
+		print("Checking file for .uproject extension")
+		if name:sub(-#filetype) == filetype then
+			found = true
+			break
+		end
+	end
+
+	if found then
+		print("Found a .uproject file in the current directory.")
+	else
+		print("No .uproject found in the current working directory.")
+	end
+
+	return found
 end
 
 return M

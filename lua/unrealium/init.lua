@@ -2,8 +2,12 @@ local augroup = vim.api.nvim_create_augroup("Unrealium", { clear = true })
 
 local function main()
 	print("Unrealium initializing...")
-	print("Initialization complete.")
-	require("unrealium.configuration").getUnrealiumConfig()
+	local configuration = require("unrealium.configuration")
+
+	if configuration._directoryIsUProject() then
+		configuration.getUnrealiumConfig()
+		print("Initialization complete.")
+	end
 end
 
 local function setup()
