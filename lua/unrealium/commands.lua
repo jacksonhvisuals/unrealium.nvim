@@ -11,11 +11,11 @@ function M.register()
 	end, {})
 
 	vim.api.nvim_create_user_command("URun", function(opts)
-		require("unrealium").uRun(opts)
+		require("unrealium.integration").uRun(opts)
 	end, {})
 
 	vim.api.nvim_create_user_command("UDebug", function(opts)
-		require("unrealium").uDebug(opts)
+		require("unrealium.integration").uDebug(opts)
 	end, {})
 end
 

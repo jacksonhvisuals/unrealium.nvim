@@ -17,7 +17,6 @@ And we (maybe?) also provide a UI interface for it all (see how Lazy supplies an
 3. If no config, offer to create one.
 
 ### Commands by UE
-
 Running "Generate Visutal Studio Code Project" in UE equates to:
 `$UNREAL_ROOT_PATH/Engine/Build/BatchFiles/Linux/Build.sh -projectfiles -project="$PATH_TO_UPROJECT" -game -engine -progress`
 

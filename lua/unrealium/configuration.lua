@@ -7,7 +7,6 @@ local cwd = uv.cwd()
 
 local M = {}
 
--- A func for loading the config file
 -- A func for creating a new config file (interactive?)
 -- A func for finding the Unreal Engine root directory
 -- A func for adding the Engine Source to the search paths of Telescope
@@ -73,12 +72,24 @@ function M.getUnrealiumConfig()
 	return data
 end
 
----Queries whether or not cwd is an Unreal Project
+---Fetches the "EnginePath" value from a table
+---@param config table
+---@return string
+function M._getEngineDirectory(config)
+	if config["EnginePath"] ~= nil then
+		return config["EnginePath"]
+	end
+
+	return "None"
+end
+
+---Queries whether or not cwd houses a .uproject file
 ---@return boolean
-function M._directoryIsUProject()
+function M._directoryHasUProject()
 	local filetype = ".uproject"
 	local found = false
 
+	-- See if there is a file in the CWD that has a .uproject extension
 	for name, _ in vim.fs.dir(cwd) do
 		if name:sub(-#filetype) == filetype then
 			found = true
