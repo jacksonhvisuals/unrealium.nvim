@@ -6,9 +6,10 @@ local function init()
 
 	if configuration._directoryHasUProject() then
 		local config = configuration.getUnrealiumConfig()
-		vim.g.Unrealium = {}
-		vim.g.Unrealium.EnginePath = configuration._getEngineDirectory(config)
-		print("Engine Path is: " .. vim.g.Unrealium.EnginePath)
+		vim.g.Unrealium = vim.g.Unrealium or {}
+		local enginePathValue = configuration._getEngineDirectory(config)
+		vim.g.Unrealium.EnginePath = enginePathValue
+		print("Engine Path is: " .. enginePathValue)
 		print("Initialization complete.")
 	end
 end
