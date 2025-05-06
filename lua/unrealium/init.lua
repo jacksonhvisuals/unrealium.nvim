@@ -8,6 +8,7 @@ local function init()
 		local config = configuration.getUnrealiumConfig()
 		vim.g.Unrealium = {}
 		vim.g.Unrealium.EnginePath = configuration._getEngineDirectory(config)
+		print("Engine Path is: " .. vim.g.Unrealium.EnginePath)
 		print("Initialization complete.")
 	end
 end
