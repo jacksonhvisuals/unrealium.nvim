@@ -68,8 +68,6 @@ function M.getUnrealiumConfig()
 
 	if next(data) == nil then
 		print("JSON file was empty.")
-	else
-		print(tostring(data.secretValue))
 	end
 
 	return data
@@ -79,11 +77,9 @@ end
 ---@return boolean
 function M._directoryIsUProject()
 	local filetype = ".uproject"
-
 	local found = false
 
-	for name, type in vim.fs.dir(cwd) do
-		print("Checking file for .uproject extension")
+	for name, _ in vim.fs.dir(cwd) do
 		if name:sub(-#filetype) == filetype then
 			found = true
 			break
@@ -92,8 +88,6 @@ function M._directoryIsUProject()
 
 	if found then
 		print("Found a .uproject file in the current directory.")
-	else
-		print("No .uproject found in the current working directory.")
 	end
 
 	return found
