@@ -5,7 +5,8 @@ local function init()
 	local configuration = require("unrealium.configuration")
 
 	if configuration._directoryHasUProject() then
-		configuration.getUnrealiumConfig()
+		local config = configuration.getUnrealiumConfig()
+		print(configuration._getEngineDirectory(config))
 		print("Initialization complete.")
 	end
 end
