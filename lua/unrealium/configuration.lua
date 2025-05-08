@@ -1,5 +1,7 @@
-local configDirName = ".unrealium"
-local configFileName = "config.json"
+local globals = require("unrealium.globals")
+local CONFIG_DIR_NAME = globals.UnrealiumConfigDir
+local CONFIG_FILE_NAME = globals.UnrealiumConfigFile
+local UPROJECT_FILE_EXT = globals.UnrealProjectExt
 
 local Path = require("plenary.path")
 local uv = vim.uv
@@ -7,6 +9,7 @@ local cwd = uv.cwd()
 
 local M = {}
 
+-- TODO:
 -- A func for creating a new config file (interactive?)
 -- A func for finding the Unreal Engine root directory
 -- A func for adding the Engine Source to the search paths of Telescope
@@ -14,7 +17,7 @@ local M = {}
 ---Ensures that the config directory exists in the CWD, creating one if not.
 ---@return Path
 function M._ensureConfigDirectory()
-	local fullDirPath = cwd .. "/" .. configDirName
+	local fullDirPath = cwd .. "/" .. CONFIG_DIR_NAME
 
 	local configDir = Path:new(fullDirPath) -- path
 
@@ -30,7 +33,7 @@ end
 ---@param fullDirPath string
 ---@return Path
 function M._ensureConfigFile(fullDirPath)
-	local configFilePath = tostring(fullDirPath) .. "/" .. configFileName
+	local configFilePath = tostring(fullDirPath) .. "/" .. CONFIG_FILE_NAME
 	local configFile = Path:new(configFilePath) -- path
 
 	if not configFile:exists() then
@@ -55,7 +58,6 @@ function M.getUnrealiumConfig()
 
 		if content ~= "" then
 			data = vim.fn.json_decode(content)
-			print("Decoded JSON file.")
 		else
 			data = {}
 		end
@@ -65,8 +67,10 @@ function M.getUnrealiumConfig()
 		data = {}
 	end
 
+	file:close()
+
 	if next(data) == nil then
-		print("JSON file was empty.")
+		print("Unrealium JSON file was empty.")
 	end
 
 	return data
@@ -86,12 +90,11 @@ end
 ---Queries whether or not cwd houses a .uproject file
 ---@return boolean
 function M._directoryHasUProject()
-	local filetype = ".uproject"
 	local found = false
 
 	-- See if there is a file in the CWD that has a .uproject extension
-	for name, _ in vim.fs.dir(cwd) do
-		if name:sub(-#filetype) == filetype then
+	for name in vim.fs.dir(cwd) do
+		if name:sub(-#filetype) == UPROJECT_FILE_EXT then
 			found = true
 			break
 		end

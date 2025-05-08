@@ -10,15 +10,16 @@ end
 
 function Commands.uBuild(opts)
 	print("Building Unreal project.")
+	-- Ensure Correct Directory
+	-- Get the Unreal Builder Executable (build.sh)
+	-- Execute it
 end
 
 function Commands.uRun(opts)
-	require("unrealium")
 	print("Launching UnrealEditor for $ProjectName.")
 end
 
 function Commands.uDebug(opts)
-	require("unrealium")
 	print("Launching UnrealEditor & attaching debugger.")
 end
 
