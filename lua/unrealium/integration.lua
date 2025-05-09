@@ -17,7 +17,7 @@ function Commands.uGenerateProjectFiles(opts)
 
 	local uconfig = conf.getUnrealiumConfig()
 	local engineDir = conf._getEngineDirectory(uconfig)
-	local buildScript = engineDir .. globals.BatchFileSubpath .. "/Build.sh"
+	local buildScript = engineDir .. "/" .. globals.BatchFileSubpath .. "/" .. "Build.sh"
 
 	local uprojectFilePath = conf.getUProjectPath()
 	if not uprojectFilePath then
