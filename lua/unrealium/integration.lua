@@ -27,7 +27,8 @@ function Commands.uGenerateProjectFiles(opts)
 
 	local commandExtras = "-game -engine -progress"
 	local command = buildScript .. '-projectfiles -project="' .. uprojectFilePath .. '" ' .. commandExtras
-	print("Command to execute would be: " .. command)
+	local cli = require("unrealium.cli")
+	cli.runCommandInSmallTerminal(command)
 end
 
 Commands.uGenerateProjectFiles()
