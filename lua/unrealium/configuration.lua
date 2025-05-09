@@ -61,8 +61,6 @@ function M.getUnrealiumConfig()
 		else
 			data = {}
 		end
-
-		file:close()
 	else
 		data = {}
 	end
@@ -94,7 +92,7 @@ function M._directoryHasUProject()
 
 	-- See if there is a file in the CWD that has a .uproject extension
 	for name in vim.fs.dir(cwd) do
-		if name:sub(-#filetype) == UPROJECT_FILE_EXT then
+		if name:sub(-#UPROJECT_FILE_EXT) == UPROJECT_FILE_EXT then
 			found = true
 			break
 		end
