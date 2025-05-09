@@ -2,6 +2,15 @@ local M = {}
 
 ---@return number channel the terminal window channel
 function M._openSmallTerminal()
+	vim.api.nvim_create_autocmd("TermOpen", {
+		group = vim.api.nvim_create_augroup("custom-term-open", { clear = true }),
+		callback = function()
+			-- Turn off line numbering
+			vim.opt.number = false
+			vim.opt.relativenumber = false
+		end,
+	})
+
 	-- Create a new terminal window
 	vim.cmd("new")
 	vim.cmd("term")
@@ -10,10 +19,6 @@ function M._openSmallTerminal()
 	local total_height = vim.api.nvim_get_option_value("lines", {})
 	local target_height = math.floor(total_height * 0.35)
 	vim.api.nvim_win_set_height(0, target_height)
-
-	-- Turn off line numbering
-	vim.opt.number = false
-	vim.opt.relativenumber = false
 
 	return vim.bo.channel
 end

@@ -98,11 +98,36 @@ function M._directoryHasUProject()
 		end
 	end
 
-	if found then
-		print("Found a .uproject file in the current directory.")
+	return found
+end
+
+---Fetches the full path of the .uproject file
+---@return Path or nil
+function M.getUProjectPath()
+	local projectPath = nil
+
+	local dir = uv.fs_opendir(cwd, nil, 50)
+	if not dir then
+		return nil
 	end
 
-	return found
+	while true do
+		local entries = uv.fs_readdir(dir)
+		if not entries then
+			break
+		end
+
+		for _, entry in ipairs(entries) do
+			if entry.type == "file" and entry.name:sub(-#UPROJECT_FILE_EXT) == UPROJECT_FILE_EXT then
+				print("FOUND the UPROJECT file")
+				uv.fs_closedir(dir)
+				return Path:new(cwd .. "/" .. entry.name)
+			end
+		end
+
+		uv.fs_closedir(dir)
+		return nil
+	end
 end
 
 return M

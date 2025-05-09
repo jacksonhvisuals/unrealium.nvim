@@ -3,7 +3,7 @@ local M = {}
 -- Registers commands for Unrealium
 function M.register()
 	vim.api.nvim_create_user_command("UGenProjectFiles", function(opts)
-		require("unrealium.integration").test(opts)
+		require("unrealium.integration").uGenerateProjectFiles(opts)
 	end, {})
 
 	vim.api.nvim_create_user_command("UBuild", function(opts)
