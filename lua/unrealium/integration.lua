@@ -10,9 +10,16 @@ end
 
 function Commands.uBuild(opts)
 	print("Building Unreal project.")
-	-- Ensure Correct Directory
-	-- Get the Unreal Builder Executable (build.sh)
-	-- Execute it
+	local cmds = require("unrealium.configuration")
+
+	if not cmds._directoryHasUProject() then
+		print("The CWD does not have a .uproject, aborting.")
+		return
+	end
+
+	local cli = require("unrealium.cli")
+
+	cli.runCommandInSmallTerminal("make")
 end
 
 function Commands.uRun(opts)
