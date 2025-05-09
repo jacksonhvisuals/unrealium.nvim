@@ -16,4 +16,6 @@ local function setup(args)
 	print("Setting up Unrealium plugin.")
 end
 
+print("Unrealium setup complete.")
+
 return { setup = setup }
