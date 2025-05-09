@@ -32,10 +32,8 @@ end
 
 ---Executes a command in a new small terminal, handles the carriage return
 ---@param command string the command to run
----@param title string friendly title for the term window
-function M.runCommandInSmallTerminal(command, title)
+function M.runCommandInSmallTerminal(command)
 	local termID = M._openSmallTerminal()
-	vim.api.nvim_buf_set_name(termID, title)
 
 	local returnKey = "\r\n"
 	local fullCommand = command .. returnKey
