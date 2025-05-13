@@ -1,4 +1,6 @@
 local globals = require("unrealium.globals")
+local foundation = require("unrealium.foundation")
+
 local CONFIG_DIR_NAME = globals.UnrealiumConfigDir
 local CONFIG_FILE_NAME = globals.UnrealiumConfigFile
 local UPROJECT_FILE_EXT = globals.UnrealProjectExt
@@ -22,7 +24,7 @@ function M._ensureConfigDirectory()
 	local configDir = Path:new(fullDirPath) -- path
 
 	if not configDir:exists() then
-		print("Unrealium directory (.unrealium) did not exist. Creating...")
+		foundation.logMessage("Unrealium directory (.unrealium) did not exist. Creating...")
 		configDir:mkdir()
 	end
 
@@ -37,7 +39,7 @@ function M._ensureConfigFile(fullDirPath)
 	local configFile = Path:new(configFilePath) -- path
 
 	if not configFile:exists() then
-		print("Unrealium config JSON did not exist. Generating a new one.")
+		foundation.logError("Unrealium config JSON did not exist. Generating a new one.")
 		configFile:touch()
 	end
 
@@ -46,7 +48,7 @@ end
 
 ---Fetches the config file as a table.
 ---@return table
-function M.getUnrealiumConfig()
+function M.readUnrealiumConfig()
 	local configDir = M._ensureConfigDirectory()
 	local configFile = M._ensureConfigFile(configDir.filename)
 
@@ -68,7 +70,7 @@ function M.getUnrealiumConfig()
 	file:close()
 
 	if next(data) == nil then
-		print("Unrealium JSON file was empty.")
+		foundation.logError("Unrealium JSON file was empty.")
 	end
 
 	return data
@@ -102,10 +104,8 @@ function M._directoryHasUProject()
 end
 
 ---Fetches the full path of the .uproject file
----@return Path or nil
+---@return Path | nil
 function M.getUProjectPath()
-	local projectPath = nil
-
 	local dir = uv.fs_opendir(cwd, nil, 50)
 	if not dir then
 		return nil
@@ -119,7 +119,6 @@ function M.getUProjectPath()
 
 		for _, entry in ipairs(entries) do
 			if entry.type == "file" and entry.name:sub(-#UPROJECT_FILE_EXT) == UPROJECT_FILE_EXT then
-				print("FOUND the UPROJECT file")
 				uv.fs_closedir(dir)
 				return Path:new(cwd .. "/" .. entry.name)
 			end
@@ -129,5 +128,7 @@ function M.getUProjectPath()
 		return nil
 	end
 end
+
+M.ProjectName = vim.fn.fnamemodify(M.getUProjectPath().filename, ":t"):match("^[^.]+")
 
 return M

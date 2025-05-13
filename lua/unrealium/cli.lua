@@ -1,16 +1,16 @@
 local M = {}
 
+vim.api.nvim_create_autocmd("TermOpen", {
+	group = vim.api.nvim_create_augroup("custom-term-open", { clear = true }),
+	callback = function()
+		-- Turn off line numbering
+		vim.opt_local.number = false
+		vim.opt_local.relativenumber = false
+	end,
+})
+
 ---@return number channel the terminal window channel
 function M._openSmallTerminal()
-	vim.api.nvim_create_autocmd("TermOpen", {
-		group = vim.api.nvim_create_augroup("custom-term-open", { clear = true }),
-		callback = function()
-			-- Turn off line numbering
-			vim.opt.number = false
-			vim.opt.relativenumber = false
-		end,
-	})
-
 	-- Create a new terminal window
 	vim.cmd("new")
 	vim.cmd("term")
@@ -32,7 +32,7 @@ end
 
 ---Executes a command in a new small terminal, handles the carriage return
 ---@param command string the command to run
-function M.runCommandInSmallTerminal(command)
+function M.runCommand(command)
 	local termID = M._openSmallTerminal()
 
 	local returnKey = "\r\n"

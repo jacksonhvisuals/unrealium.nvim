@@ -5,7 +5,7 @@ local function init()
 
 	if configuration._directoryHasUProject() then
 		print("Unrealium initializing...")
-		local config = configuration.getUnrealiumConfig()
+		local config = configuration.readUnrealiumConfig()
 		vim.g.UnrealiumEnginePath = configuration._getEngineDirectory(config)
 		print("Engine Path is: " .. vim.g.UnrealiumEnginePath)
 		print("Initialization complete.")

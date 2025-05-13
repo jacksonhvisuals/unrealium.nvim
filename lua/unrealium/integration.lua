@@ -4,7 +4,7 @@ local logPath = vim.fn.stdpath("data") .. "/unrealium.log"
 
 local Commands = {}
 
-function Commands.uGenerateProjectFiles(opts)
+function Commands:uGenerateProjectFiles(opts)
 	print("Generating project files... done.")
 	local conf = require("unrealium.configuration")
 
@@ -15,7 +15,7 @@ function Commands.uGenerateProjectFiles(opts)
 
 	local globals = require("unrealium.globals")
 
-	local uconfig = conf.getUnrealiumConfig()
+	local uconfig = conf.readUnrealiumConfig()
 	local engineDir = conf._getEngineDirectory(uconfig)
 	local buildScript = engineDir .. "/" .. globals.BatchFileSubpath .. "/" .. "Build.sh"
 
@@ -28,12 +28,10 @@ function Commands.uGenerateProjectFiles(opts)
 	local commandExtras = "-game -engine -progress"
 	local command = buildScript .. ' -projectfiles -project="' .. uprojectFilePath .. '" ' .. commandExtras
 	local cli = require("unrealium.cli")
-	cli.runCommandInSmallTerminal(command)
+	cli.runCommand(command)
 end
 
-Commands.uGenerateProjectFiles()
-
-function Commands.uBuild(opts)
+function Commands:uBuild(opts)
 	local conf = require("unrealium.configuration")
 
 	if not conf._directoryHasUProject() then
@@ -47,11 +45,11 @@ function Commands.uBuild(opts)
 	cli.runCommandInSmallTerminal("make")
 end
 
-function Commands.uRun(opts)
+function Commands:uRun(opts)
 	print("Launching UnrealEditor for $ProjectName.")
 end
 
-function Commands.uDebug(opts)
+function Commands:uDebug(opts)
 	print("Launching UnrealEditor & attaching debugger.")
 end
 
