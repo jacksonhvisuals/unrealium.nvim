@@ -129,6 +129,8 @@ function M.getUProjectPath()
 	end
 end
 
-M.ProjectName = vim.fn.fnamemodify(M.getUProjectPath().filename, ":t"):match("^[^.]+")
+if M._directoryHasUProject() then
+	M.ProjectName = vim.fn.fnamemodify(M.getUProjectPath().filename, ":t"):match("^[^.]+")
+end
 
 return M
