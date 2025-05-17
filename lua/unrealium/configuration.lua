@@ -1,4 +1,11 @@
-local globals = require("unrealium.globals")
+local globals = {
+	UnrealiumConfigDir = ".unrealium",
+	UnrealiumConfigFile = "config.json",
+	BatchFileSubpath = "Engine/Build/BatchFiles/Linux",
+	UProjExt = ".uproject",
+	EditorSubpath = "Engine/Binaries/Linux",
+}
+
 local foundation = require("unrealium.foundation")
 
 local CONFIG_DIR_NAME = globals.UnrealiumConfigDir
@@ -10,6 +17,12 @@ local uv = vim.uv
 local cwd = uv.cwd()
 
 local M = {}
+
+if not vim.g.unrealium_config_loaded then
+	-- TODO: Set up the main global var with all the necessary values
+	-- then set the value to true
+	vim.g.unrealium_config_loaded = true
+end
 
 -- TODO:
 -- A func for creating a new config file (interactive?)
