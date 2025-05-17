@@ -9,13 +9,27 @@ if vim.g.unrealium_loaded == 1 then
 end
 vim.g.unrealium_loaded = 1
 
--- Otherwise, register commands.
-require("unrealium.commands").register()
+-- Set up Unrealium commands
+vim.api.nvim_create_user_command("UShowActions", function(opts)
+	require("unrealium.ui").ShowUnrealiumActions(opts)
+end, {})
 
-local function setup(args)
+vim.api.nvim_create_user_command("UGenProjectFiles", function(opts)
+	require("unrealium.integration").uGenerateProjectFiles(opts)
+end, {})
+
+vim.api.nvim_create_user_command("UBuild", function(opts)
+	require("unrealium.integration").uBuild(opts)
+end, {})
+
+vim.api.nvim_create_user_command("URun", function(opts)
+	require("unrealium.integration").uRun(opts)
+end, {})
+
+vim.api.nvim_create_user_command("UDebug", function(opts)
+	require("unrealium.integration").uDebug(opts)
+end, {})
+
+function setup(args)
 	print("Setting up Unrealium plugin.")
 end
-
-print("Unrealium setup complete.")
-
-return { setup = setup }
