@@ -1,9 +1,5 @@
 ---@alias LOG_LEVEL integer
----| "ERROR"
----| "WARNING"
----| "LOG"
----| "VERBOSE"
----| "VERY_VERBOSE"
+---| "ERROR" | "WARNING" | "LOG" | "VERBOSE" | "VERY_VERBOSE"
 local LOG_LEVEL = {
 	ERROR = 1,
 	WARNING = 2,
@@ -13,6 +9,19 @@ local LOG_LEVEL = {
 }
 
 local LOG_FILE_PATH = vim.fn.stdpath("state") .. "/unrealium.log"
+
+-- Set up (local) globals
+local PLATFORM_NAME = "Linux"
+local CONFIG_DIR_NAME = ".unrealium"
+local CONFIG_FILE_NAME = "config.json"
+local BUILD_FILES_SUBPATH = "Engine/Build/BatchFiles/" .. PLATFORM_NAME
+local EDITOR_SUBPATH = "Engine/Binaries/" .. PLATFORM_NAME
+
+local Path = require("plenary.path")
+local uv = vim.uv
+local cwd = uv.cwd()
+
+local M = {}
 
 ---Handles logging, taking verbosity preference into account.
 ---@param verbosity LOG_LEVEL
@@ -60,19 +69,6 @@ local function logError(message)
 
 	logWithVerbosity(LOG_LEVEL.ERROR, message)
 end
-
--- Set up (local) globals
-local PLATFORM_NAME = "Linux"
-local CONFIG_DIR_NAME = ".unrealium"
-local CONFIG_FILE_NAME = "config.json"
-local BUILD_FILES_SUBPATH = "Engine/Build/BatchFiles/" .. PLATFORM_NAME
-local EDITOR_SUBPATH = "Engine/Binaries/" .. PLATFORM_NAME
-
-local Path = require("plenary.path")
-local uv = vim.uv
-local cwd = uv.cwd()
-
-local M = {}
 
 if not vim.g.unrealium_config_loaded then
 	-- TODO: Set up the main global var with all the necessary values
