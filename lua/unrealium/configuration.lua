@@ -1,16 +1,72 @@
-local globals = {
-	UnrealiumConfigDir = ".unrealium",
-	UnrealiumConfigFile = "config.json",
-	BatchFileSubpath = "Engine/Build/BatchFiles/Linux",
-	UProjExt = ".uproject",
-	EditorSubpath = "Engine/Binaries/Linux",
+---@alias LOG_LEVEL integer
+---| "ERROR"
+---| "WARNING"
+---| "LOG"
+---| "VERBOSE"
+---| "VERY_VERBOSE"
+local LOG_LEVEL = {
+	ERROR = 1,
+	WARNING = 2,
+	LOG = 3,
+	VERBOSE = 4,
+	VERY_VERBOSE = 5,
 }
 
-local foundation = require("unrealium.foundation")
+local LOG_FILE_PATH = vim.fn.stdpath("state") .. "/unrealium.log"
 
-local CONFIG_DIR_NAME = globals.UnrealiumConfigDir
-local CONFIG_FILE_NAME = globals.UnrealiumConfigFile
-local UPROJECT_FILE_EXT = globals.UProjExt
+---Handles logging, taking verbosity preference into account.
+---@param verbosity LOG_LEVEL
+---@param message string
+local function logWithVerbosity(verbosity, message)
+	if not vim.g.unrealium_debug then
+		return
+	end
+
+	local verbosityPref = LOG_LEVEL.LOG
+	if vim.g.unrealium_loglevel then
+		verbosityPref = vim.g.unrealium_loglevel
+	end
+
+	if verbosity > verbosityPref then
+		return
+	end
+
+	local file = io.open(LOG_FILE_PATH, "a")
+
+	if file then
+		local time = os.date("%m/%d/%y %H:%M:%S")
+		file:write("[" .. time .. "][" .. verbosity .. "]: " .. message .. "\n")
+	end
+end
+
+---Wrapper for general logs in logWithVerbosity for convenience
+---@param message string
+local function log(message)
+	if not message then
+		logWithVerbosity(LOG_LEVEL.ERROR, "${message} was nil")
+		return
+	end
+
+	logWithVerbosity(LOG_LEVEL.LOG, message)
+end
+
+---Wrapper for logging errors via logWithVerbosity for convenience
+---@param message string
+local function logError(message)
+	if not message then
+		logWithVerbosity(LOG_LEVEL.ERROR, "${message} was nil")
+		return
+	end
+
+	logWithVerbosity(LOG_LEVEL.ERROR, message)
+end
+
+-- Set up (local) globals
+local PLATFORM_NAME = "Linux"
+local CONFIG_DIR_NAME = ".unrealium"
+local CONFIG_FILE_NAME = "config.json"
+local BUILD_FILES_SUBPATH = "Engine/Build/BatchFiles/" .. PLATFORM_NAME
+local EDITOR_SUBPATH = "Engine/Binaries/" .. PLATFORM_NAME
 
 local Path = require("plenary.path")
 local uv = vim.uv
@@ -37,7 +93,7 @@ function M._ensureConfigDirectory()
 	local configDir = Path:new(fullDirPath) -- path
 
 	if not configDir:exists() then
-		foundation.logMessage("Unrealium directory (.unrealium) did not exist. Creating...")
+		log("Unrealium directory (.unrealium) did not exist. Creating...")
 		configDir:mkdir()
 	end
 
@@ -107,7 +163,8 @@ function M._directoryHasUProject()
 
 	-- See if there is a file in the CWD that has a .uproject extension
 	for name in vim.fs.dir(cwd) do
-		if name:sub(-#UPROJECT_FILE_EXT) == UPROJECT_FILE_EXT then
+		local file_ext = ".uproject"
+		if name:sub(-#file_ext) == file_ext then
 			found = true
 			break
 		end
@@ -131,7 +188,8 @@ function M.getUProjectPath()
 		end
 
 		for _, entry in ipairs(entries) do
-			if entry.type == "file" and entry.name:sub(-#UPROJECT_FILE_EXT) == UPROJECT_FILE_EXT then
+			local file_ext = ".uproject"
+			if entry.type == "file" and entry.name:sub(-#file_ext) == file_ext then
 				uv.fs_closedir(dir)
 				return Path:new(cwd .. "/" .. entry.name)
 			end
