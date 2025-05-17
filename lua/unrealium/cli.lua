@@ -1,14 +1,5 @@
 local M = {}
 
-vim.api.nvim_create_autocmd("TermOpen", {
-	group = vim.api.nvim_create_augroup("custom-term-open", { clear = true }),
-	callback = function()
-		-- Turn off line numbering
-		vim.opt_local.number = false
-		vim.opt_local.relativenumber = false
-	end,
-})
-
 ---@return number channel the terminal window channel
 function M._openSmallTerminal()
 	-- Create a new terminal window
