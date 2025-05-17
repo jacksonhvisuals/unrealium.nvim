@@ -35,7 +35,7 @@ end
 function M.runCommand(command)
 	local termID = M._openSmallTerminal()
 
-	local returnKey = "\r\n"
+	local returnKey = "\n"
 	local fullCommand = command .. returnKey
 
 	M._executeCommandInTerminal(termID, fullCommand)
