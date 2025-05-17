@@ -3,7 +3,7 @@ local foundation = require("unrealium.foundation")
 
 local CONFIG_DIR_NAME = globals.UnrealiumConfigDir
 local CONFIG_FILE_NAME = globals.UnrealiumConfigFile
-local UPROJECT_FILE_EXT = globals.UnrealProjectExt
+local UPROJECT_FILE_EXT = globals.UProjExt
 
 local Path = require("plenary.path")
 local uv = vim.uv

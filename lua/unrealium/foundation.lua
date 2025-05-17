@@ -1,11 +1,11 @@
-local G = {}
+local M = {}
 
-function G.logMessage(message)
+function M.logMessage(message)
 	vim.notify(message, vim.log.levels.INFO)
 end
 
-function G.logError(message)
+function M.logError(message)
 	vim.notify(message, vim.log.levels.ERROR)
 end
 
-return G
+return M
