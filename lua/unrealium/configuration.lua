@@ -200,4 +200,11 @@ if M._directoryHasUProject() then
 	M.ProjectName = vim.fn.fnamemodify(M.getUProjectPath().filename, ":t"):match("^[^.]+")
 end
 
+---Primary function to determine if the current file or
+---directory is a valid Unreal Project.
+---@return boolean
+function M.isUProjectDirectory()
+	return false
+end
+
 return M
