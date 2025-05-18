@@ -115,7 +115,7 @@ end
 
 ---Fetches the config file as a table.
 ---@return table
-function M.readUnrealiumConfig()
+local function readUnrealiumConfig()
 	local configDir = ensureConfigDirectory()
 	local configFile = ensureConfigFile(configDir.filename)
 
@@ -146,60 +146,12 @@ end
 ---Fetches the "EnginePath" value from a table
 ---@param config table
 ---@return string
-function M._getEngineDirectory(config)
+local function _getEngineDirectory(config)
 	if config["EnginePath"] ~= nil then
 		return config["EnginePath"]
 	end
 
 	return "None"
-end
-
----Queries whether or not cwd houses a .uproject file
----@return boolean
-local function directoryHasUProject()
-	local found = false
-
-	-- See if there is a file in the CWD that has a .uproject extension
-	for name in vim.fs.dir(cwd) do
-		local file_ext = ".uproject"
-		if name:sub(-#file_ext) == file_ext then
-			found = true
-			break
-		end
-	end
-
-	return found
-end
-
----Fetches the full path of the .uproject file
----@return Path | nil
-function M.getUProjectPath()
-	local dir = uv.fs_opendir(cwd, nil, 50)
-	if not dir then
-		return nil
-	end
-
-	while true do
-		local entries = uv.fs_readdir(dir)
-		if not entries then
-			break
-		end
-
-		for _, entry in ipairs(entries) do
-			local file_ext = ".uproject"
-			if entry.type == "file" and entry.name:sub(-#file_ext) == file_ext then
-				uv.fs_closedir(dir)
-				return Path:new(cwd .. "/" .. entry.name)
-			end
-		end
-
-		uv.fs_closedir(dir)
-		return nil
-	end
-end
-
-if directoryHasUProject() then
-	M.ProjectName = vim.fn.fnamemodify(M.getUProjectPath().filename, ":t"):match("^[^.]+")
 end
 
 ---Looks in the current directory for a file with the given extension
@@ -270,6 +222,8 @@ end
 ---@class UnrealiumConfig
 ---@field BatchFilesDir string
 ---@field ProjectName string
+---@field ProjectFolder string
+---@field EngineFolder string
 
 ---Attempts to get the UnrealiumConfig, if in a valid directory.
 ---@return UnrealiumConfig | nil
@@ -279,9 +233,14 @@ function M.get()
 		return nil
 	end
 
-	local config = {} ---@type UnrealiumConfig
+	local config ---@type UnrealiumConfig
 	config.ProjectName = vim.fn.fnamemodify(uProjectDir.filename, ":t:r")
+	config.ProjectFolder = vim.fn.fnamemodify(uProjectDir.filename, ":h")
 	config.BatchFilesDir = "test"
+
+	-- Ensure the config file
+	-- Read config file and set values
+	-- if no config file, create template & prompt user, return nil
 
 	return config
 end
