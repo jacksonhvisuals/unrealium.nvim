@@ -202,31 +202,6 @@ if directoryHasUProject() then
 	M.ProjectName = vim.fn.fnamemodify(M.getUProjectPath().filename, ":t"):match("^[^.]+")
 end
 
----Primary function to get the directory of
----a uProject, if it exists in the path
----@return Path | nil
-function getUProjectDirectory()
-	--Check current dir for .uproject
-	--Check recursively walk up the path and look for .uproject
-	--  If we hit /, return false
-	return nil
-end
-
----@class UnrealiumConfig
----@field BatchFilesDir string
----@field ProjectName string
-
----Attempts to get the UnrealiumConfig, if in a valid directory.
----@return UnrealiumConfig | nil
-function M.get()
-	local uProjectDir = getUProjectDirectory()
-	if not uProjectDir then
-		return nil
-	end
-
-	--
-end
-
 ---Looks in the current directory for a file with the given extension
 ---@param directory string
 ---@param extension string
@@ -275,7 +250,7 @@ local function getDirectoryWithFileWithExtension(filepath, extension)
 	end
 
 	local parentDir = currentDir:parent()
-	if parentDir ~= currentDir then
+	if parentDir.filename ~= currentDir.filename then
 		log("Couldn't find " .. extension .. " at " .. currentDir.filename)
 		return getDirectoryWithFileWithExtension(parentDir, extension)
 	end
@@ -284,13 +259,31 @@ local function getDirectoryWithFileWithExtension(filepath, extension)
 	return nil
 end
 
-local testPath = Path:new(cwd)
-log("Beginning to test for .uproject file.")
-local ProjectDir = getDirectoryWithFileWithExtension(testPath, "uproject")
-if ProjectDir then
-	log("Found a .uproject file at " .. ProjectDir.filename)
-else
-	log("Could not find a .uproject file")
+---Primary function to get the directory of
+---a uProject, if it exists in the path
+---@return Path | nil
+local function getUProjectFile()
+	local CurrentPath = Path:new(cwd)
+	return getDirectoryWithFileWithExtension(CurrentPath, "uproject")
+end
+
+---@class UnrealiumConfig
+---@field BatchFilesDir string
+---@field ProjectName string
+
+---Attempts to get the UnrealiumConfig, if in a valid directory.
+---@return UnrealiumConfig | nil
+function M.get()
+	local uProjectDir = getUProjectFile()
+	if not uProjectDir then
+		return nil
+	end
+
+	local config = {} ---@type UnrealiumConfig
+	config.ProjectName = vim.fn.fnamemodify(uProjectDir.filename, ":t:r")
+	config.BatchFilesDir = "test"
+
+	return config
 end
 
 return M
