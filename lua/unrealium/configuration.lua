@@ -233,7 +233,7 @@ function M.get()
 		return nil
 	end
 
-	local config ---@type UnrealiumConfig
+	local config = {} ---@type UnrealiumConfig
 	config.ProjectName = vim.fn.fnamemodify(uProjectDir.filename, ":t:r")
 	config.ProjectFolder = vim.fn.fnamemodify(uProjectDir.filename, ":h")
 	config.BatchFilesDir = "test"
