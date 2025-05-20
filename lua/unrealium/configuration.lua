@@ -13,7 +13,7 @@ local LOG_FILE_PATH = vim.fn.stdpath("data") .. "/unrealium.log"
 -- Set up (local) globals
 local CONFIG_FILE_NAME = ".unrealium"
 local BATCH_FILES_SUBPATH = "Engine/Build/BatchFiles" ---@see Needs platform subfoler
-local TEMPLATE_CONFIG = "{{ 'EnginePath':'None', 'PlatformName':'None' }}"
+local TEMPLATE_CONFIG = "{ 'EnginePath':'None', 'PlatformName':'None' }"
 
 -- Get various useful modules
 local Path = require("plenary.path")
@@ -87,6 +87,7 @@ end
 local function ensureConfigFile(fullDirPath)
 	local configFilePath = tostring(fullDirPath) .. "/" .. CONFIG_FILE_NAME
 	local configFile = Path:new(configFilePath) ---@type Path
+	log("Checking " .. configFile.filename .. " for a .unrealium file")
 
 	if not configFile:exists() then
 		logError("Unrealium config file (.unrealium) did not exist. Generating a new one.")
@@ -129,6 +130,8 @@ local function readUnrealiumConfig(uProjectDirectory)
 	if next(data) == nil then
 		logError("Unrealium JSON file was empty.")
 	end
+
+	log("Received " .. data["EnginePath"] .. " as proof of good Unrealium file")
 
 	return data
 end
@@ -267,6 +270,7 @@ function M.get()
 	-- TODO:
 	-- if no config file, create template & prompt user, return nil
 
+	log("setting up the struct")
 	local config = {} ---@type UnrealiumConfig
 	config.ProjectPath = uProjectFilePath
 	config.PlatformName = _getPlatformName(configData)
