@@ -93,7 +93,7 @@ local function ensureConfigFile(fullDirPath)
 		configFile:touch()
 	end
 
-	configFile:write(TEMPLATE_CONFIG)
+	configFile:write(TEMPLATE_CONFIG, "w")
 
 	return configFile
 end
