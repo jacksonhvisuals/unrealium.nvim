@@ -14,7 +14,7 @@ local LOG_FILE_PATH = vim.fn.stdpath("data") .. "/unrealium.log"
 local PLATFORM_NAME = "Linux"
 local CONFIG_DIR_NAME = ".unrealium"
 local CONFIG_FILE_NAME = "config.json"
-local BUILD_FILES_SUBPATH = "Engine/Build/BatchFiles/" .. PLATFORM_NAME
+local BATCH_FILES_SUBPATH = "Engine/Build/BatchFiles/" .. PLATFORM_NAME
 local EDITOR_SUBPATH = "Engine/Binaries/" .. PLATFORM_NAME
 
 -- Get various useful modules
@@ -52,7 +52,7 @@ end
 
 ---Wrapper for general logs in logWithVerbosity for convenience
 ---@param message string
-local function log(message)
+function M.log(message)
 	if not message then
 		logWithVerbosity(LOG_LEVEL.ERROR, "${message} was nil")
 		return
@@ -63,7 +63,7 @@ end
 
 ---Wrapper for logging errors via logWithVerbosity for convenience
 ---@param message string
-local function logError(message)
+function M.logError(message)
 	if not message then
 		logWithVerbosity(LOG_LEVEL.ERROR, "${message} was nil")
 		return
@@ -145,13 +145,13 @@ end
 
 ---Fetches the "EnginePath" value from a table
 ---@param config table
----@return string
+---@return string | nil
 local function _getEngineDirectory(config)
 	if config["EnginePath"] ~= nil then
 		return config["EnginePath"]
 	end
 
-	return "None"
+	return nil
 end
 
 ---Looks in the current directory for a file with the given extension
@@ -219,28 +219,48 @@ local function getUProjectFile()
 	return getDirectoryWithFileWithExtension(CurrentPath, "uproject")
 end
 
+---@class EngineScripts
+---@field Build string
+---@field GenerateProjectFiles string
+---@field EditorBase string The UnrealEditor, but can have strings appended for various build targets.
+
+---Builds the fields of EngineScripts
+---@param enginePath string
+---@return EngineScripts
+local function getScriptPaths(enginePath)
+	local Scripts = {} ---@type EngineScripts
+	Scripts.GenerateProjectFiles = enginePath .. "/" .. BATCH_FILES_SUBPATH .. "/" .. "Build.sh"
+	Scripts.Build = enginePath .. "/" .. BATCH_FILES_SUBPATH .. "/" .. "GenerateProjectFiles.sh"
+	Scripts.EditorBase = enginePath .. "/Binaries/" .. PLATFORM_NAME .. "UnrealEditor"
+
+	return Scripts
+end
+
 ---@class UnrealiumConfig
----@field BatchFilesDir string
+---@field ProjectPath string
 ---@field ProjectName string
 ---@field ProjectFolder string
 ---@field EngineFolder string
+---@field Scripts EngineScripts
 
 ---Attempts to get the UnrealiumConfig, if in a valid directory.
 ---@return UnrealiumConfig | nil
 function M.get()
 	local uProjectDir = getUProjectFile()
-	if not uProjectDir then
+	local engineDir = _getEngineDirectory(readUnrealiumConfig())
+	if not uProjectDir or not engineDir then
 		return nil
 	end
 
+	-- TODO:
+	-- if no config file, create template & prompt user, return nil
+
 	local config = {} ---@type UnrealiumConfig
+	config.ProjectPath = uProjectDir
 	config.ProjectName = vim.fn.fnamemodify(uProjectDir.filename, ":t:r")
 	config.ProjectFolder = vim.fn.fnamemodify(uProjectDir.filename, ":h")
-	config.BatchFilesDir = "test"
-
-	-- Ensure the config file
-	-- Read config file and set values
-	-- if no config file, create template & prompt user, return nil
+	config.EngineFolder = engineDir
+	config.Scripts = getScriptPaths(config.EngineFolder)
 
 	return config
 end
