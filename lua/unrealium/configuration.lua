@@ -252,13 +252,14 @@ function M.get()
 		return nil
 	end
 
+	local uProjectFilePath = uProjectPath.filename
 	-- TODO:
 	-- if no config file, create template & prompt user, return nil
 
 	local config = {} ---@type UnrealiumConfig
-	config.ProjectPath = uProjectPath.filename
-	config.ProjectName = vim.fn.fnamemodify(uProjectDir.filename, ":t:r")
-	config.ProjectFolder = vim.fn.fnamemodify(uProjectDir.filename, ":h")
+	config.ProjectPath = uProjectFilePath
+	config.ProjectName = vim.fn.fnamemodify(uProjectFilePath, ":t:r")
+	config.ProjectFolder = vim.fn.fnamemodify(uProjectFilePath, ":h")
 	config.EngineFolder = engineDir
 	config.Scripts = getScriptPaths(config.EngineFolder)
 
