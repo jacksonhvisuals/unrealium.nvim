@@ -85,16 +85,22 @@ end
 ---@param fullDirPath string
 ---@return Path
 local function ensureConfigFile(fullDirPath)
-	local configFilePath = tostring(fullDirPath) .. "/" .. CONFIG_FILE_NAME
+	local confDir = Path:new(tostring(fullDirPath) .. ".unrealium")
+
+	if not confDir:exists() then
+		log("Unrealium directory (.unrealium) did not exist. Creating...")
+		configD:mkdir()
+	end
+
+	local configFilePath = confDir.filename .. "config.json"
 	local configFile = Path:new(configFilePath) ---@type Path
 	log("Checking " .. configFile.filename .. " for a .unrealium file")
 
 	if not configFile:exists() then
 		logError("Unrealium config file (.unrealium) did not exist. Generating a new one.")
 		configFile:touch()
+		configFile:write(TEMPLATE_CONFIG, "w")
 	end
-
-	configFile:write(TEMPLATE_CONFIG, "w")
 
 	return configFile
 end
