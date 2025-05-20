@@ -35,8 +35,11 @@ function Commands:uBuild(opts)
 		return
 	end
 
+	conf.log("Changing directory to " .. unrealium.ProjectFolder)
 	vim.cmd("cd " .. unrealium.ProjectFolder)
-	vim.cmd("Make " .. unrealium.ProjectName .. "-" .. unrealium.PlatformName .. "-Development")
+	local makeCmd = "Make " .. unrealium.ProjectName .. "Editor-" .. unrealium.PlatformName .. "-Development"
+	conf.log("Running ".. makeCmd)
+	vim.cmd(makeCmd)
 end
 
 function Commands:uRun(opts)
