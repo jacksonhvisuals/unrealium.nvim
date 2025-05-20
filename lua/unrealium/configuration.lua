@@ -111,9 +111,14 @@ local function readUnrealiumConfig(uProjectDirectory)
 		local content = file:read("*all")
 
 		if content ~= "" then
-			data = vim.fn.json_decode(content)
-		else
-			data = {}
+			content = content:gsub("^\xEF\xBB\xBF", "")
+			local ok, decode = pcall(vim.fn.json_decode, content)
+			if not ok then
+				logError("Unrealium file was not readable")
+				return {}
+			end
+
+			data = decode
 		end
 
 		file:close()
