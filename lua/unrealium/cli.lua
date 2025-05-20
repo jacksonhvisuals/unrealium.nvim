@@ -5,6 +5,7 @@ function M._openSmallTerminal()
 	-- Create a new terminal window
 	vim.cmd("new")
 	vim.cmd("term")
+	vim.cmd("norm G")
 
 	-- Set the window height to 35% of window height.
 	local total_height = vim.api.nvim_get_option_value("lines", {})

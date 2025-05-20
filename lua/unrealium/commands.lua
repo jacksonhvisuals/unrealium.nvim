@@ -5,7 +5,7 @@ local logPath = vim.fn.stdpath("data") .. "/unrealium.log"
 local Commands = {}
 
 function Commands:uGenerateProjectFiles(opts)
-	print("Generating project files... done.")
+	print("Generating project files...")
 	local conf = require("unrealium.configuration")
 	local cli = require("unrealium.cli")
 
@@ -24,17 +24,19 @@ function Commands:uGenerateProjectFiles(opts)
 end
 
 function Commands:uBuild(opts)
+	print("Attempting to build Unreal project...")
 	local conf = require("unrealium.configuration")
+	local cli = require("unrealium.cli")
 
-	if not conf._directoryHasUProject() then
-		print("The CWD does not have a .uproject, aborting.")
+	local unrealium = conf.get()
+
+	if not unrealium then
+		conf.logError("Something went wrong.")
 		return
 	end
 
-	print("Building Unreal project.")
-	local cli = require("unrealium.cli")
-
-	cli.runCommandInSmallTerminal("make")
+	vim.cmd("cd " .. unrealium.ProjectFolder)
+	vim.cmd("Make")
 end
 
 function Commands:uRun(opts)
