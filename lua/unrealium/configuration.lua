@@ -11,7 +11,8 @@ local LOG_LEVEL = {
 local LOG_FILE_PATH = vim.fn.stdpath("data") .. "/unrealium.log"
 
 -- Set up (local) globals
-local CONFIG_FILE_NAME = ".unrealium"
+local CONFIG_DIR_NAME = ".unrealium"
+local CONFIG_FILE_NAME = "config.json"
 local BATCH_FILES_SUBPATH = "Engine/Build/BatchFiles" ---@see Needs platform subfoler
 local TEMPLATE_CONFIG = "{ 'EnginePath':'None', 'PlatformName':'None' }"
 
@@ -85,21 +86,23 @@ end
 ---@param fullDirPath string
 ---@return Path
 local function ensureConfigFile(fullDirPath)
-	local confDir = Path:new(tostring(fullDirPath) .. ".unrealium")
+	local confDir = Path:new(tostring(fullDirPath) .. "/" .. CONFIG_DIR_NAME)
 
 	if not confDir:exists() then
 		log("Unrealium directory (.unrealium) did not exist. Creating...")
 		confDir:mkdir()
 	end
 
-	local configFilePath = confDir.filename .. "config.json"
+	local configFilePath = confDir.filename .. "/" .. CONFIG_FILE_NAME
 	local configFile = Path:new(configFilePath) ---@type Path
-	log("Checking " .. configFile.filename .. " for a .unrealium file")
+	log("Checking " .. configFile.filename .. " to see if it exists.")
 
 	if not configFile:exists() then
 		logError("Unrealium config file (.unrealium) did not exist. Generating a new one.")
 		configFile:touch()
+		configFile:open()
 		configFile:write(TEMPLATE_CONFIG, "w")
+		configFile:close()
 	end
 
 	return configFile
