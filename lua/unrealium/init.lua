@@ -8,7 +8,25 @@ local function init()
 		return
 	end
 
-	print("Initialization complete for uProject: " .. UnrealiumConfig.ProjectName)
+	vim.api.nvim_create_user_command("UShowActions", function(opts)
+		require("unrealium.ui").ShowUnrealiumActions(opts)
+	end, {})
+
+	vim.api.nvim_create_user_command("UGenProjectFiles", function(opts)
+		require("unrealium.commands").uGenerateProjectFiles(opts)
+	end, {})
+
+	vim.api.nvim_create_user_command("UBuild", function(opts)
+		require("unrealium.commands").uBuild(opts)
+	end, {})
+
+	vim.api.nvim_create_user_command("URun", function(opts)
+		require("unrealium.commands").uRun(opts)
+	end, {})
+
+	vim.api.nvim_create_user_command("UDebug", function(opts)
+		require("unrealium.commands").uDebug(opts)
+	end, {})
 end
 
 local function setup()

@@ -12,8 +12,7 @@ local LOG_FILE_PATH = vim.fn.stdpath("data") .. "/unrealium.log"
 
 -- Set up (local) globals
 local PLATFORM_NAME = "Linux"
-local CONFIG_DIR_NAME = ".unrealium"
-local CONFIG_FILE_NAME = "config.json"
+local CONFIG_FILE_NAME = ".unrealium"
 local BATCH_FILES_SUBPATH = "Engine/Build/BatchFiles/" .. PLATFORM_NAME
 local EDITOR_SUBPATH = "Engine/Binaries/" .. PLATFORM_NAME
 
@@ -83,30 +82,15 @@ end
 -- A func for finding the Unreal Engine root directory
 -- A func for adding the Engine Source to the search paths of Telescope
 
----Ensures that the config directory exists in the CWD, creating one if not.
----@return Path
-local function ensureConfigDirectory()
-	local fullDirPath = cwd .. "/" .. CONFIG_DIR_NAME
-
-	local configDir = Path:new(fullDirPath) -- path
-
-	if not configDir:exists() then
-		log("Unrealium directory (.unrealium) did not exist. Creating...")
-		configDir:mkdir()
-	end
-
-	return configDir
-end
-
 ---Ensures that the config.json file exists at the given path, creating one if not.
 ---@param fullDirPath string
 ---@return Path
 local function ensureConfigFile(fullDirPath)
 	local configFilePath = tostring(fullDirPath) .. "/" .. CONFIG_FILE_NAME
-	local configFile = Path:new(configFilePath) -- path
+	local configFile = Path:new(configFilePath)
 
 	if not configFile:exists() then
-		logError("Unrealium config JSON did not exist. Generating a new one.")
+		logError("Unrealium config file (.unrealium) did not exist. Generating a new one.")
 		configFile:touch()
 	end
 
@@ -114,10 +98,10 @@ local function ensureConfigFile(fullDirPath)
 end
 
 ---Fetches the config file as a table.
+---@param uProjectDirectory string
 ---@return table
-local function readUnrealiumConfig()
-	local configDir = ensureConfigDirectory()
-	local configFile = ensureConfigFile(configDir.filename)
+local function readUnrealiumConfig(uProjectDirectory)
+	local configFile = ensureConfigFile(uProjectDirectory)
 
 	local file = io.open(configFile.filename, "r")
 	local data = {}
@@ -247,19 +231,26 @@ end
 ---@return UnrealiumConfig | nil
 function M.get()
 	local uProjectPath = getUProjectFile()
-	local engineDir = _getEngineDirectory(readUnrealiumConfig())
-	if not uProjectPath or not engineDir then
+	if not uProjectPath then
 		return nil
 	end
 
 	local uProjectFilePath = uProjectPath.filename
+	local projectDir = vim.fn.fnamemodify(uProjectFilePath, ":h")
+	local engineDir = _getEngineDirectory(readUnrealiumConfig(projectDir))
+	if not engineDir then
+		--TODO: Write docs.
+		logError("Looks like your .unrealium config is not set up yet. See :h unrealium.config for docs.")
+		return nil
+	end
+
 	-- TODO:
 	-- if no config file, create template & prompt user, return nil
 
 	local config = {} ---@type UnrealiumConfig
 	config.ProjectPath = uProjectFilePath
 	config.ProjectName = vim.fn.fnamemodify(uProjectFilePath, ":t:r")
-	config.ProjectFolder = vim.fn.fnamemodify(uProjectFilePath, ":h")
+	config.ProjectFolder = projectDir
 	config.EngineFolder = engineDir
 	config.Scripts = getScriptPaths(config.EngineFolder)
 
