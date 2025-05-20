@@ -20,7 +20,7 @@ function Commands:uGenerateProjectFiles(opts)
 
 	local commandExtras = "-game -engine -progress"
 	local command = buildScript .. ' -projectfiles -project="' .. unrealium.ProjectPath .. '" ' .. commandExtras
-	cli.runCommand(command)
+	cli.runCommand(command, "Generate Project Files")
 end
 
 function Commands:uBuild(opts)
@@ -36,7 +36,7 @@ function Commands:uBuild(opts)
 	end
 
 	vim.cmd("cd " .. unrealium.ProjectFolder)
-	vim.cmd("Make")
+	vim.cmd("Make " .. unrealium.ProjectName .. "-" .. unrealium.PlatformName .. "-Development")
 end
 
 function Commands:uRun(opts)
