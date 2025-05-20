@@ -89,7 +89,7 @@ local function ensureConfigFile(fullDirPath)
 
 	if not confDir:exists() then
 		log("Unrealium directory (.unrealium) did not exist. Creating...")
-		configD:mkdir()
+		confDir:mkdir()
 	end
 
 	local configFilePath = confDir.filename .. "config.json"
