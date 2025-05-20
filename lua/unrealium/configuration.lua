@@ -52,7 +52,7 @@ end
 
 ---Wrapper for general logs in logWithVerbosity for convenience
 ---@param message string
-function M.log(message)
+local function log(message)
 	if not message then
 		logWithVerbosity(LOG_LEVEL.ERROR, "${message} was nil")
 		return
@@ -63,7 +63,7 @@ end
 
 ---Wrapper for logging errors via logWithVerbosity for convenience
 ---@param message string
-function M.logError(message)
+local function logError(message)
 	if not message then
 		logWithVerbosity(LOG_LEVEL.ERROR, "${message} was nil")
 		return
@@ -246,9 +246,9 @@ end
 ---Attempts to get the UnrealiumConfig, if in a valid directory.
 ---@return UnrealiumConfig | nil
 function M.get()
-	local uProjectDir = getUProjectFile()
+	local uProjectPath = getUProjectFile()
 	local engineDir = _getEngineDirectory(readUnrealiumConfig())
-	if not uProjectDir or not engineDir then
+	if not uProjectPath or not engineDir then
 		return nil
 	end
 
@@ -256,7 +256,7 @@ function M.get()
 	-- if no config file, create template & prompt user, return nil
 
 	local config = {} ---@type UnrealiumConfig
-	config.ProjectPath = uProjectDir
+	config.ProjectPath = uProjectPath.filename
 	config.ProjectName = vim.fn.fnamemodify(uProjectDir.filename, ":t:r")
 	config.ProjectFolder = vim.fn.fnamemodify(uProjectDir.filename, ":h")
 	config.EngineFolder = engineDir
@@ -264,5 +264,10 @@ function M.get()
 
 	return config
 end
+
+M.log = log
+M.logError = logError
+M.log = log
+M.logError = logError
 
 return M

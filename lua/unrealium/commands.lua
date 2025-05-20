@@ -16,11 +16,10 @@ function Commands:uGenerateProjectFiles(opts)
 		return
 	end
 
-	local uProjectFilePath = unrealium.ProjectFolder .. "/"
 	local buildScript = unrealium.Scripts.Build
 
 	local commandExtras = "-game -engine -progress"
-	local command = buildScript .. ' -projectfiles -project="' .. uProjectFilePath .. '" ' .. commandExtras
+	local command = buildScript .. ' -projectfiles -project="' .. unrealium.ProjectPath .. '" ' .. commandExtras
 	cli.runCommand(command)
 end
 
