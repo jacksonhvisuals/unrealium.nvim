@@ -4,20 +4,23 @@ local logPath = vim.fn.stdpath("data") .. "/unrealium.log"
 
 local Commands = {}
 
+local conf = require("unrealium.configuration")
+Commands.unrealium = conf.get()
+if not Commands.unrealium then
+	conf.logError("Could not get unrealium config for Commands.")
+	return {}
+end
+
 function Commands:uGenerateProjectFiles(opts)
 	print("Generating project files...")
-	local conf = require("unrealium.configuration")
-	local cli = require("unrealium.cli")
 
-	local unrealium = conf.get()
-
+	local unrealium = self.unrealium
 	if not unrealium then
 		conf.logError("Something went wrong.")
 		return
 	end
 
 	local buildScript = unrealium.Scripts.Build
-
 	local commandExtras = "-game -engine -progress"
 	local command = buildScript .. ' -projectfiles -project="' .. unrealium.ProjectPath .. '" ' .. commandExtras
 	local runCmd = "Dispatch " .. command
@@ -27,11 +30,8 @@ end
 
 function Commands:uBuild(opts)
 	print("Attempting to build Unreal project...")
-	local conf = require("unrealium.configuration")
-	local cli = require("unrealium.cli")
 
-	local unrealium = conf.get()
-
+	local unrealium = self.unrealium
 	if not unrealium then
 		conf.logError("Something went wrong.")
 		return
@@ -46,10 +46,33 @@ end
 
 function Commands:uRun(opts)
 	print("Launching UnrealEditor for $ProjectName.")
+
+	local unrealium = self.unrealium
+	if not unrealium then
+		conf.logError("Something went wrong.")
+		return
+	end
+
+	conf.log("Running Unreal Engine")
+
+	local runCmd = "Dispatch " .. unrealium.Scripts.EditorBase .. " " .. unrealium.ProjectPath
+	vim.cmd(runCmd)
 end
 
 function Commands:uDebug(opts)
-	print("Launching UnrealEditor & attaching debugger.")
+	print("Launching UnrealEditor Debug for $ProjectName.")
+
+	local unrealium = self.unrealium
+	if not unrealium then
+		conf.logError("Something went wrong.")
+		return
+	end
+
+	conf.log("Running Unreal Engine")
+	local EditorExecutable = unrealium.Scripts.EditorBase .. "-" .. unrealium.PlatformName .. "-Debug"
+	local debugCmd = "Dispatch " .. EditorExecutable .. " " .. unrealium.ProjectPath
+	conf.log("Running " .. debugCmd)
+	vim.cmd(debugCmd)
 end
 
 return Commands
