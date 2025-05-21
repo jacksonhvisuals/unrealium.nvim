@@ -20,7 +20,9 @@ function Commands:uGenerateProjectFiles(opts)
 
 	local commandExtras = "-game -engine -progress"
 	local command = buildScript .. ' -projectfiles -project="' .. unrealium.ProjectPath .. '" ' .. commandExtras
-	cli.runCommand(command, "Generate Project Files")
+	local runCmd = "Dispatch " .. command
+	conf.log("Running " .. runCmd)
+	vim.cmd(runCmd)
 end
 
 function Commands:uBuild(opts)
@@ -38,7 +40,7 @@ function Commands:uBuild(opts)
 	conf.log("Changing directory to " .. unrealium.ProjectFolder)
 	vim.cmd("cd " .. unrealium.ProjectFolder)
 	local makeCmd = "Make " .. unrealium.ProjectName .. "Editor-" .. unrealium.PlatformName .. "-Development"
-	conf.log("Running ".. makeCmd)
+	conf.log("Running " .. makeCmd)
 	vim.cmd(makeCmd)
 end
 
