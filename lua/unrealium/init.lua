@@ -13,19 +13,19 @@ local function init()
 	end, {})
 
 	vim.api.nvim_create_user_command("UGenProjectFiles", function(opts)
-		require("unrealium.commands").uGenerateProjectFiles(opts)
+		require("unrealium.commands"):uGenerateProjectFiles(opts)
 	end, {})
 
 	vim.api.nvim_create_user_command("UBuild", function(opts)
-		require("unrealium.commands").uBuild(opts)
+		require("unrealium.commands"):uBuild(opts)
 	end, {})
 
 	vim.api.nvim_create_user_command("URun", function(opts)
-		require("unrealium.commands").uRun(opts)
+		require("unrealium.commands"):uRun(opts)
 	end, {})
 
 	vim.api.nvim_create_user_command("UDebug", function(opts)
-		require("unrealium.commands").uDebug(opts)
+		require("unrealium.commands"):uDebug(opts)
 	end, {})
 
 	vim.api.nvim_create_user_command("USearch", function(opts)
