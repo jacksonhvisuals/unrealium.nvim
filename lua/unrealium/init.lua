@@ -27,6 +27,12 @@ local function init()
 	vim.api.nvim_create_user_command("UDebug", function(opts)
 		require("unrealium.commands").uDebug(opts)
 	end, {})
+
+	vim.api.nvim_create_user_command("USearch", function(opts)
+		require("telescope.builtin").find_files({
+			search_dirs = { UnrealiumConfig.EngineFolder, UnrealiumConfig.ProjectFolder },
+		})
+	end, {})
 end
 
 local function setup()
