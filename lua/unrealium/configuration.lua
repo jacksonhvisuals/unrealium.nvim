@@ -149,8 +149,13 @@ end
 ---@param config table
 ---@return string | nil
 local function _getEngineDirectory(config)
-	if config["EnginePath"] ~= nil then
-		return config["EnginePath"]
+	local configValue = config["EnginePath"] ---@type string
+	if configValue ~= nil then
+		local enginePath = Path:new(configValue) ---@type Path
+
+		if enginePath:exists() then
+			return enginePath.filename
+		end
 	end
 
 	return nil
@@ -245,7 +250,7 @@ local function getScriptPaths(enginePath, platformName)
 	local Scripts = {} ---@type EngineScripts
 	Scripts.GenerateProjectFiles = enginePath .. "/" .. BATCH_FILES_SUBPATH .. "/" .. platformName .. "/Build.sh"
 	Scripts.Build = enginePath .. "/" .. BATCH_FILES_SUBPATH .. "/" .. platformName .. "/GenerateProjectFiles.sh"
-	Scripts.EditorBase = enginePath .. "/Binaries/" .. platformName .. "UnrealEditor"
+	Scripts.EditorBase = enginePath .. "Engine/Binaries/" .. platformName .. "/UnrealEditor"
 
 	return Scripts
 end
