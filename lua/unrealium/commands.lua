@@ -16,11 +16,11 @@ function Commands:USearch(cmd, context)
 	local searchDirs = {}
 
 	if context == "Engine" then
-		searchDirs = { UnrealiumConfig.EngineFolder }
+		searchDirs = { UnrealiumConfig.Engine.Folder }
 	elseif context == "Project" then
-		searchDirs = { UnrealiumConfig.ProjectFolder }
+		searchDirs = { UnrealiumConfig.Project.Folder }
 	else
-		searchDirs = { UnrealiumConfig.EngineFolder, UnrealiumConfig.ProjectFolder }
+		searchDirs = { UnrealiumConfig.Engine.Folder, UnrealiumConfig.Project.Folder }
 	end
 
 	require("telescope.builtin")[cmd]({ search_dirs = searchDirs })
@@ -46,8 +46,8 @@ function Commands:URun(type)
 		suffix = "-" .. unrealium.PlatformName .. "-Debug"
 	end
 
-	local EditorExecutable = unrealium.Scripts.EditorBase .. suffix
-	local debugCmd = "Dispatch " .. EditorExecutable .. " " .. unrealium.ProjectPath
+	local EditorExecutable = unrealium.Engine.Scripts.EditorBase .. suffix
+	local debugCmd = "Dispatch " .. EditorExecutable .. " " .. unrealium.Project.FullPath
 	conf.log("Running " .. debugCmd)
 	vim.cmd(debugCmd)
 end
@@ -72,9 +72,9 @@ function Commands:UBuild(type)
 		buildTypeSuffix = buildTypeSuffix .. "-Development"
 	end
 
-	conf.log("Changing directory to " .. unrealium.ProjectFolder)
-	vim.cmd("cd " .. unrealium.ProjectFolder)
-	local makeCmd = "Make " .. unrealium.ProjectName .. buildTypeSuffix
+	conf.log("Changing directory to " .. unrealium.Project.Folder)
+	vim.cmd("cd " .. unrealium.Project.Folder)
+	local makeCmd = "Make " .. unrealium.Project.Name .. buildTypeSuffix
 	conf.log("Running " .. makeCmd)
 	vim.cmd(makeCmd)
 end
@@ -88,9 +88,9 @@ function Commands:uGenerateProjectFiles(opts)
 		return
 	end
 
-	local buildScript = unrealium.Scripts.Build
+	local buildScript = unrealium.Engine.Scripts.Build
 	local commandExtras = "-game -engine -progress"
-	local command = buildScript .. ' -projectfiles -project="' .. unrealium.ProjectPath .. '" ' .. commandExtras
+	local command = buildScript .. ' -projectfiles -project="' .. unrealium.Project.Path .. '" ' .. commandExtras
 	local runCmd = "Dispatch " .. command
 	conf.log("Running " .. runCmd)
 	vim.cmd(runCmd)

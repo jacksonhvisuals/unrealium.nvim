@@ -44,7 +44,9 @@ local function logWithVerbosity(verbosity, message)
 				uv.fs_close(fd)
 			end)
 		else
-			vim.notify(err)
+			if err ~= nil then
+				vim.notify(err)
+			end
 		end
 	end)
 end
@@ -148,7 +150,7 @@ end
 ---Fetches the "EnginePath" value from a table
 ---@param config table
 ---@return string | nil
-local function _getEngineDirectory(config)
+local function getEnginePath(config)
 	local configValue = config["EnginePath"] ---@type string
 	if configValue ~= nil then
 		local enginePath = Path:new(configValue) ---@type Path
@@ -161,15 +163,32 @@ local function _getEngineDirectory(config)
 	return nil
 end
 
----Fetches the "Platform" value from a table, falls back to "Linux"
+---Fetches the system name.
+---@return string platformName a UBT-friendly platform string
+local function getPlatformName()
+	local sysname = vim.loop.os_uname().sysname
+
+	if sysname == "Linux" then
+		return "Linux"
+	elseif sysname == "Darwin" then
+		return "Mac"
+	elseif sysname:match("Windows") or sysname:match("Win") then
+		return "Windows"
+	else
+		return "Unknown"
+	end
+end
+
+---Fetches the "Engine" value from a table, falls back to false
 ---@param config table
----@return string
-local function _getPlatformName(config)
-	if config["Platform"] ~= nil then
-		return config["Platform"]
+---@return boolean
+local function getEngineModifiablePref(config)
+	local configValue = config["allowEngineModifications"] ---@type boolean
+	if configValue ~= nil then
+		return configValue
 	end
 
-	return "Linux"
+	return false
 end
 
 ---Looks in the current directory for a file with the given extension
@@ -182,7 +201,7 @@ local function checkForFileWithExtensionInDir(directory, extension)
 		return nil
 	end
 
-	handle = vim.loop.fs_scandir(directory)
+	local handle = vim.loop.fs_scandir(directory)
 	local name, typ
 
 	while handle do
@@ -237,10 +256,25 @@ local function getUProjectFile()
 	return getDirectoryWithFileWithExtension(CurrentPath, "uproject")
 end
 
+---@class EngineConfig
+---@field Folder string
+---@field Scripts EngineScripts
+---@field AllowEngineModifications boolean
+
+---@class ProjectConfig
+---@field Folder string
+---@field FullPath string
+---@field Name string
+
 ---@class EngineScripts
 ---@field Build string
 ---@field GenerateProjectFiles string
 ---@field EditorBase string The UnrealEditor, but can have strings appended for various build targets.
+
+---@class UnrealiumConfig
+---@field Project ProjectConfig
+---@field Engine EngineConfig
+---@field PlatformName string
 
 ---Builds the fields of EngineScripts
 ---@param enginePath string
@@ -255,14 +289,6 @@ local function getScriptPaths(enginePath, platformName)
 	return Scripts
 end
 
----@class UnrealiumConfig
----@field ProjectPath string
----@field ProjectName string
----@field ProjectFolder string
----@field EngineFolder string
----@field PlatformName string
----@field Scripts EngineScripts
-
 ---Attempts to get the UnrealiumConfig, if in a valid directory.
 ---@return UnrealiumConfig | nil
 function M.get()
@@ -274,7 +300,7 @@ function M.get()
 	local uProjectFilePath = uProjectPath.filename
 	local projectDir = vim.fn.fnamemodify(uProjectFilePath, ":h")
 	local configData = readUnrealiumConfig(projectDir)
-	local engineDir = _getEngineDirectory(configData)
+	local engineDir = getEnginePath(configData)
 	if not engineDir then
 		--TODO: Write docs.
 		logError("Looks like your .unrealium config is not set up yet. See :h unrealium.config for docs.")
@@ -286,12 +312,15 @@ function M.get()
 
 	log("setting up the struct")
 	local config = {} ---@type UnrealiumConfig
-	config.ProjectPath = uProjectFilePath
-	config.PlatformName = _getPlatformName(configData)
-	config.ProjectName = vim.fn.fnamemodify(uProjectFilePath, ":t:r")
-	config.ProjectFolder = projectDir
-	config.EngineFolder = engineDir
-	config.Scripts = getScriptPaths(config.EngineFolder, config.PlatformName)
+	config.Project = {}
+	config.Engine = {}
+	config.Project.FullPath = uProjectFilePath
+	config.PlatformName = getPlatformName()
+	config.Project.Name = vim.fn.fnamemodify(uProjectFilePath, ":t:r")
+	config.Project.Folder = projectDir
+	config.Engine.Folder = engineDir
+	config.Engine.AllowEngineModifications = getEngineModifiablePref(configData)
+	config.Engine.Scripts = getScriptPaths(config.Engine.Folder, config.PlatformName)
 
 	return config
 end
