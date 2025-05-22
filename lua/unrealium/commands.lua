@@ -19,7 +19,7 @@ function Commands:USearch(cmd, context)
 		searchDirs = { UnrealiumConfig.EngineFolder }
 	elseif context == "Project" then
 		searchDirs = { UnrealiumConfig.ProjectFolder }
-	elseif context == "All" then
+	else
 		searchDirs = { UnrealiumConfig.EngineFolder, UnrealiumConfig.ProjectFolder }
 	end
 
@@ -28,6 +28,9 @@ end
 
 ---@param type string "Debug" or "Development"
 function Commands:URun(type)
+	if type == nil then
+		type = "Development"
+	end
 	conf.log("Launching UnrealEditor in " .. type .. " mode")
 
 	local unrealium = self.unrealium
@@ -51,7 +54,10 @@ end
 
 ---@param type string "Debug" or "Development"
 function Commands:UBuild(type)
-	print("Attempting to build Unreal project...")
+	if type == nil then
+		type = "Development"
+	end
+	conf.log("Attempting to build Unreal project with " .. type .. " configuration")
 
 	local unrealium = self.unrealium
 	if not unrealium then
@@ -59,7 +65,12 @@ function Commands:UBuild(type)
 		return
 	end
 
-	local buildTypeSuffix = "Editor-" .. unrealium.PlatformName .. "-" .. type
+	local buildTypeSuffix = "Editor-" .. unrealium.PlatformName
+	if type == "Debug" then
+		buildTypeSuffix = buildTypeSuffix .. "-Debug"
+	else
+		buildTypeSuffix = buildTypeSuffix .. "-Development"
+	end
 
 	conf.log("Changing directory to " .. unrealium.ProjectFolder)
 	vim.cmd("cd " .. unrealium.ProjectFolder)
