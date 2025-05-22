@@ -90,7 +90,7 @@ function Commands:uGenerateProjectFiles(opts)
 
 	local buildScript = unrealium.Engine.Scripts.Build
 	local commandExtras = "-game -engine -progress"
-	local command = buildScript .. ' -projectfiles -project="' .. unrealium.Project.Path .. '" ' .. commandExtras
+	local command = buildScript .. ' -projectfiles -project="' .. unrealium.Project.FullPath .. '" ' .. commandExtras
 	local runCmd = "Dispatch " .. command
 	conf.log("Running " .. runCmd)
 	vim.cmd(runCmd)
