@@ -96,4 +96,23 @@ function Commands:uGenerateProjectFiles(opts)
 	vim.cmd(runCmd)
 end
 
+---@param filePath string The file path of the newly-opened file
+function Commands:DetermineFileEditable(filePath)
+	local unrealium = self.unrealium
+	if not unrealium then
+		conf.logError("Unrealium config was nil when trying to determine file editability for " .. filePath)
+		return
+	end
+
+	if unrealium.Engine.AllowEngineModifications then
+		conf.log("AllowEngineModifications is true, so modifiable is true for " .. filePath)
+		return
+	end
+
+	if vim.startswith(filePath, unrealium.Engine.Folder) then
+		conf.log("AllowEngineModifications is false, setting modifiable false for " .. filePath)
+		vim.bo.modifiable = false
+	end
+end
+
 return Commands

@@ -47,6 +47,13 @@ local function init()
 			return require("unrealium.utils").autocomplete(line, { search_type, sources_list })
 		end,
 	})
+
+	vim.api.nvim_create_autocmd("BufReadPost", {
+		callback = function()
+			local filepath = vim.api.nvim_buf_get_name(0)
+			require("unrealium.commands"):DetermineFileEditable(filepath)
+		end,
+	})
 end
 
 local function setup()
