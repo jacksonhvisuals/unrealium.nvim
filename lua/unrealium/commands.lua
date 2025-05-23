@@ -11,6 +11,9 @@ if not Commands.unrealium then
 	return {}
 end
 
+---A wrapper for Telescope search so as to filter Engine vs Project
+---@param cmd string the Telescope builtin command (e.g. live_grep, search_files
+---@param context string the categories to search: Engine / Project / All
 function Commands:USearch(cmd, context)
 	conf.log("Received cmd: " .. cmd .. ", context: " .. context)
 	local searchDirs = {}
@@ -26,6 +29,7 @@ function Commands:USearch(cmd, context)
 	require("telescope.builtin")[cmd]({ search_dirs = searchDirs })
 end
 
+---Launches Unreal Engine in either Development or Debug mode with the current Unreal Project
 ---@param type string "Debug" or "Development"
 function Commands:URun(type)
 	if type == nil then
@@ -52,6 +56,7 @@ function Commands:URun(type)
 	vim.cmd(debugCmd)
 end
 
+---Runs `make` with a specified build target, either Editor-Platform-Debug or Editor-Platform-Development
 ---@param type string "Debug" or "Development"
 function Commands:UBuild(type)
 	if type == nil then
@@ -79,7 +84,8 @@ function Commands:UBuild(type)
 	vim.cmd(makeCmd)
 end
 
-function Commands:uGenerateProjectFiles(opts)
+---Generates project files for the Project & Engine (compile commands & Makefile)
+function Commands:uGenerateProjectFiles()
 	conf.log("Generating project files...")
 
 	local unrealium = self.unrealium
@@ -96,6 +102,7 @@ function Commands:uGenerateProjectFiles(opts)
 	vim.cmd(runCmd)
 end
 
+---For automatically locking Engine files, if the Unrealium default isn't overridden
 ---@param filePath string The file path of the newly-opened file
 function Commands:DetermineFileEditable(filePath)
 	local unrealium = self.unrealium
@@ -114,5 +121,9 @@ function Commands:DetermineFileEditable(filePath)
 		vim.bo.modifiable = false
 	end
 end
+
+-- CLEAN
+-- Build.sh {projname}Editor PlatformName Development -Project={ProjPath} -buildscw -clean
+-- requires dotnet in PATH
 
 return Commands

@@ -14,7 +14,7 @@ local function init()
 	-- end, {})
 
 	vim.api.nvim_create_user_command("UGenProjectFiles", function(opts)
-		require("unrealium.commands"):uGenerateProjectFiles(opts)
+		require("unrealium.commands"):uGenerateProjectFiles()
 	end, {})
 
 	vim.api.nvim_create_user_command("UBuild", function(opts)
@@ -48,6 +48,7 @@ local function init()
 		end,
 	})
 
+	-- Automatically check if newly-opened files should be editable
 	vim.api.nvim_create_autocmd("BufReadPost", {
 		callback = function()
 			local filepath = vim.api.nvim_buf_get_name(0)
