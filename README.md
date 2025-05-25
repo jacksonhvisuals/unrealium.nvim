@@ -1,6 +1,6 @@
-# Unrealium.nvim
+# unrealium.nvim
 
-A lightweight Neovim plugin for Unreal Engine projects. Provides seamless build, run, project generation, and code search tooling—all tailored to UE workflows.
+A lightweight Neovim plugin for Unreal Engine projects.
 
 ---
 
@@ -37,13 +37,26 @@ Unrealium depends on both Telescope and Vim-Dispatch (via the Neovim shim).
 
 ---
 
+## Project Configuration
+In an effort to provide flexibility, all configuration happens in the .unrealium/config.json file.
+
+```json
+{
+  "EnginePath": "Path/To/Unreal/Install/Dir",
+  "allowEngineModifications": false,
+}
+```
+`allowEngineModifications` is optional, and defaults to false.
+
+---
+
 ## Available User Commands
 
 Unrealium automatically activates when the current working directory is inside an Unreal Engine project.
 
 | Command             | Description                                               |
 |---------------------|-----------------------------------------------------------|
-| `:UBuild`           | Build the Unreal project using `make` in Dev/Debug mode   |
-| `:URun`             | Launch Unreal Editor in Dev/Debug mode via `Dispatch`     |
-| `:UGenProjectFiles` | Generate Makefile and compile_commands for the project    |
+| `:UBuild`           | Build the Unreal project using `make` against either Dev/Debug targets |
+| `:URun`             | Launch Unreal Editor built against Dev/Debug via `Dispatch`     |
+| `:UGenProjectFiles` | Generate Makefile and compile_commands.json for the project    |
 | `:USearch`          | Use Telescope to search in Project, Engine, or both       |
