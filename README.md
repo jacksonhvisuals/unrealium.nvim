@@ -59,4 +59,4 @@ Unrealium automatically activates when the current working directory is inside a
 | `:UBuild` | `<target> (Development / Debug)` | Build the Unreal project using `make` against either Dev/Debug targets |
 | `:URun` | `<target> (Development / Debug)` | Launch Unreal Editor built against Dev/Debug via `Dispatch` |
 | `:UGenProjectFiles` | N/A | Generate Makefile and compile_commands.json for the project    |
-| `:USearch` | `<search_type> (search_files | live_grep), <context> (Project | Engine | All)` | Use Telescope to search in Project, Engine, or both |
+| `:USearch` | `<search_type> (search_files / live_grep), <context> (Project / Engine / All)` | Use Telescope to search in Project, Engine, or both |
