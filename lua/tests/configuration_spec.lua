@@ -39,7 +39,7 @@ describe("unrealium.configuration", function()
 		local projDir = tUtil.createValidTree(tmp_dir, enginePath)
 		local confTable = config._readUnrealiumConfig(projDir)
 		assert.are.equal(confTable.EnginePath, enginePath)
-		assert.are.equal(confTable.allowEngineModifications, true)
+		assert.is_false(confTable.allowEngineModifications)
 	end)
 
 	it("returns the correct platform string", function()
@@ -92,7 +92,7 @@ describe("unrealium.configuration", function()
 
 			-- Assert Engine fields
 			assert.equals(UnrealEngineDir, unrealiumConf.Engine.Folder)
-			assert.is_true(unrealiumConf.Engine.AllowEngineModifications)
+			assert.is_false(unrealiumConf.Engine.AllowEngineModifications)
 			assert.truthy(unrealiumConf.Engine.Scripts.Build)
 			assert.truthy(unrealiumConf.Engine.Scripts.GenerateProjectFiles)
 			assert.truthy(unrealiumConf.Engine.Scripts.EditorBase)

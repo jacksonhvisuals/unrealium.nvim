@@ -11,8 +11,7 @@ local LOG_LEVEL = {
 local LOG_FILE_PATH = vim.fn.stdpath("data") .. "/unrealium.log"
 
 -- Set up (local) globals
-local CONFIG_DIR_NAME = ".unrealium"
-local CONFIG_FILE_NAME = "config.json"
+local CONFIG_FILE_NAME = ".unrealium"
 local BATCH_FILES_SUBPATH = "Engine/Build/BatchFiles" ---@see Needs platform subfoler
 
 -- Get various useful modules
@@ -98,23 +97,16 @@ if not vim.g.unrealium_config_loaded then
 	vim.g.unrealium_config_loaded = true
 end
 
----Checks to see if the config.json file exists at the given path
+---Checks to see if the .unrealium file exists at the given path
 ---@param projectDirectory string the Unreal Engine Project folder path
 ---@return Path | nil
 local function getConfigFile(projectDirectory)
-	local confDir = Path:new(utils.joinPath(projectDirectory, CONFIG_DIR_NAME))
-
-	if not confDir:exists() then
-		logError("Unrealium directory did not exist at " .. confDir.filename)
-		return nil
-	end
-
-	local configFilePath = utils.joinPath(confDir.filename, CONFIG_FILE_NAME)
-	local configFile = Path:new(configFilePath) ---@type Path
+	local configFilePath = utils.joinPath(projectDirectory, CONFIG_FILE_NAME)
+	local configFile = Path:new(configFilePath)
 
 	if not configFile:exists() then
 		logError(
-			"Unrealium config file (.unrealium/config.json) did not exist at your .uproject path, ("
+			"Unrealium config file (.unrealium) did not exist at your .uproject path, ("
 				.. projectDirectory
 				.. ". Please create one."
 		)
