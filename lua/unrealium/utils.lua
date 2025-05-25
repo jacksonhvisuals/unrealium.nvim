@@ -4,6 +4,10 @@ local M = {}
 ---@param args table a table of any number of lists of strings
 ---@return table | nil a flattened table of strings for autocomplete suggestions
 function M.autocomplete(input, args)
+	if not input then
+		return nil
+	end
+
 	local l = vim.split(input, "%s+")
 	local n = #l - 2
 
