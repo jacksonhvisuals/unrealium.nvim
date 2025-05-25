@@ -12,3 +12,5 @@ jobs:
     with:
       plugin: unrealium.nvim
       repo: jacksonhvisuals/unrealium.nvim
+      docs: false
+      release: false
