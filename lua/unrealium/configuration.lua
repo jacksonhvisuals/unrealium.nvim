@@ -14,7 +14,6 @@ local LOG_FILE_PATH = vim.fn.stdpath("data") .. "/unrealium.log"
 local CONFIG_DIR_NAME = ".unrealium"
 local CONFIG_FILE_NAME = "config.json"
 local BATCH_FILES_SUBPATH = "Engine/Build/BatchFiles" ---@see Needs platform subfoler
-local TEMPLATE_CONFIG = "{ 'EnginePath':'None', 'PlatformName':'None' }"
 
 -- Get various useful modules
 local Path = require("plenary.path")
