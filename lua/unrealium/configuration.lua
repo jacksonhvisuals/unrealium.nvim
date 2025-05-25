@@ -102,7 +102,7 @@ end
 ---@return Path | nil
 local function getConfigFile(projectDirectory)
 	local configFilePath = utils.joinPath(projectDirectory, CONFIG_FILE_NAME)
-	local configFile = Path:new(configFilePath)
+	local configFile = Path:new(configFilePath) ---@type Path
 
 	if not configFile:exists() then
 		logError(
@@ -113,6 +113,10 @@ local function getConfigFile(projectDirectory)
 		return nil
 	end
 
+	if configFile:is_dir() then
+		logError("Unrealium found a config folder called .unrealium, not a config ~file~. Please fix.")
+		return nil
+	end
 	return configFile
 end
 
