@@ -20,11 +20,12 @@ USearch
 ```
 
 ### Project Configuration
-In order to use Unrealium, you need to set up a `.unrealium/config.json` file inside your Unreal project folder. `allowEngineModifications` is optional and defaults to false.
+In order to use Unrealium, you need to set up a `.unrealium/config.json` file inside your Unreal project folder.
 ```json
 { 
     "EnginePath" : "/Aboslute/Path/To/Engine/Install/Folder",
     "allowEngineModifications" : true/false,
 }
 ```
+`allowEngineModifications` is optional and defaults to false.
 
