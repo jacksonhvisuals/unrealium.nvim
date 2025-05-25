@@ -7,6 +7,7 @@ A lightweight Neovim plugin for Unreal Engine projects. Provides seamless build,
 ## Features
 
 - Detects and initializes automatically inside Unreal project directories
+- Makes Engine files read-only to avoid triggering recompiles.
 - Adds convenient user commands for building, running, and searching code
 - Integrates with [Telescope](https://github.com/nvim-telescope/telescope.nvim) and [vim-dispatch](https://github.com/tpope/vim-dispatch)
 
