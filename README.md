@@ -33,6 +33,9 @@ Unrealium depends on both Telescope and Vim-Dispatch (via the Neovim shim).
   },
 }
 ```
+
+---
+
 ## ✅ Available User Commands
 
 Unrealium automatically activates when the current working directory is inside an Unreal Engine project.
