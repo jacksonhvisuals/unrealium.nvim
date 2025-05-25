@@ -83,7 +83,7 @@ function Commands:UBuild(type)
 end
 
 ---Generates project files for the Project & Engine (compile commands & Makefile)
-function Commands:uGenerateProjectFiles()
+function Commands:UGenerateProjectFiles()
 	conf.log("Generating project files...")
 
 	local unrealium = self.unrealium

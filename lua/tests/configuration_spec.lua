@@ -1,5 +1,6 @@
 ---@module 'luassert'
 
+local tUtil = require("tests.test_util")
 local Path = require("plenary.path")
 local uv = vim.loop
 
@@ -8,35 +9,10 @@ _TEST = true
 local config = require("unrealium.configuration")
 
 describe("unrealium.configuration", function()
-	local tmp_dir = Path:new("./tests/tmp_config"):absolute()
-
-	---@param engineDir? string the engine path to put in the config
-	---@return string projectDir directory in which the uproject file lives
-	local function createValidTree(engineDir)
-		local projectDir = tmp_dir .. "/MyTestProject"
-		local unrealiumDir = projectDir .. "/.unrealium"
-		local pluginsDir = projectDir .. "/Plugins"
-		local subDir = projectDir .. "/Plugins/test"
-
-		vim.fn.mkdir(projectDir, "p")
-		vim.fn.mkdir(unrealiumDir, "p")
-		vim.fn.mkdir(pluginsDir, "p")
-		vim.fn.mkdir(subDir, "p")
-
-		Path:new(projectDir .. "/MyTestProject.uproject"):touch()
-		Path:new(projectDir .. "/Plugins/test/MyTestClass.cpp"):touch()
-
-		if engineDir == nil then
-			engineDir = tmp_dir .. "/Engine"
-		end
-
-		local confFile = Path:new(unrealiumDir .. "/config.json")
-		confFile:write('{"EnginePath":"' .. engineDir .. '", "allowEngineModifications":true}', "w")
-
-		return projectDir
-	end
+	local tmp_dir = Path:new("./tmp_config"):absolute()
 
 	before_each(function()
+		vim.fn.delete(tmp_dir, "rf")
 		vim.fn.mkdir(tmp_dir, "p")
 	end)
 
@@ -45,7 +21,7 @@ describe("unrealium.configuration", function()
 	end)
 
 	it("returns a Path if a .unrealium/config file exists", function()
-		local projDir = createValidTree()
+		local projDir = tUtil.createValidTree(tmp_dir)
 		local confPath = config._getConfigFile(projDir)
 		assert.truthy(confPath)
 
@@ -60,7 +36,7 @@ describe("unrealium.configuration", function()
 
 	it("reads a well-formed config json file", function()
 		local enginePath = "Some/Path/Here"
-		local projDir = createValidTree(enginePath)
+		local projDir = tUtil.createValidTree(tmp_dir, enginePath)
 		local confTable = config._readUnrealiumConfig(projDir)
 		assert.are.equal(confTable.EnginePath, enginePath)
 		assert.are.equal(confTable.allowEngineModifications, true)
@@ -79,14 +55,14 @@ describe("unrealium.configuration", function()
 
 	describe("file scanning", function()
 		it("finds .uproject in nested dirs", function()
-			local projDir = createValidTree()
+			local projDir = tUtil.createValidTree(tmp_dir)
 			local found = config._getDirectoryWithFileExtension(Path:new(projDir .. "/Plugins/test"), "uproject")
 			assert.truthy(found)
 			assert.matches("MyTestProject.uproject", found.filename)
 		end)
 
 		it("returns nil when no .uproject exists", function()
-			local projDir = createValidTree()
+			local projDir = tUtil.createValidTree(tmp_dir)
 			local found = config._getDirectoryWithFileExtension(Path:new(projDir .. "/Plugins/test"), "amc")
 			assert.falsy(found)
 		end)
@@ -101,13 +77,13 @@ describe("unrealium.configuration", function()
 			vim.fn.mkdir(UnrealBuildDir)
 			vim.fn.mkdir(UnrealBatchFilesDir)
 
-			local projDir = createValidTree(UnrealEngineDir)
+			local projDir = tUtil.createValidTree(tmp_dir, UnrealEngineDir)
 			vim.wait(150)
 
 			local cwd = vim.fn.getcwd()
-			vim.loop.chdir(projDir)
+			vim.uv.chdir(projDir)
 			local unrealiumConf = config.get()
-			vim.loop.chdir(cwd)
+			vim.uv.chdir(cwd)
 
 			-- Assert Project fields
 			assert.equals("MyTestProject", unrealiumConf.Project.Name)

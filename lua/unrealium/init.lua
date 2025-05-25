@@ -1,10 +1,11 @@
-local augroup = vim.api.nvim_create_augroup("Unrealium", { clear = true })
+local M = {}
 
 local function init()
 	local configuration = require("unrealium.configuration")
 
 	UnrealiumConfig = configuration.get()
 	if not UnrealiumConfig then
+		print("Unrealium Config did not work")
 		return
 	end
 
@@ -14,7 +15,7 @@ local function init()
 	-- end, {})
 
 	vim.api.nvim_create_user_command("UGenProjectFiles", function(opts)
-		require("unrealium.commands"):uGenerateProjectFiles()
+		require("unrealium.commands"):UGenerateProjectFiles()
 	end, {})
 
 	vim.api.nvim_create_user_command("UBuild", function(opts)
@@ -57,7 +58,8 @@ local function init()
 	})
 end
 
-local function setup()
+function M.setup()
+	local augroup = vim.api.nvim_create_augroup("Unrealium", { clear = true })
 	vim.api.nvim_create_autocmd("VimEnter", {
 		group = augroup,
 		desc = "Configures basic mechanisms for Unrealium.",
@@ -66,4 +68,8 @@ local function setup()
 	})
 end
 
-return { setup = setup }
+if _TEST then
+	M._init = init
+end
+
+return M
