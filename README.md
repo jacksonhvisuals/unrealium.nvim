@@ -1,10 +1,10 @@
 # Unrealium.nvim
 
-🚀 A lightweight Neovim plugin for Unreal Engine projects. Provides seamless build, run, project generation, and code search tooling—all tailored to UE workflows.
+A lightweight Neovim plugin for Unreal Engine projects. Provides seamless build, run, project generation, and code search tooling—all tailored to UE workflows.
 
 ---
 
-## ✨ Features
+## Features
 
 - Detects and initializes automatically inside Unreal project directories
 - Adds convenient user commands for building, running, and searching code
@@ -12,7 +12,7 @@
 
 ---
 
-## 📦 Installation
+## Installation
 
 Unrealium depends on both Telescope and Vim-Dispatch (via the Neovim shim).
 
@@ -36,7 +36,7 @@ Unrealium depends on both Telescope and Vim-Dispatch (via the Neovim shim).
 
 ---
 
-## ✅ Available User Commands
+## Available User Commands
 
 Unrealium automatically activates when the current working directory is inside an Unreal Engine project.
 
