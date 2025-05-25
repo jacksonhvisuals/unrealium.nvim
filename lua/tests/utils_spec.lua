@@ -2,6 +2,24 @@
 
 local utils = require("unrealium.utils")
 
+describe("path building", function()
+	it("assembles a path", function()
+		local tests = {
+			{ { "a", "b", "c" }, "a/b/c" },
+			{ { "/bin/", "/bash", "test" }, "/bin/bash/test" },
+			{ { "Engine" }, "Engine" },
+		}
+
+		for i, val in ipairs(tests) do
+			local input = val[1]
+			local expectedOutput = val[2]
+
+			local output = utils.joinPath(unpack(input))
+			assert.same(expectedOutput, output)
+		end
+	end)
+end)
+
 describe("autocomplete", function()
 	it("returns matching autocomplete suggestions for first argument list", function()
 		local suggestions = utils.autocomplete("command ", {
