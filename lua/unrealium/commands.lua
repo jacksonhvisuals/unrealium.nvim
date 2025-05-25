@@ -1,5 +1,3 @@
-local logPath = vim.fn.stdpath("data") .. "/unrealium.log"
-
 --[[ Main functions for Unrealium ]]
 
 local Commands = {}
