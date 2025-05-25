@@ -20,6 +20,26 @@ local Path = require("plenary.path")
 local uv = vim.uv
 local utils = require("unrealium.utils")
 
+---@class EngineConfig
+---@field Folder string
+---@field Scripts EngineScripts
+---@field AllowEngineModifications boolean
+
+---@class ProjectConfig
+---@field Folder string
+---@field FullPath string
+---@field Name string
+
+---@class EngineScripts
+---@field Build string
+---@field GenerateProjectFiles string
+---@field EditorBase string The UnrealEditor, but can have strings appended for various build targets.
+
+---@class UnrealiumConfig
+---@field Project ProjectConfig
+---@field Engine EngineConfig
+---@field PlatformName string
+
 local M = {}
 
 ---Handles logging, taking verbosity preference into account.
@@ -261,26 +281,6 @@ local function getUProjectFile()
 	return uProjectFile
 end
 
----@class EngineConfig
----@field Folder string
----@field Scripts EngineScripts
----@field AllowEngineModifications boolean
-
----@class ProjectConfig
----@field Folder string
----@field FullPath string
----@field Name string
-
----@class EngineScripts
----@field Build string
----@field GenerateProjectFiles string
----@field EditorBase string The UnrealEditor, but can have strings appended for various build targets.
-
----@class UnrealiumConfig
----@field Project ProjectConfig
----@field Engine EngineConfig
----@field PlatformName string
-
 ---Builds the fields of EngineScripts
 ---@param enginePath string
 ---@param platformName string
@@ -336,8 +336,6 @@ function M.get()
 	return config
 end
 
-M.log = log
-M.logError = logError
 M.log = log
 M.logError = logError
 
