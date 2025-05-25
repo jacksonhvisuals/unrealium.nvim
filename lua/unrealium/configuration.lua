@@ -19,7 +19,6 @@ local TEMPLATE_CONFIG = "{ 'EnginePath':'None', 'PlatformName':'None' }"
 -- Get various useful modules
 local Path = require("plenary.path")
 local uv = vim.uv
-local cwd = uv.cwd()
 
 local M = {}
 
@@ -79,32 +78,27 @@ if not vim.g.unrealium_config_loaded then
 	vim.g.unrealium_config_loaded = true
 end
 
--- TODO:
--- A func for creating a new config file (interactive?)
--- A func for finding the Unreal Engine root directory
--- A func for adding the Engine Source to the search paths of Telescope
-
----Ensures that the config.json file exists at the given path, creating one if not.
----@param fullDirPath string
----@return Path
-local function ensureConfigFile(fullDirPath)
-	local confDir = Path:new(tostring(fullDirPath) .. "/" .. CONFIG_DIR_NAME)
+---Checks to see if the config.json file exists at the given path
+---@param projectDirectory string the Unreal Engine Project folder path
+---@return Path | nil
+local function getConfigFile(projectDirectory)
+	local confDir = Path:new(projectDirectory .. "/" .. CONFIG_DIR_NAME)
 
 	if not confDir:exists() then
-		log("Unrealium directory (.unrealium) did not exist. Creating...")
-		confDir:mkdir()
+		logError("Unrealium directory did not exist at " .. confDir.filename)
+		return nil
 	end
 
 	local configFilePath = confDir.filename .. "/" .. CONFIG_FILE_NAME
 	local configFile = Path:new(configFilePath) ---@type Path
-	log("Checking " .. configFile.filename .. " to see if it exists.")
 
 	if not configFile:exists() then
-		logError("Unrealium config file (.unrealium) did not exist. Generating a new one.")
-		configFile:touch()
-		configFile:open()
-		configFile:write(TEMPLATE_CONFIG, "w")
-		configFile:close()
+		logError(
+			"Unrealium config file (.unrealium/config.json) did not exist at your .uproject path, ("
+				.. projectDirectory
+				.. ". Please create one."
+		)
+		return nil
 	end
 
 	return configFile
@@ -112,9 +106,16 @@ end
 
 ---Fetches the config file as a table.
 ---@param uProjectDirectory string
----@return table
+---@return table | nil
 local function readUnrealiumConfig(uProjectDirectory)
-	local configFile = ensureConfigFile(uProjectDirectory)
+	local configFile = getConfigFile(uProjectDirectory)
+	if not configFile then
+		if not uProjectDirectory then
+			uProjectDirectory = "nil"
+		end
+		logError("Config file did not exist at " .. uProjectDirectory)
+		return nil
+	end
 
 	local file = io.open(configFile.filename, "r")
 	local data = {}
@@ -127,7 +128,7 @@ local function readUnrealiumConfig(uProjectDirectory)
 			local ok, decode = pcall(vim.fn.json_decode, content)
 			if not ok then
 				logError("Unrealium file was not readable")
-				return {}
+				return nil
 			end
 
 			data = decode
@@ -135,16 +136,15 @@ local function readUnrealiumConfig(uProjectDirectory)
 
 		file:close()
 	else
-		data = {}
+		return nil
 	end
 
 	if next(data) == nil then
 		logError("Unrealium JSON file was empty.")
+		return nil
+	else
+		return data
 	end
-
-	log("Received " .. data["EnginePath"] .. " as proof of good Unrealium file")
-
-	return data
 end
 
 ---Fetches the "EnginePath" value from a table
@@ -179,7 +179,7 @@ local function getPlatformName()
 	end
 end
 
----Fetches the "Engine" value from a table, falls back to false
+---Fetches the "allowEngineModifications" value from a table, falls back to false
 ---@param config table
 ---@return boolean
 local function getEngineModifiablePref(config)
@@ -240,7 +240,6 @@ local function getDirectoryWithFileWithExtension(filepath, extension)
 
 	local parentDir = currentDir:parent()
 	if parentDir.filename ~= currentDir.filename then
-		log("Couldn't find " .. extension .. " at " .. currentDir.filename)
 		return getDirectoryWithFileWithExtension(parentDir, extension)
 	end
 
@@ -252,8 +251,14 @@ end
 ---a uProject, if it exists in the path
 ---@return Path | nil
 local function getUProjectFile()
-	local CurrentPath = Path:new(cwd)
-	return getDirectoryWithFileWithExtension(CurrentPath, "uproject")
+	local CurrentPath = Path:new(uv.cwd())
+	local uProjectFile = getDirectoryWithFileWithExtension(CurrentPath, "uproject")
+	if not uProjectFile then
+		local cwd = uv.cwd()
+		logError("Could not find uProject file in the current cwd (" .. cwd .. " or any of its parent directories.")
+	end
+
+	return uProjectFile
 end
 
 ---@class EngineConfig
@@ -299,7 +304,13 @@ function M.get()
 
 	local uProjectFilePath = uProjectPath.filename
 	local projectDir = vim.fn.fnamemodify(uProjectFilePath, ":h")
+
 	local configData = readUnrealiumConfig(projectDir)
+	if not configData then
+		logError("Could not get the configData out of " .. projectDir)
+		return nil
+	end
+
 	local engineDir = getEnginePath(configData)
 	if not engineDir then
 		--TODO: Write docs.
@@ -310,7 +321,6 @@ function M.get()
 	-- TODO:
 	-- if no config file, create template & prompt user, return nil
 
-	log("setting up the struct")
 	local config = {} ---@type UnrealiumConfig
 	config.Project = {}
 	config.Engine = {}
@@ -329,5 +339,16 @@ M.log = log
 M.logError = logError
 M.log = log
 M.logError = logError
+
+if _TEST then
+	M._readUnrealiumConfig = readUnrealiumConfig
+	M._getEnginePath = getEnginePath
+	M._getPlatformName = getPlatformName
+	M._getScriptPaths = getScriptPaths
+	M._getEngineModifiablePref = getEngineModifiablePref
+	M._getDirectoryWithFileExtension = getDirectoryWithFileWithExtension
+	M._checkForFileWithExtensionInDir = checkForFileWithExtensionInDir
+	M._getConfigFile = getConfigFile
+end
 
 return M
