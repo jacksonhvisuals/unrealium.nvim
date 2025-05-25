@@ -8,8 +8,3 @@ if vim.g.unrealium_loaded == 1 then
 	return
 end
 vim.g.unrealium_loaded = 1
-
--- Set up Unrealium commands
-function setup(args)
-	print("Setting up Unrealium plugin.")
-end
