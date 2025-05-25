@@ -10,6 +10,7 @@ A lightweight Neovim plugin for Unreal Engine projects for the Editor.
 - Makes Engine files read-only to avoid triggering recompiles.
 - Adds convenient user commands for building, running, and searching code
 - Integrates with [Telescope](https://github.com/nvim-telescope/telescope.nvim) and [vim-dispatch](https://github.com/tpope/vim-dispatch)
+- Currently tested on Linux, MacOS should work. Windows support... unlikely.
 
 ---
 

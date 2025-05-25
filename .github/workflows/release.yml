@@ -1,8 +1,8 @@
-name: CI
+name: Release
 
 on:
   push:
-    branches: [staging, dev]
+    branches: [main]
   pull_request:
 
 jobs:
@@ -13,4 +13,3 @@ jobs:
       plugin: unrealium.nvim
       repo: jacksonhvisuals/unrealium.nvim
       docs: false
-      release: false
