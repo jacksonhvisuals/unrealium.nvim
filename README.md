@@ -38,7 +38,7 @@ Unrealium depends on both Telescope and Vim-Dispatch (via the Neovim shim).
 ---
 
 ## Project Configuration
-In an effort to provide flexibility, all configuration happens in the .unrealium/config.json file.
+In an effort to provide flexibility, all configuration happens in an `.unrealium` file that lives in the root folder of your Unreal Project.
 
 ```json
 {
