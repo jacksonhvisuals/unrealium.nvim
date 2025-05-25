@@ -1,6 +1,6 @@
 # unrealium.nvim
 
-A lightweight Neovim plugin for Unreal Engine projects.
+A lightweight Neovim plugin for Unreal Engine projects for the Editor.
 
 ---
 
@@ -42,11 +42,12 @@ In an effort to provide flexibility, all configuration happens in an `.unrealium
 
 ```json
 {
+  # For the EnginePath, we're looking for the root Engine install directory, not the Engine subfolder.
   "EnginePath": "Path/To/Unreal/Install/Dir",
+  # allowEngineModifications is optional, and defaults to false.
   "allowEngineModifications": false,
 }
 ```
-`allowEngineModifications` is optional, and defaults to false.
 
 ---
 
@@ -54,9 +55,9 @@ In an effort to provide flexibility, all configuration happens in an `.unrealium
 
 Unrealium automatically activates when the current working directory is inside an Unreal Engine project.
 
-| Command             | Description                                               |
+| Command | Args | Description |
 |---------------------|-----------------------------------------------------------|
-| `:UBuild`           | Build the Unreal project using `make` against either Dev/Debug targets |
-| `:URun`             | Launch Unreal Editor built against Dev/Debug via `Dispatch`     |
-| `:UGenProjectFiles` | Generate Makefile and compile_commands.json for the project    |
-| `:USearch`          | Use Telescope to search in Project, Engine, or both       |
+| `:UBuild` | `<target> (Development / Debug)` | Build the Unreal project using `make` against either Dev/Debug targets |
+| `:URun` | `<target> (Development / Debug)` | Launch Unreal Editor built against Dev/Debug via `Dispatch` |
+| `:UGenProjectFiles` | N/A | Generate Makefile and compile_commands.json for the project    |
+| `:USearch` | `<search_type> (search_files | live_grep), <context> (Project | Engine | All)` | Use Telescope to search in Project, Engine, or both |
