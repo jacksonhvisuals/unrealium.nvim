@@ -49,8 +49,8 @@ describe("unrealium.configuration", function()
 
 	it("gets script paths correctly", function()
 		local scripts = config._getScriptPaths("/Dummy/Unreal", "Linux")
-		assert.matches("Build.sh", scripts.GenerateProjectFiles)
-		assert.matches("GenerateProjectFiles.sh", scripts.Build)
+		assert.matches("Build.sh", scripts.Build)
+		assert.matches("GenerateProjectFiles.sh", scripts.GenerateProjectFiles)
 	end)
 
 	describe("file scanning", function()

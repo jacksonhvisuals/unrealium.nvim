@@ -22,4 +22,11 @@ function M.autocomplete(input, args)
 	end
 end
 
+---Join multiple path segments into a single path.
+---@param ... string Path segments to join
+---@return string Full joined path
+function M.joinPath(...)
+	return vim.fs.joinpath(...)
+end
+
 return M

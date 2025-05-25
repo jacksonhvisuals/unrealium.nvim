@@ -18,6 +18,7 @@ local BATCH_FILES_SUBPATH = "Engine/Build/BatchFiles" ---@see Needs platform sub
 -- Get various useful modules
 local Path = require("plenary.path")
 local uv = vim.uv
+local utils = require("unrealium.utils")
 
 local M = {}
 
@@ -81,14 +82,14 @@ end
 ---@param projectDirectory string the Unreal Engine Project folder path
 ---@return Path | nil
 local function getConfigFile(projectDirectory)
-	local confDir = Path:new(projectDirectory .. "/" .. CONFIG_DIR_NAME)
+	local confDir = Path:new(utils.joinPath(projectDirectory, CONFIG_DIR_NAME))
 
 	if not confDir:exists() then
 		logError("Unrealium directory did not exist at " .. confDir.filename)
 		return nil
 	end
 
-	local configFilePath = confDir.filename .. "/" .. CONFIG_FILE_NAME
+	local configFilePath = utils.joinPath(confDir.filename, CONFIG_FILE_NAME)
 	local configFile = Path:new(configFilePath) ---@type Path
 
 	if not configFile:exists() then
@@ -211,7 +212,7 @@ local function checkForFileWithExtensionInDir(directory, extension)
 		if typ == "file" then
 			local ext = vim.fn.fnamemodify(name, ":e")
 			if ext == extension then
-				return Path:new(directory .. "/" .. name)
+				return Path:new(utils.joinPath(directory, name))
 			end
 		end
 	end
@@ -286,9 +287,10 @@ end
 ---@return EngineScripts
 local function getScriptPaths(enginePath, platformName)
 	local Scripts = {} ---@type EngineScripts
-	Scripts.GenerateProjectFiles = enginePath .. "/" .. BATCH_FILES_SUBPATH .. "/" .. platformName .. "/Build.sh"
-	Scripts.Build = enginePath .. "/" .. BATCH_FILES_SUBPATH .. "/" .. platformName .. "/GenerateProjectFiles.sh"
-	Scripts.EditorBase = enginePath .. "Engine/Binaries/" .. platformName .. "/UnrealEditor"
+	Scripts.Build = utils.joinPath(enginePath, BATCH_FILES_SUBPATH, platformName, "Build.sh")
+	Scripts.GenerateProjectFiles =
+		utils.joinPath(enginePath, BATCH_FILES_SUBPATH, platformName, "GenerateProjectFiles.sh")
+	Scripts.EditorBase = utils.joinPath(enginePath, "Engine", "Binaries", platformName, "UnrealEditor")
 
 	return Scripts
 end
