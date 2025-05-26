@@ -9,6 +9,8 @@ if not Commands.unrealium then
 	return {}
 end
 
+local platform = require("unrealium.platform")
+
 ---A wrapper for Telescope search so as to filter Engine vs Project
 ---@param cmd string the Telescope builtin command (e.g. live_grep, search_files
 ---@param context string the categories to search: Engine / Project / All
@@ -68,16 +70,9 @@ function Commands:UBuild(type)
 		return
 	end
 
-	local buildTypeSuffix = "Editor-" .. unrealium.PlatformName
-	if type == "Debug" then
-		buildTypeSuffix = buildTypeSuffix .. "-Debug"
-	else
-		buildTypeSuffix = buildTypeSuffix .. "-Development"
-	end
-
 	conf.log("Changing directory to " .. unrealium.Project.Folder)
 	vim.cmd("cd " .. unrealium.Project.Folder)
-	local makeCmd = "Make " .. unrealium.Project.Name .. buildTypeSuffix
+	local makeCmd = platform.getBuildCommand(unrealium)
 	conf.log("Running " .. makeCmd)
 	vim.cmd(makeCmd)
 end
@@ -92,7 +87,7 @@ function Commands:UGenerateProjectFiles()
 		return
 	end
 
-	local buildScript = unrealium.Engine.Scripts.Build
+	local buildScript = unrealium.Engine.Scripts.GenerateProjectFiles
 	local commandExtras = "-game -engine -progress"
 	local command = buildScript .. ' -projectfiles -project="' .. unrealium.Project.FullPath .. '" ' .. commandExtras
 	local runCmd = "Dispatch " .. command
