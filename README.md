@@ -10,8 +10,7 @@ A lightweight Neovim plugin for Unreal Engine projects for the Editor.
 - Makes Engine files read-only to avoid triggering recompiles.
 - Adds convenient user commands for building, running, and searching code
 - Integrates with [Telescope](https://github.com/nvim-telescope/telescope.nvim) and [vim-dispatch](https://github.com/tpope/vim-dispatch)
-- Currently tested on Linux, MacOS should work. Windows support... unlikely.
-
+- Currently tested on Linux. MacOS would be a nice-to-have. Windows support is... unlikely.
 ---
 
 ## Installation
@@ -39,7 +38,7 @@ Unrealium depends on both Telescope and Vim-Dispatch (via the Neovim shim).
 ---
 
 ## Project Configuration
-In an effort to provide flexibility, all configuration happens in an `.unrealium` file that lives in the root folder of your Unreal Project.
+In an effort to provide per-project flexibility, unrealium.nvim depends on there being a `.unrealium` file in the root folder of your Unreal Project. While it *could* support some sort of magical Unreal Engine detection through other config files, PATH, etc, you often want to be building against a very particular engine anyway. 
 
 ```json
 {
