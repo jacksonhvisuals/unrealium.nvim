@@ -87,12 +87,9 @@ function Commands:UGenerateProjectFiles()
 		return
 	end
 
-	local buildScript = unrealium.Engine.Scripts.GenerateProjectFiles
-	local commandExtras = "-game -engine -progress"
-	local command = buildScript .. ' -projectfiles -project="' .. unrealium.Project.FullPath .. '" ' .. commandExtras
-	local runCmd = "Dispatch " .. command
-	conf.log("Running " .. runCmd)
-	vim.cmd(runCmd)
+	local genCmd = platform.getGenProjFilesCommand(unrealium)
+	conf.log("Running " .. genCmd)
+	vim.cmd(genCmd)
 end
 
 ---For automatically locking Engine files, if the Unrealium default isn't overridden

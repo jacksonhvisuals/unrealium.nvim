@@ -31,7 +31,14 @@ end
 ---@param config UnrealiumConfig
 ---@return table args
 local function getGenProjFilesArg(config)
-	return { "-projectfiles", '-project="' .. config.Project.FullPath .. '"', "-game", "-engine", "-progress" }
+	return {
+		"-projectfiles",
+		'-project="' .. config.Project.FullPath .. '"',
+		"-VSCode",
+		"-game",
+		"-engine",
+		"-progress",
+	}
 end
 
 ---Obtains the full Build command for the given Platform
@@ -49,6 +56,19 @@ function M.getBuildCommand(config)
 	end
 
 	local args = getBuildArgs(config)
+	vim.list_extend(command, args)
+
+	return table.concat(command, " ")
+end
+
+---Obtains the full Generate Project Files ccommand for the given Platform
+---@param config UnrealiumConfig
+---@return string
+function M.getGenProjFilesCommand(config)
+	local Platform = config.PlatformName
+	local command = { "Dispatch", config.Engine.Scripts.GenerateProjectFiles }
+
+	local args = getGenProjFilesArg(config)
 	vim.list_extend(command, args)
 
 	return table.concat(command, " ")
