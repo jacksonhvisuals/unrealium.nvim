@@ -61,3 +61,18 @@ Unrealium automatically activates when the current working directory is inside a
 | `:URun` | `<target> (Development / Debug)` | Launch Unreal Editor built against Dev/Debug via `Dispatch` |
 | `:UGenProjectFiles` | N/A | Generate Makefile and compile_commands.json for the project    |
 | `:USearch` | `<search_type> (search_files / live_grep) <context> (Project / Engine / All)` | Use Telescope to search in Project, Engine, or both |
+
+---
+
+## Extensibility
+In an effort to make Unrealium extensible with your own preferences and vim settings, you can create an autocommand to fire off for the UnrealiumStart pattern.
+
+```lua
+vim.api.nvim_create_autocmd('User', {
+  pattern = 'UnrealiumStart',
+  group = vim.api.nvim_create_augroup('mygroup', { clear = true }),
+  callback = function()
+    print("Do fancy Unreal development-specific stuff here!")
+  end,
+})
+```
