@@ -30,7 +30,7 @@ function Commands:USearch(cmd, context)
 end
 
 ---Launches Unreal Engine in either Development or Debug mode with the current Unreal Project
----@param type string "Debug" or "Development"
+---@param type string "Debug" / "Development"
 function Commands:URun(type)
 	if type == nil then
 		type = "Development"
