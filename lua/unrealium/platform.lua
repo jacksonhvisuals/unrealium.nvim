@@ -6,8 +6,9 @@ local M = {}
 
 ---Collects the correct Build arguments for the given Platform
 ---@param config UnrealiumConfig
+---@param type string
 ---@return table args
-local function getBuildArgs(config)
+local function getBuildArgs(config, type)
 	local args = {}
 	if config.PlatformName == "Linux" then
 		local buildTypeSuffix = "Editor-" .. config.PlatformName

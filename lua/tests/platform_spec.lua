@@ -19,4 +19,11 @@ describe("platform command abstraction", function()
 		local args = plat.getGenProjFilesArgs(testConfig)
 		assert.same(testResults, args)
 	end)
+
+	it("gets args for building", function()
+		local testConfig = { PlatformName = "Linux", Project = { Name = "MyTestProject" } }
+		local buildCmd = plat.getBuildArgs(testConfig, "Debug")
+		local buildResults = { "MyTestProjectEditor-Linux-Debug" }
+		assert.same(buildResults, buildCmd)
+	end)
 end)
