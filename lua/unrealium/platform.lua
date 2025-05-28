@@ -1,7 +1,6 @@
-local config = require("unrealium.configuration")
-local utils = require("unrealium.utils")
-local logError = config.logError
-local log = config.log
+local configuration = require("unrealium.configuration")
+local logError = configuration.logError
+local log = configuration.log
 
 local M = {}
 
@@ -30,7 +29,7 @@ end
 ---Collects the correct GenProjFiles arguments for the given Platform
 ---@param config UnrealiumConfig
 ---@return table args
-local function getGenProjFilesArg(config)
+local function getGenProjFilesArgs(config)
 	return {
 		"-projectfiles",
 		'-project="' .. config.Project.FullPath .. '"',
@@ -65,13 +64,17 @@ end
 ---@param config UnrealiumConfig
 ---@return string
 function M.getGenProjFilesCommand(config)
-	local Platform = config.PlatformName
 	local command = { "Dispatch", config.Engine.Scripts.GenerateProjectFiles }
 
-	local args = getGenProjFilesArg(config)
+	local args = getGenProjFilesArgs(config)
 	vim.list_extend(command, args)
 
 	return table.concat(command, " ")
+end
+
+if _TEST then
+	M.getGenProjFilesArgs = getGenProjFilesArgs
+	M.getBuildArgs = getBuildArgs
 end
 
 return M
