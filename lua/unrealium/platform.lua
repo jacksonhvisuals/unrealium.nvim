@@ -43,8 +43,9 @@ end
 
 ---Obtains the full Build command for the given Platform
 ---@param config UnrealiumConfig
+---@param type string build target type (Debug/Development)
 ---@return string
-function M.getBuildCommand(config)
+function M.getBuildCommand(config, type)
 	local Platform = config.PlatformName
 	local command = {}
 
@@ -55,7 +56,7 @@ function M.getBuildCommand(config)
 		table.insert(command, "xcodebuild")
 	end
 
-	local args = getBuildArgs(config)
+	local args = getBuildArgs(config, type)
 	vim.list_extend(command, args)
 
 	return table.concat(command, " ")

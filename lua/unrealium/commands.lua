@@ -72,7 +72,7 @@ function Commands:UBuild(type)
 
 	conf.log("Changing directory to " .. unrealium.Project.Folder)
 	vim.cmd("cd " .. unrealium.Project.Folder)
-	local makeCmd = platform.getBuildCommand(unrealium)
+	local makeCmd = platform.getBuildCommand(unrealium, type)
 	conf.log("Running " .. makeCmd)
 	vim.cmd(makeCmd)
 end
