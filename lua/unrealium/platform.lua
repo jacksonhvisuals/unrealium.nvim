@@ -121,7 +121,7 @@ end
 function M.getGenProjFilesCommand(config)
 	local command = { "Dispatch", config.Engine.Scripts.GenerateProjectFiles }
 
-	local args = getGenProjFilesArgs(config)
+	local args = getGenProjFilesArgs(config, IDE.VSCode)
 	vim.list_extend(command, args)
 
 	return table.concat(command, " ")
