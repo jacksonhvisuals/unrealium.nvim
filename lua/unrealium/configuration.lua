@@ -31,6 +31,7 @@ local utils = require("unrealium.utils")
 ---@class EngineScripts
 ---@field Build string
 ---@field GenerateProjectFiles string
+---@field RunUBT string
 ---@field EditorBase string The UnrealEditor, but can have strings appended for various build targets.
 
 ---@class UnrealiumConfig
@@ -166,7 +167,7 @@ end
 ---@return string | nil
 local function getEnginePath(config)
 	local enginePath = config["EnginePath"] ---@type string
-	if configValue ~= nil then
+	if enginePath ~= nil then
 		if vim.fs.exists(enginePath) then
 			return enginePath
 		end
@@ -289,6 +290,7 @@ local function getScriptPaths(enginePath, platformName)
 	Scripts.GenerateProjectFiles =
 		utils.joinPath(enginePath, BATCH_FILES_SUBPATH, platformName, "GenerateProjectFiles.sh")
 	Scripts.EditorBase = utils.joinPath(enginePath, "Engine", "Binaries", platformName, "UnrealEditor")
+	Scripts.RunUBT = utils.joinPath(enginePath, BATCH_FILES_SUBPATH, platformName, "RunUBT.sh")
 
 	return Scripts
 end

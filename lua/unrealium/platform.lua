@@ -127,6 +127,25 @@ function M.getGenProjFilesCommand(config)
 	return table.concat(command, " ")
 end
 
+---Obtains the full Generate Clang Database command for the given Platform
+---@param config UnrealiumConfig
+---@return string
+function M.getGenClangDatabaseCommands(config)
+	local command = { "Dispatch", config.Engine.Scripts.RunUBT }
+	local engineCommand = command
+	local engineArgs = getGenClangDBArgs(config, ClangDatabaseGenMode.Engine)
+	vim.list_extend(engineCommand, engineArgs)
+
+	local projectCommand = command
+	local projectArgs = getGenClangDBArgs(config, ClangDatabaseGenMode.Project)
+	vim.list_extend(projectCommand, projectArgs)
+
+	vim.list_extend(engineCommand, { "&&" })
+	vim.list_extend(engineCommand, projectCommand)
+
+	return table.concat(engineCommand, " ")
+end
+
 if _TEST then
 	M.getGenProjFilesArgs = getGenProjFilesArgs
 	M.getBuildArgs = getBuildArgs
