@@ -50,14 +50,14 @@ local function getGenClangDBArgs(config, genMode)
 	else
 		outputDir = config.Project.Folder
 		targetName = config.Project.Name
-		projectArg = '-project="' .. config.Project.FullPath .. '"'
+		projectArg = "-project='" .. config.Project.FullPath .. "'"
 	end
 
 	return {
 		"-mode=GenerateClangDatabase",
 		projectArg,
 		targetName .. "Editor " .. config.PlatformName .. " Development",
-		'-OutputDir="' .. outputDir .. '"',
+		"-OutputDir='" .. outputDir .. "'",
 	}
 end
 
@@ -132,7 +132,10 @@ end
 ---@param genMode ClangDatabaseGenMode
 ---@return string
 function M.getGenClangDatabaseCommand(config, genMode)
-	local command = { "Dispatch", config.Engine.Scripts.RunUBT }
+	--local command = { "Dispatch", config.Engine.Scripts.RunUBT }
+
+	vim.cmd('set makeprg=' .. config.Engine.Scripts.RunUBT)
+	local command = { "make" }
 	local args = getGenClangDBArgs(config, genMode)
 	vim.list_extend(command, args)
 

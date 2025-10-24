@@ -296,7 +296,7 @@ local function getScriptPaths(enginePath, platformName)
 	Scripts.GenerateProjectFiles =
 		utils.joinPath(enginePath, BATCH_FILES_SUBPATH, platformName, "GenerateProjectFiles.sh")
 	Scripts.EditorBase = utils.joinPath(enginePath, "Engine", "Binaries", platformName, "UnrealEditor")
-	Scripts.RunUBT = utils.joinPath(enginePath, BATCH_FILES_SUBPATH, platformName, "RunUBT.sh")
+	Scripts.RunUBT = utils.joinPath(enginePath, BATCH_FILES_SUBPATH, "RunUBT.sh")
 
 	return Scripts
 end

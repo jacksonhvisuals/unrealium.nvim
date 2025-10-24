@@ -82,20 +82,20 @@ end
 function Commands:UGenerateClangDatabase(type)
 	conf.log("Generating Clang Database files...")
 
-	if type ~= "Project" or type ~= "Engine" then
-		conf.logError("Something went wrong.")
+	if type == "Project" or type == "Engine" then
+		local unrealium = self.unrealium
+		if not unrealium then
+			conf.logError("Something went wrong. Failed to get the unrealium object.")
+			return
+		end
+
+		local genCmd = platform.getGenClangDatabaseCommand(unrealium, type)
+		conf.log("Running " .. genCmd)
+		vim.cmd(genCmd)
+	else
+		conf.logError('Something went wrong. Received "' .. type .. '" as the ClangDatabase type')
 		return
 	end
-
-	local unrealium = self.unrealium
-	if not unrealium then
-		conf.logError("Something went wrong.")
-		return
-	end
-
-	local genCmd = platform.getGenClangDatabaseCommand(unrealium, type)
-	conf.log("Running " .. genCmd)
-	vim.cmd(genCmd)
 end
 
 ---Generates project files for the Project & Engine (compile commands & Makefile)
