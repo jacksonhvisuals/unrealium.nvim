@@ -21,8 +21,14 @@ local function init()
 	end, {})
 
 	vim.api.nvim_create_user_command("UGenClangDatabase", function(opts)
-		require("unrealium.commands"):UGenerateClangDatabase()
-	end, {})
+		require("unrealium.commands"):UGenerateClangDatabase(unpack(opts.fargs))
+	end, {
+		nargs = "*",
+		complete = function(_, line)
+			local gen_types = { "Project", "Engine" }
+			return require("unrealium.utils").autocomplete(line, { gen_types })
+		end,
+	})
 
 	vim.api.nvim_create_user_command("UBuild", function(opts)
 		require("unrealium.commands"):UBuild(unpack(opts.fargs))

@@ -77,6 +77,27 @@ function Commands:UBuild(type)
 	vim.cmd(makeCmd)
 end
 
+---Generates clang database file (compile_commands)
+---@param type string "Project" or "Engine"
+function Commands:UGenerateClangDatabase(type)
+	conf.log("Generating Clang Database files...")
+
+	if type ~= "Project" or type ~= "Engine" then
+		conf.logError("Something went wrong.")
+		return
+	end
+
+	local unrealium = self.unrealium
+	if not unrealium then
+		conf.logError("Something went wrong.")
+		return
+	end
+
+	local genCmd = platform.getGenClangDatabaseCommand(unrealium, type)
+	conf.log("Running " .. genCmd)
+	vim.cmd(genCmd)
+end
+
 ---Generates project files for the Project & Engine (compile commands & Makefile)
 function Commands:UGenerateProjectFiles()
 	conf.log("Generating project files...")
@@ -90,21 +111,6 @@ function Commands:UGenerateProjectFiles()
 	local genCmd = platform.getGenProjFilesCommand(unrealium)
 	conf.log("Running " .. genCmd)
 	vim.cmd(genCmd)
-end
-
----Generates Clang Database (compile_commands.json) files for the Project & Engine
-function Commands:UGenerateClangDatabase()
-	conf.log("Generating project files...")
-
-	local unrealium = self.unrealium
-	if not unrealium then
-		conf.logError("Something went wrong.")
-		return
-	end
-
-	local genClangCmd = platform.getGenClangDatabaseCommands(unrealium)
-	conf.log("Running " .. genClangCmd)
-	vim.cmd(genClangCmd)
 end
 
 ---For automatically locking Engine files, if the Unrealium default isn't overridden
