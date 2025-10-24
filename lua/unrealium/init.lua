@@ -2,12 +2,14 @@ local M = {}
 
 local function init()
 	local configuration = require("unrealium.configuration")
+	print("Unrealium initializing")
 
 	UnrealiumConfig = configuration.get()
 	if not UnrealiumConfig then
 		print("Unrealium Config did not work")
 		return
 	end
+	print("Unrealium initialized")
 
 	vim.api.nvim_exec_autocmds("User", { pattern = "UnrealiumStart" })
 

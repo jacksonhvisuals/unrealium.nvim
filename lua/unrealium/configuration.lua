@@ -101,21 +101,27 @@ end
 ---@param projectDirectory string the Unreal Engine Project folder path
 ---@return string | nil
 local function getConfigFile(projectDirectory)
+	if projectDirectory == nil then
+		logError("Received a nil value for projectDirectory")
+		return nil
+	end
+
 	local configFilePath = utils.joinPath(projectDirectory, CONFIG_FILE_NAME)
 
-	if not vim.fs.exists(configFilePath) then
+	if vim.fn.isdirectory(configFilePath) == 1 then
+		logError("Unrealium found a config folder called .unrealium, not a config ~file~. Please fix.")
+		return nil
+	end
+
+	if vim.fn.filereadable(configFilePath) == 0 then
 		logError(
 			"Unrealium config file (.unrealium) did not exist at your .uproject path, ("
-				.. projectDirectory
-				.. ". Please create one."
+			.. projectDirectory
+			.. "). Please create one."
 		)
 		return nil
 	end
 
-	if vim.fs.isdirectory(configFilePath) then
-		logError("Unrealium found a config folder called .unrealium, not a config ~file~. Please fix.")
-		return nil
-	end
 	return configFilePath
 end
 
@@ -168,7 +174,7 @@ end
 local function getEnginePath(config)
 	local enginePath = config["EnginePath"] ---@type string
 	if enginePath ~= nil then
-		if vim.fs.exists(enginePath) then
+		if vim.fn.isdirectory(enginePath) then
 			return enginePath
 		end
 	end
@@ -266,7 +272,7 @@ end
 local function getUProjectFile()
 	local CurrentPath = uv.cwd()
 
-	if CurrentPath ~= nil then
+	if CurrentPath == nil then
 		return nil
 	end
 
@@ -300,11 +306,13 @@ end
 function M.get()
 	local uProjectPath = getUProjectFile()
 	if not uProjectPath then
+		logError("Failed to find a uProject file")
 		return nil
 	end
 
 	local uProjectFilePath = uProjectPath
 	local projectDir = vim.fn.fnamemodify(uProjectFilePath, ":h")
+	log("Project file: " .. uProjectFilePath .. "; Project dir: " .. projectDir)
 
 	local configData = readUnrealiumConfig(projectDir)
 	if not configData then
