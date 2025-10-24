@@ -20,6 +20,10 @@ local function init()
 		require("unrealium.commands"):UGenerateProjectFiles()
 	end, {})
 
+	vim.api.nvim_create_user_command("UGenClangDatabase", function(opts)
+		require("unrealium.commands"):UGenerateClangDatabase()
+	end, {})
+
 	vim.api.nvim_create_user_command("UBuild", function(opts)
 		require("unrealium.commands"):UBuild(unpack(opts.fargs))
 	end, {
