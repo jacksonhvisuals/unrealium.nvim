@@ -142,6 +142,12 @@ function M.getGenClangDatabaseCommand(config, genMode)
 	return table.concat(command, " ")
 end
 
+---Returns a list of file extensions that should be ignored
+---@return string[]
+function M.getIgnoredFileExtensions()
+	return { ".po", ".archive", ".gen.h" }
+end
+
 if _TEST then
 	M.getGenProjFilesArgs = getGenProjFilesArgs
 	M.getBuildArgs = getBuildArgs

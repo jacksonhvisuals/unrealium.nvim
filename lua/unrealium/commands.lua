@@ -11,11 +11,19 @@ end
 
 local platform = require("unrealium.platform")
 
+---@alias SearchTypes
+---| grep "grep"
+---| file_search "file_search"
+local SearchTypes = {
+	grep = "grep",
+	file_search = "file_search",
+}
+
 ---A wrapper for Telescope search so as to filter Engine vs Project
----@param cmd string the Telescope builtin command (e.g. live_grep, search_files
+---@param search_type SearchTypes the modes of search
 ---@param context string the categories to search: Engine / Project / All
-function Commands:USearch(cmd, context)
-	conf.log("Received cmd: " .. cmd .. ", context: " .. context)
+function Commands:USearch(search_type, context)
+	conf.log("Received cmd: " .. search_type .. ", context: " .. context)
 	local searchDirs = {}
 
 	if context == "Engine" then
@@ -26,7 +34,16 @@ function Commands:USearch(cmd, context)
 		searchDirs = { UnrealiumConfig.Engine.Folder, UnrealiumConfig.Project.Folder }
 	end
 
-	require("telescope.builtin")[cmd]({ search_dirs = searchDirs })
+	if require("snacks") == nil then
+		conf.logError("Doesn't seem like Snacks.nvim is available for search")
+		return
+	end
+
+	if search_type == SearchTypes.file_search then
+		require("snacks").picker.grep({ dirs = searchDirs, exclude = platform.getIgnoredFileExtensions() })
+	elseif search_type == SearchTypes.grep then
+		require("snacks").picker.files({ dirs = searchDirs, exclude = platform.getIgnoredFileExtensions() })
+	end
 end
 
 ---Launches Unreal Engine in either Development or Debug mode with the current Unreal Project

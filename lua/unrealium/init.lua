@@ -57,7 +57,7 @@ local function init()
 	end, {
 		nargs = "*",
 		complete = function(_, line)
-			local search_type = { "live_grep", "find_files" }
+			local search_type = { "grep", "file_search" }
 			local sources_list = { "Engine", "Project", "All" }
 			return require("unrealium.utils").autocomplete(line, { search_type, sources_list })
 		end,

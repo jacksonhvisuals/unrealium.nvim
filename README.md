@@ -24,10 +24,6 @@ Unrealium depends on both Telescope and Vim-Dispatch (via the Neovim shim).
   'jacksonhvisuals/unrealium.nvim',
   dependencies = {
     {
-      'nvim-telescope/telescope.nvim',
-      dependencies = { 'nvim-lua/plenary.nvim' },
-    },
-    {
       'radenling/vim-dispatch-neovim',
       dependencies = { 'tpope/vim-dispatch' },
     },

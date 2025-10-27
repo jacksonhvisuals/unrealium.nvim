@@ -23,16 +23,16 @@ local utils = require("unrealium.utils")
 ---@field Scripts EngineScripts
 ---@field AllowEngineModifications boolean
 
----@class ProjectConfig
----@field Folder string
----@field FullPath string
----@field Name string
-
 ---@class EngineScripts
 ---@field Build string
 ---@field GenerateProjectFiles string
 ---@field RunUBT string
 ---@field EditorBase string The UnrealEditor, but can have strings appended for various build targets.
+
+---@class ProjectConfig
+---@field Folder string
+---@field FullPath string
+---@field Name string
 
 ---@class UnrealiumConfig
 ---@field Project ProjectConfig
