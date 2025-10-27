@@ -134,7 +134,7 @@ end
 function M.getGenClangDatabaseCommand(config, genMode)
 	--local command = { "Dispatch", config.Engine.Scripts.RunUBT }
 
-	vim.cmd('set makeprg=' .. config.Engine.Scripts.RunUBT)
+	vim.cmd("set makeprg=" .. config.Engine.Scripts.RunUBT)
 	local command = { "make" }
 	local args = getGenClangDBArgs(config, genMode)
 	vim.list_extend(command, args)

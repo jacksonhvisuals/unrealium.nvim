@@ -116,8 +116,8 @@ local function getConfigFile(projectDirectory)
 	if vim.fn.filereadable(configFilePath) == 0 then
 		logError(
 			"Unrealium config file (.unrealium) did not exist at your .uproject path, ("
-			.. projectDirectory
-			.. "). Please create one."
+				.. projectDirectory
+				.. "). Please create one."
 		)
 		return nil
 	end
