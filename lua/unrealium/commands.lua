@@ -11,7 +11,7 @@ end
 
 local platform = require("unrealium.platform")
 
----@alias SearchTypes
+---@alias SearchTypes string
 ---| grep "grep"
 ---| file_search "file_search"
 local SearchTypes = {
@@ -19,16 +19,26 @@ local SearchTypes = {
 	file_search = "file_search",
 }
 
+---@alias SearchContext string
+---| Engine "Engine"
+---| Project "Project"
+---| All "All"
+local SearchContext = {
+	Engine = "Engine",
+	Project = "Project",
+	All = "All",
+}
+
 ---A wrapper for Telescope search so as to filter Engine vs Project
 ---@param search_type SearchTypes the modes of search
----@param context string the categories to search: Engine / Project / All
+---@param context SearchContext the categories to search: Engine / Project / All
 function Commands:USearch(search_type, context)
 	conf.log("Received cmd: " .. search_type .. ", context: " .. context)
 	local searchDirs = {}
 
-	if context == "Engine" then
+	if context == SearchContext.Engine then
 		searchDirs = { UnrealiumConfig.Engine.Folder }
-	elseif context == "Project" then
+	elseif context == SearchContext.Project then
 		searchDirs = { UnrealiumConfig.Project.Folder }
 	else
 		searchDirs = { UnrealiumConfig.Engine.Folder, UnrealiumConfig.Project.Folder }
