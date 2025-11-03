@@ -2,12 +2,14 @@ local M = {}
 
 local function init()
 	local configuration = require("unrealium.configuration")
+	print("Unrealium initializing")
 
 	UnrealiumConfig = configuration.get()
 	if not UnrealiumConfig then
 		print("Unrealium Config did not work")
 		return
 	end
+	print("Unrealium initialized")
 
 	vim.api.nvim_exec_autocmds("User", { pattern = "UnrealiumStart" })
 
@@ -19,6 +21,16 @@ local function init()
 	vim.api.nvim_create_user_command("UGenProjectFiles", function(opts)
 		require("unrealium.commands"):UGenerateProjectFiles()
 	end, {})
+
+	vim.api.nvim_create_user_command("UGenClangDatabase", function(opts)
+		require("unrealium.commands"):UGenerateClangDatabase(unpack(opts.fargs))
+	end, {
+		nargs = "*",
+		complete = function(_, line)
+			local gen_types = { "Project", "Engine" }
+			return require("unrealium.utils").autocomplete(line, { gen_types })
+		end,
+	})
 
 	vim.api.nvim_create_user_command("UBuild", function(opts)
 		require("unrealium.commands"):UBuild(unpack(opts.fargs))
@@ -45,7 +57,7 @@ local function init()
 	end, {
 		nargs = "*",
 		complete = function(_, line)
-			local search_type = { "live_grep", "find_files" }
+			local search_type = { "grep", "file_search" }
 			local sources_list = { "Engine", "Project", "All" }
 			return require("unrealium.utils").autocomplete(line, { search_type, sources_list })
 		end,

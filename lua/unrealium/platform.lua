@@ -31,7 +31,7 @@ end
 ---| "Project" | "Engine"
 local ClangDatabaseGenMode = {
 	Project = 0,
-	Engine = 1
+	Engine = 1,
 }
 
 ---Returns the GenerateClangDatabase args for the Engine
@@ -39,9 +39,9 @@ local ClangDatabaseGenMode = {
 ---@param genMode ClangDatabaseGenMode
 ---@return table args
 local function getGenClangDBArgs(config, genMode)
-	local outputDir = ''
-	local targetName = ''
-	local projectArg = ''
+	local outputDir = ""
+	local targetName = ""
+	local projectArg = ""
 
 	if genMode == ClangDatabaseGenMode.Project then
 		outputDir = config.Engine.Folder
@@ -50,14 +50,14 @@ local function getGenClangDBArgs(config, genMode)
 	else
 		outputDir = config.Project.Folder
 		targetName = config.Project.Name
-		projectArg = '-project="' .. config.Project.FullPath .. '"'
+		projectArg = "-project='" .. config.Project.FullPath .. "'"
 	end
 
 	return {
 		"-mode=GenerateClangDatabase",
 		projectArg,
-		targetName .. 'Editor ' .. config.PlatformName .. ' Development',
-		'-OutputDir="' .. outputDir .. '"',
+		targetName .. "Editor " .. config.PlatformName .. " Development",
+		"-OutputDir='" .. outputDir .. "'",
 	}
 end
 
@@ -65,18 +65,18 @@ end
 ---@param config UnrealiumConfig
 local function getUHTArgs(config)
 	return {
-		config.Project.Name .. 'Editor ' .. config.PlatformName .. ' Development',
-		'-SkipBuild',
-		'-project="' .. config.Project.FullPath .. '"'
+		config.Project.Name .. "Editor " .. config.PlatformName .. " Development",
+		"-SkipBuild",
+		'-project="' .. config.Project.FullPath .. '"',
 	}
 end
 
 ---@alias IDE string
 ---| "VSCode" | "Rider" | "Makefile"
 local IDE = {
-	VSCode = '-VSCode',
-	Rider = '-Rider',
-	Makefile = '-Makefile'
+	VSCode = "-VSCode",
+	Rider = "-Rider",
+	Makefile = "-Makefile",
 }
 
 ---Collects the correct GenProjFiles arguments for the given Platform
@@ -115,16 +115,37 @@ function M.getBuildCommand(config, type)
 	return table.concat(command, " ")
 end
 
----Obtains the full Generate Project Files ccommand for the given Platform
+---Obtains the full Generate Project Files command for the given Platform
 ---@param config UnrealiumConfig
 ---@return string
 function M.getGenProjFilesCommand(config)
 	local command = { "Dispatch", config.Engine.Scripts.GenerateProjectFiles }
 
-	local args = getGenProjFilesArgs(config)
+	local args = getGenProjFilesArgs(config, IDE.Makefile)
 	vim.list_extend(command, args)
 
 	return table.concat(command, " ")
+end
+
+---Obtains the full Generate Clang Database command for the given Platform
+---@param config UnrealiumConfig
+---@param genMode ClangDatabaseGenMode
+---@return string
+function M.getGenClangDatabaseCommand(config, genMode)
+	--local command = { "Dispatch", config.Engine.Scripts.RunUBT }
+
+	vim.cmd("set makeprg=" .. config.Engine.Scripts.RunUBT)
+	local command = { "make" }
+	local args = getGenClangDBArgs(config, genMode)
+	vim.list_extend(command, args)
+
+	return table.concat(command, " ")
+end
+
+---Returns a list of file extensions that should be ignored
+---@return string[]
+function M.getIgnoredFileExtensions()
+	return { ".po", ".archive", ".gen.h" }
 end
 
 if _TEST then
