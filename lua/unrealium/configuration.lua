@@ -15,7 +15,6 @@ local CONFIG_FILE_NAME = ".unrealium"
 local BATCH_FILES_SUBPATH = "Engine/Build/BatchFiles" ---@see Needs platform subfoler
 
 -- Get various useful modules
-local Path = require("plenary.path")
 local uv = vim.uv
 local utils = require("unrealium.utils")
 
@@ -24,15 +23,16 @@ local utils = require("unrealium.utils")
 ---@field Scripts EngineScripts
 ---@field AllowEngineModifications boolean
 
+---@class EngineScripts
+---@field Build string
+---@field GenerateProjectFiles string
+---@field RunUBT string
+---@field EditorBase string The UnrealEditor, but can have strings appended for various build targets.
+
 ---@class ProjectConfig
 ---@field Folder string
 ---@field FullPath string
 ---@field Name string
-
----@class EngineScripts
----@field Build string
----@field GenerateProjectFiles string
----@field EditorBase string The UnrealEditor, but can have strings appended for various build targets.
 
 ---@class UnrealiumConfig
 ---@field Project ProjectConfig
@@ -99,25 +99,30 @@ end
 
 ---Checks to see if the .unrealium file exists at the given path
 ---@param projectDirectory string the Unreal Engine Project folder path
----@return Path | nil
+---@return string | nil
 local function getConfigFile(projectDirectory)
-	local configFilePath = utils.joinPath(projectDirectory, CONFIG_FILE_NAME)
-	local configFile = Path:new(configFilePath) ---@type Path
+	if projectDirectory == nil then
+		logError("Received a nil value for projectDirectory")
+		return nil
+	end
 
-	if not configFile:exists() then
+	local configFilePath = utils.joinPath(projectDirectory, CONFIG_FILE_NAME)
+
+	if vim.fn.isdirectory(configFilePath) == 1 then
+		logError("Unrealium found a config folder called .unrealium, not a config ~file~. Please fix.")
+		return nil
+	end
+
+	if vim.fn.filereadable(configFilePath) == 0 then
 		logError(
 			"Unrealium config file (.unrealium) did not exist at your .uproject path, ("
 				.. projectDirectory
-				.. ". Please create one."
+				.. "). Please create one."
 		)
 		return nil
 	end
 
-	if configFile:is_dir() then
-		logError("Unrealium found a config folder called .unrealium, not a config ~file~. Please fix.")
-		return nil
-	end
-	return configFile
+	return configFilePath
 end
 
 ---Fetches the config file as a table.
@@ -133,7 +138,7 @@ local function readUnrealiumConfig(uProjectDirectory)
 		return nil
 	end
 
-	local file = io.open(configFile.filename, "r")
+	local file = io.open(configFile, "r")
 	local data = {}
 
 	if file then
@@ -167,12 +172,10 @@ end
 ---@param config table
 ---@return string | nil
 local function getEnginePath(config)
-	local configValue = config["EnginePath"] ---@type string
-	if configValue ~= nil then
-		local enginePath = Path:new(configValue) ---@type Path
-
-		if enginePath:exists() then
-			return enginePath.filename
+	local enginePath = config["EnginePath"] ---@type string
+	if enginePath ~= nil then
+		if vim.fn.isdirectory(enginePath) then
+			return enginePath
 		end
 	end
 
@@ -210,7 +213,7 @@ end
 ---Looks in the current directory for a file with the given extension
 ---@param directory string
 ---@param extension string
----@return Path | nil
+---@return string | nil
 local function checkForFileWithExtensionInDir(directory, extension)
 	local dir = vim.loop.fs_opendir(directory)
 	if not dir then
@@ -228,7 +231,7 @@ local function checkForFileWithExtensionInDir(directory, extension)
 		if typ == "file" then
 			local ext = vim.fn.fnamemodify(name, ":e")
 			if ext == extension then
-				return Path:new(utils.joinPath(directory, name))
+				return utils.joinPath(directory, name)
 			end
 		end
 	end
@@ -237,25 +240,25 @@ end
 
 ---Checks (recursively) if a file with the given extension
 ---exists in the current or parent directories of the given filepath.
----@param filepath Path
+---@param path string
 ---@param extension string
----@return Path | nil
-local function getDirectoryWithFileWithExtension(filepath, extension)
+---@return string | nil
+local function getDirectoryWithFileWithExtension(path, extension)
 	local currentDir
-	if not filepath:is_dir() then
-		currentDir = filepath:parent()
+	if not vim.fn.isdirectory(path) then
+		currentDir = vim.fn.fnamemodify(path, ":p:h")
 	else
-		currentDir = filepath
+		currentDir = path
 	end
 
-	local foundFile = checkForFileWithExtensionInDir(currentDir.filename, extension)
+	local foundFile = checkForFileWithExtensionInDir(currentDir, extension)
 
 	if foundFile then
 		return foundFile
 	end
 
-	local parentDir = currentDir:parent()
-	if parentDir.filename ~= currentDir.filename then
+	local parentDir = vim.fn.fnamemodify(currentDir, ":p:h")
+	if parentDir ~= currentDir then
 		return getDirectoryWithFileWithExtension(parentDir, extension)
 	end
 
@@ -265,13 +268,19 @@ end
 
 ---Primary function to get the directory of
 ---a uProject, if it exists in the path
----@return Path | nil
+---@return string | nil
 local function getUProjectFile()
-	local CurrentPath = Path:new(uv.cwd())
+	local CurrentPath = uv.cwd()
+
+	if CurrentPath == nil then
+		return nil
+	end
+
 	local uProjectFile = getDirectoryWithFileWithExtension(CurrentPath, "uproject")
 	if not uProjectFile then
-		local cwd = uv.cwd()
-		logError("Could not find uProject file in the current cwd (" .. cwd .. " or any of its parent directories.")
+		logError(
+			"Could not find uProject file in the current cwd (" .. CurrentPath .. ") or any of its parent directories."
+		)
 	end
 
 	return uProjectFile
@@ -287,6 +296,7 @@ local function getScriptPaths(enginePath, platformName)
 	Scripts.GenerateProjectFiles =
 		utils.joinPath(enginePath, BATCH_FILES_SUBPATH, platformName, "GenerateProjectFiles.sh")
 	Scripts.EditorBase = utils.joinPath(enginePath, "Engine", "Binaries", platformName, "UnrealEditor")
+	Scripts.RunUBT = utils.joinPath(enginePath, BATCH_FILES_SUBPATH, "RunUBT.sh")
 
 	return Scripts
 end
@@ -296,11 +306,13 @@ end
 function M.get()
 	local uProjectPath = getUProjectFile()
 	if not uProjectPath then
+		logError("Failed to find a uProject file")
 		return nil
 	end
 
-	local uProjectFilePath = uProjectPath.filename
+	local uProjectFilePath = uProjectPath
 	local projectDir = vim.fn.fnamemodify(uProjectFilePath, ":h")
+	log("Project file: " .. uProjectFilePath .. "; Project dir: " .. projectDir)
 
 	local configData = readUnrealiumConfig(projectDir)
 	if not configData then

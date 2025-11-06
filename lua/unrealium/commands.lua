@@ -11,22 +11,49 @@ end
 
 local platform = require("unrealium.platform")
 
+---@alias SearchTypes string
+---| grep "grep"
+---| file_search "file_search"
+local SearchTypes = {
+	grep = "grep",
+	file_search = "file_search",
+}
+
+---@alias SearchContext string
+---| Engine "Engine"
+---| Project "Project"
+---| All "All"
+local SearchContext = {
+	Engine = "Engine",
+	Project = "Project",
+	All = "All",
+}
+
 ---A wrapper for Telescope search so as to filter Engine vs Project
----@param cmd string the Telescope builtin command (e.g. live_grep, search_files
----@param context string the categories to search: Engine / Project / All
-function Commands:USearch(cmd, context)
-	conf.log("Received cmd: " .. cmd .. ", context: " .. context)
+---@param search_type SearchTypes the modes of search
+---@param context SearchContext the categories to search: Engine / Project / All
+function Commands:USearch(search_type, context)
+	conf.log("Received cmd: " .. search_type .. ", context: " .. context)
 	local searchDirs = {}
 
-	if context == "Engine" then
+	if context == SearchContext.Engine then
 		searchDirs = { UnrealiumConfig.Engine.Folder }
-	elseif context == "Project" then
+	elseif context == SearchContext.Project then
 		searchDirs = { UnrealiumConfig.Project.Folder }
 	else
 		searchDirs = { UnrealiumConfig.Engine.Folder, UnrealiumConfig.Project.Folder }
 	end
 
-	require("telescope.builtin")[cmd]({ search_dirs = searchDirs })
+	if require("snacks") == nil then
+		conf.logError("Doesn't seem like Snacks.nvim is available for search")
+		return
+	end
+
+	if search_type == SearchTypes.file_search then
+		require("snacks").picker.grep({ dirs = searchDirs, exclude = platform.getIgnoredFileExtensions() })
+	elseif search_type == SearchTypes.grep then
+		require("snacks").picker.files({ dirs = searchDirs, exclude = platform.getIgnoredFileExtensions() })
+	end
 end
 
 ---Launches Unreal Engine in either Development or Debug mode with the current Unreal Project
@@ -75,6 +102,27 @@ function Commands:UBuild(type)
 	local makeCmd = platform.getBuildCommand(unrealium, type)
 	conf.log("Running " .. makeCmd)
 	vim.cmd(makeCmd)
+end
+
+---Generates clang database file (compile_commands)
+---@param type string "Project" or "Engine"
+function Commands:UGenerateClangDatabase(type)
+	conf.log("Generating Clang Database files...")
+
+	if type == "Project" or type == "Engine" then
+		local unrealium = self.unrealium
+		if not unrealium then
+			conf.logError("Something went wrong. Failed to get the unrealium object.")
+			return
+		end
+
+		local genCmd = platform.getGenClangDatabaseCommand(unrealium, type)
+		conf.log("Running " .. genCmd)
+		vim.cmd(genCmd)
+	else
+		conf.logError('Something went wrong. Received "' .. type .. '" as the ClangDatabase type')
+		return
+	end
 end
 
 ---Generates project files for the Project & Engine (compile commands & Makefile)
