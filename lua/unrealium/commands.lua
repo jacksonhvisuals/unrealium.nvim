@@ -13,10 +13,10 @@ local platform = require("unrealium.platform")
 
 ---@alias SearchTypes string
 ---| grep "grep"
----| file_search "file_search"
+---| files "files"
 local SearchTypes = {
 	grep = "grep",
-	file_search = "file_search",
+	files = "files",
 }
 
 ---@alias SearchContext string
@@ -49,19 +49,30 @@ function Commands:USearch(search_type, context)
 		return
 	end
 
-	if search_type == SearchTypes.file_search then
-		require("snacks").picker.grep({ dirs = searchDirs, exclude = platform.getIgnoredFileExtensions() })
-	elseif search_type == SearchTypes.grep then
+	if search_type == SearchTypes.files then
 		require("snacks").picker.files({ dirs = searchDirs, exclude = platform.getIgnoredFileExtensions() })
+	elseif search_type == SearchTypes.grep then
+		require("snacks").picker.grep({ dirs = searchDirs, exclude = platform.getIgnoredFileExtensions() })
 	end
 end
 
 ---Launches Unreal Engine in either Development or Debug mode with the current Unreal Project
 ---@param type string "Debug" / "Development"
-function Commands:URun(type)
+---@param buildFirst boolean
+function Commands:URun(type, buildFirst)
 	if type == nil then
 		type = "Development"
 	end
+
+	if buildFirst == nil then
+		buildFirst = true
+	end
+
+	if buildFirst then
+		conf.log("Building UnrealEditor in " .. type .. " mode")
+		Commands:UBuild(type)
+	end
+
 	conf.log("Launching UnrealEditor in " .. type .. " mode")
 
 	local unrealium = self.unrealium
