@@ -10,6 +10,7 @@ if not Commands.unrealium then
 end
 
 local platform = require("unrealium.platform")
+local utils = require("unrealium.utils")
 
 ---@alias SearchTypes string
 ---| grep "grep"
@@ -64,14 +65,14 @@ function Commands:URun(type, buildFirst)
 		type = "Development"
 	end
 
-	if buildFirst == nil then
-		buildFirst = true
-	end
-
-	if buildFirst then
-		conf.log("Building UnrealEditor in " .. type .. " mode")
-		Commands:UBuild(type)
-	end
+	-- if buildFirst == nil then
+	-- 	buildFirst = true
+	-- end
+	--
+	-- if buildFirst then
+	-- 	conf.log("Building UnrealEditor in " .. type .. " mode")
+	-- 	Commands:UBuild(type)
+	-- end
 
 	conf.log("Launching UnrealEditor in " .. type .. " mode")
 
