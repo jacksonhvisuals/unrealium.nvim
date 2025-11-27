@@ -145,7 +145,7 @@ end
 ---Returns a list of file extensions that should be ignored
 ---@return string[]
 function M.getIgnoredFileExtensions()
-	return { ".po", ".archive", ".gen.h" }
+	return { "**/*.po", "**/*.archive", "**/*.gen.h" }
 end
 
 if _TEST then
