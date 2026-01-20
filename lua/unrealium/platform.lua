@@ -141,8 +141,8 @@ end
 
 ---Returns a list of file extensions that should be ignored
 ---@return string[]
-function M.getIgnoredFileExtensions()
-	return { "**/*.po", "**/*.archive", "**/*.gen.h" }
+function M.getExcludeGlobs()
+	return { "**/*.po", "**/*.archive", "**/*.gen.h", "**/Intermediate/Build/**" }
 end
 
 if _TEST then

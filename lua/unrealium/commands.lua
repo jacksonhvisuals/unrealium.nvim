@@ -51,9 +51,9 @@ function Commands:USearch(search_type, context)
 	end
 
 	if search_type == SearchTypes.files then
-		require("snacks").picker.files({ dirs = searchDirs, exclude = platform.getIgnoredFileExtensions() })
+		require("snacks").picker.files({ dirs = searchDirs, exclude = platform.getExcludeGlobs() })
 	elseif search_type == SearchTypes.grep then
-		require("snacks").picker.grep({ dirs = searchDirs, exclude = platform.getIgnoredFileExtensions() })
+		require("snacks").picker.grep({ dirs = searchDirs, exclude = platform.getExcludeGlobs() })
 	end
 end
 
