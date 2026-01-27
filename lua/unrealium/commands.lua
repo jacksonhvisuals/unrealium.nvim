@@ -33,8 +33,8 @@ local SearchContext = {
 ---A wrapper for Telescope search so as to filter Engine vs Project
 ---@param search_type SearchTypes the modes of search
 ---@param context SearchContext the categories to search: Engine / Project / All
-function Commands:USearch(search_type, context)
-	conf.log("Received cmd: " .. search_type .. ", context: " .. context)
+---@param search_term string the text to search (optional)
+function Commands:USearch(search_type, context, search_term)
 	local searchDirs = {}
 
 	if context == SearchContext.Engine then
@@ -51,9 +51,9 @@ function Commands:USearch(search_type, context)
 	end
 
 	if search_type == SearchTypes.files then
-		require("snacks").picker.files({ dirs = searchDirs, exclude = platform.getExcludeGlobs() })
+		require("snacks").picker.files({ search = search_term, dirs = searchDirs, exclude = platform.getExcludeGlobs() })
 	elseif search_type == SearchTypes.grep then
-		require("snacks").picker.grep({ dirs = searchDirs, exclude = platform.getExcludeGlobs() })
+		require("snacks").picker.grep({ search = search_term, dirs = searchDirs, exclude = platform.getExcludeGlobs() })
 	end
 end
 
