@@ -3,12 +3,6 @@
 local Commands = {}
 
 local conf = require("unrealium.configuration")
-Commands.unrealium = conf.get()
-if not Commands.unrealium then
-	conf.logError("Could not get unrealium config for Commands.")
-	return {}
-end
-
 local platform = require("unrealium.platform")
 local utils = require("unrealium.utils")
 
@@ -30,7 +24,7 @@ local SearchContext = {
 	All = "All",
 }
 
----A wrapper for Telescope search so as to filter Engine vs Project
+---A wrapper for Snacks picker search so as to filter Engine vs Project
 ---@param search_type SearchTypes the modes of search
 ---@param context SearchContext the categories to search: Engine / Project / All
 ---@param search_term string the text to search (optional)
@@ -38,11 +32,11 @@ function Commands:USearch(search_type, context, search_term)
 	local searchDirs = {}
 
 	if context == SearchContext.Engine then
-		searchDirs = { UnrealiumConfig.Engine.Folder }
+		searchDirs = { unrealium.Engine.Folder }
 	elseif context == SearchContext.Project then
-		searchDirs = { UnrealiumConfig.Project.Folder }
+		searchDirs = { unrealium.Project.Folder }
 	else
-		searchDirs = { UnrealiumConfig.Engine.Folder, UnrealiumConfig.Project.Folder }
+		searchDirs = { unrealium.Engine.Folder, unrealium.Project.Folder }
 	end
 
 	if require("snacks") == nil then
@@ -110,7 +104,7 @@ function Commands:UBuild(type)
 	end
 
 	conf.log("Changing directory to " .. unrealium.Project.Folder)
-	vim.cmd("cd " .. unrealium.Project.Folder)
+	vim.cmd("lcd " .. unrealium.Project.Folder)
 	local makeCmd = platform.getBuildCommand(unrealium, type)
 	conf.log("Running " .. makeCmd)
 	vim.cmd(makeCmd)
@@ -128,7 +122,8 @@ function Commands:UGenerateClangDatabase(type)
 			return
 		end
 
-		local genCmd = platform.getGenClangDatabaseCommand(unrealium, type)
+		local makeprg, genCmd = platform.getGenClangDatabaseCommand(unrealium, type)
+		vim.cmd("set makeprg=" .. makeprg)
 		conf.log("Running " .. genCmd)
 		vim.cmd(genCmd)
 	else

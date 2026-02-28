@@ -174,7 +174,7 @@ end
 local function getEnginePath(config)
 	local enginePath = config["EnginePath"] ---@type string
 	if enginePath ~= nil then
-		if vim.fn.isdirectory(enginePath) then
+		if vim.fn.isdirectory(enginePath) == 1 then
 			return enginePath
 		end
 	end
