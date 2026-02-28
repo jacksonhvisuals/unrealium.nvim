@@ -130,16 +130,14 @@ end
 ---Obtains the full Generate Clang Database command for the given Platform
 ---@param config UnrealiumConfig
 ---@param genMode ClangDatabaseGenMode
----@return string
+---@return string makeprg The path to set as makeprg before running
+---@return string command The make invocation to run
 function M.getGenClangDatabaseCommand(config, genMode)
-	--local command = { "Dispatch", config.Engine.Scripts.RunUBT }
-
-	vim.cmd("set makeprg=" .. config.Engine.Scripts.RunUBT)
 	local command = { "make" }
 	local args = getGenClangDBArgs(config, genMode)
 	vim.list_extend(command, args)
 
-	return table.concat(command, " ")
+	return config.Engine.Scripts.RunUBT, table.concat(command, " ")
 end
 
 ---Returns a list of file extensions that should be ignored

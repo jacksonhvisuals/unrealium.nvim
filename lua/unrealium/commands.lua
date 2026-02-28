@@ -116,7 +116,8 @@ function Commands:UGenerateClangDatabase(type)
 			return
 		end
 
-		local genCmd = platform.getGenClangDatabaseCommand(unrealium, type)
+		local makeprg, genCmd = platform.getGenClangDatabaseCommand(unrealium, type)
+		vim.cmd("set makeprg=" .. makeprg)
 		conf.log("Running " .. genCmd)
 		vim.cmd(genCmd)
 	else
