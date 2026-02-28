@@ -4,13 +4,14 @@ local Commands = {}
 
 local conf = require("unrealium.configuration")
 local platform = require("unrealium.platform")
+local utils = require("unrealium.utils")
 
 ---@alias SearchTypes string
 ---| grep "grep"
----| file_search "file_search"
+---| files "files"
 local SearchTypes = {
 	grep = "grep",
-	file_search = "file_search",
+	files = "files",
 }
 
 ---@alias SearchContext string
@@ -26,14 +27,8 @@ local SearchContext = {
 ---A wrapper for Snacks picker search so as to filter Engine vs Project
 ---@param search_type SearchTypes the modes of search
 ---@param context SearchContext the categories to search: Engine / Project / All
-function Commands:USearch(search_type, context)
-	conf.log("Received cmd: " .. search_type .. ", context: " .. context)
-	local unrealium = self.unrealium
-	if not unrealium then
-		conf.logError("Something went wrong.")
-		return
-	end
-
+---@param search_term string the text to search (optional)
+function Commands:USearch(search_type, context, search_term)
 	local searchDirs = {}
 
 	if context == SearchContext.Engine then
@@ -49,19 +44,30 @@ function Commands:USearch(search_type, context)
 		return
 	end
 
-	if search_type == SearchTypes.grep then
-		require("snacks").picker.grep({ dirs = searchDirs, exclude = platform.getIgnoredFileExtensions() })
-	elseif search_type == SearchTypes.file_search then
-		require("snacks").picker.files({ dirs = searchDirs, exclude = platform.getIgnoredFileExtensions() })
+	if search_type == SearchTypes.files then
+		require("snacks").picker.files({ search = search_term, dirs = searchDirs, exclude = platform.getExcludeGlobs() })
+	elseif search_type == SearchTypes.grep then
+		require("snacks").picker.grep({ search = search_term, dirs = searchDirs, exclude = platform.getExcludeGlobs() })
 	end
 end
 
 ---Launches Unreal Engine in either Development or Debug mode with the current Unreal Project
 ---@param type string "Debug" / "Development"
-function Commands:URun(type)
+---@param buildFirst boolean
+function Commands:URun(type, buildFirst)
 	if type == nil then
 		type = "Development"
 	end
+
+	-- if buildFirst == nil then
+	-- 	buildFirst = true
+	-- end
+	--
+	-- if buildFirst then
+	-- 	conf.log("Building UnrealEditor in " .. type .. " mode")
+	-- 	Commands:UBuild(type)
+	-- end
+
 	conf.log("Launching UnrealEditor in " .. type .. " mode")
 
 	local unrealium = self.unrealium

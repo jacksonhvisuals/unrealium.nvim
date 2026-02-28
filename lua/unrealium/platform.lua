@@ -133,7 +133,7 @@ end
 ---@return string makeprg The path to set as makeprg before running
 ---@return string command The make invocation to run
 function M.getGenClangDatabaseCommand(config, genMode)
-	local command = { "make" }
+	local command = { "Dispatch", config.Engine.Scripts.RunUBT }
 	local args = getGenClangDBArgs(config, genMode)
 	vim.list_extend(command, args)
 
@@ -142,8 +142,8 @@ end
 
 ---Returns a list of file extensions that should be ignored
 ---@return string[]
-function M.getIgnoredFileExtensions()
-	return { ".po", ".archive", ".gen.h" }
+function M.getExcludeGlobs()
+	return { "**/*.po", "**/*.archive", "**/*.gen.h", "**/Intermediate/Build/**" }
 end
 
 if _TEST then

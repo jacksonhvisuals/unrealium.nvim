@@ -29,4 +29,32 @@ function M.joinPath(...)
 	return vim.fs.joinpath(...)
 end
 
+function M.chain(cmd1, cmd2, opts)
+	opts = opts or {}
+
+	-- callback when first command exits
+	local function on_exit_first(job_id, exit_code, event)
+		if exit_code == 0 then
+			-- run second command if first succeeded
+			vim.fn.jobstart(cmd2, {
+				on_stdout = opts.on_stdout,
+				on_stderr = opts.on_stderr,
+				on_exit = opts.on_exit,
+			})
+		else
+			if opts.on_fail then
+				opts.on_fail(exit_code)
+			else
+				vim.notify(string.format("Command failed: %s (exit %d)", cmd1, exit_code), vim.log.levels.ERROR)
+			end
+		end
+	end
+
+	-- run first command
+	vim.fn.jobstart(cmd1, {
+		on_stdout = opts.on_stdout,
+		on_stderr = opts.on_stderr,
+		on_exit = on_exit_first,
+	})
+end
 return M
