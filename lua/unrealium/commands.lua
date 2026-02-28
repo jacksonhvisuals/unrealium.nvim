@@ -29,19 +29,25 @@ local SearchContext = {
 	All = "All",
 }
 
----A wrapper for Telescope search so as to filter Engine vs Project
+---A wrapper for Snacks picker search so as to filter Engine vs Project
 ---@param search_type SearchTypes the modes of search
 ---@param context SearchContext the categories to search: Engine / Project / All
 function Commands:USearch(search_type, context)
 	conf.log("Received cmd: " .. search_type .. ", context: " .. context)
+	local unrealium = self.unrealium
+	if not unrealium then
+		conf.logError("Something went wrong.")
+		return
+	end
+
 	local searchDirs = {}
 
 	if context == SearchContext.Engine then
-		searchDirs = { UnrealiumConfig.Engine.Folder }
+		searchDirs = { unrealium.Engine.Folder }
 	elseif context == SearchContext.Project then
-		searchDirs = { UnrealiumConfig.Project.Folder }
+		searchDirs = { unrealium.Project.Folder }
 	else
-		searchDirs = { UnrealiumConfig.Engine.Folder, UnrealiumConfig.Project.Folder }
+		searchDirs = { unrealium.Engine.Folder, unrealium.Project.Folder }
 	end
 
 	if require("snacks") == nil then
