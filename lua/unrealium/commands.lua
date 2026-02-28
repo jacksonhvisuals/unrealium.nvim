@@ -3,12 +3,6 @@
 local Commands = {}
 
 local conf = require("unrealium.configuration")
-Commands.unrealium = conf.get()
-if not Commands.unrealium then
-	conf.logError("Could not get unrealium config for Commands.")
-	return {}
-end
-
 local platform = require("unrealium.platform")
 
 ---@alias SearchTypes string

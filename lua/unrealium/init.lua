@@ -11,6 +11,8 @@ local function init()
 	end
 	print("Unrealium initialized")
 
+	require("unrealium.commands").unrealium = config
+
 	vim.api.nvim_exec_autocmds("User", { pattern = "UnrealiumStart" })
 
 	-- WIP using Telescope UI to have a more interactive mechanism to trigger commands
