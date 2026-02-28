@@ -49,9 +49,9 @@ function Commands:USearch(search_type, context)
 		return
 	end
 
-	if search_type == SearchTypes.file_search then
+	if search_type == SearchTypes.grep then
 		require("snacks").picker.grep({ dirs = searchDirs, exclude = platform.getIgnoredFileExtensions() })
-	elseif search_type == SearchTypes.grep then
+	elseif search_type == SearchTypes.file_search then
 		require("snacks").picker.files({ dirs = searchDirs, exclude = platform.getIgnoredFileExtensions() })
 	end
 end
