@@ -104,11 +104,7 @@ local function resolve_binary_path(cfg, preset)
 	local suffix = ""
 	if preset.target_type == "Game" then
 		-- Game targets use the project binary
-		local binaries_dir = vim.fs.joinpath(
-			cfg.Project.Folder,
-			"Binaries",
-			platform.ubt_platform(cfg.PlatformName)
-		)
+		local binaries_dir = vim.fs.joinpath(cfg.Project.Folder, "Binaries", platform.ubt_platform(cfg.PlatformName))
 		local binary = vim.fs.joinpath(binaries_dir, cfg.Project.Name)
 		if preset.configuration == "Debug" or preset.configuration == "DebugGame" then
 			binary = binary .. "-" .. platform.ubt_platform(cfg.PlatformName) .. "-" .. preset.configuration

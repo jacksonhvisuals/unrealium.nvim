@@ -30,9 +30,24 @@ describe("modules.debug", function()
 	describe("default_preset", function()
 		it("prefers Editor + DebugGame", function()
 			local presets = {
-				{ name = "MyProject (Development)", target_name = "MyProject", target_type = "Game", configuration = "Development" },
-				{ name = "MyProjectEditor (Development)", target_name = "MyProjectEditor", target_type = "Editor", configuration = "Development" },
-				{ name = "MyProjectEditor (DebugGame)", target_name = "MyProjectEditor", target_type = "Editor", configuration = "DebugGame" },
+				{
+					name = "MyProject (Development)",
+					target_name = "MyProject",
+					target_type = "Game",
+					configuration = "Development",
+				},
+				{
+					name = "MyProjectEditor (Development)",
+					target_name = "MyProjectEditor",
+					target_type = "Editor",
+					configuration = "Development",
+				},
+				{
+					name = "MyProjectEditor (DebugGame)",
+					target_name = "MyProjectEditor",
+					target_type = "Editor",
+					configuration = "DebugGame",
+				},
 			}
 			local result = debug_mod._default_preset(presets)
 			assert.truthy(result)
@@ -41,7 +56,12 @@ describe("modules.debug", function()
 
 		it("falls back to first preset when no Editor + DebugGame", function()
 			local presets = {
-				{ name = "MyProject (Debug)", target_name = "MyProject", target_type = "Game", configuration = "Debug" },
+				{
+					name = "MyProject (Debug)",
+					target_name = "MyProject",
+					target_type = "Game",
+					configuration = "Debug",
+				},
 			}
 			local result = debug_mod._default_preset(presets)
 			assert.truthy(result)

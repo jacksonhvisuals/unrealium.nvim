@@ -80,12 +80,7 @@ function M.execute(lint_type)
 
 				vim.fn.setqflist(items, "r")
 				local status = handle.exit_code == 0 and "completed" or "failed"
-				local msg = string.format(
-					"Lint %s: %d errors, %d warnings",
-					status,
-					#handle.errors,
-					#handle.warnings
-				)
+				local msg = string.format("Lint %s: %d errors, %d warnings", status, #handle.errors, #handle.warnings)
 				progress.finish(msg, handle.exit_code == 0 and vim.log.levels.INFO or vim.log.levels.ERROR)
 				log.info(msg)
 

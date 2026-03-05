@@ -13,8 +13,7 @@ require("lazy.minit").setup({
 			opts = {
 				collect = {
 					find_files = function()
-						return #_G.arg > 0 and _G.arg
-							or vim.fn.globpath("lua/tests", "**/*_spec.lua", true, true)
+						return #_G.arg > 0 and _G.arg or vim.fn.globpath("lua/tests", "**/*_spec.lua", true, true)
 					end,
 				},
 			},

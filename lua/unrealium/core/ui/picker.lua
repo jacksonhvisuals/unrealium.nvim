@@ -95,10 +95,34 @@ end
 
 --- Backend priority order with their checkers and pickers.
 local BACKENDS = {
-	{ name = "snacks", check = function() return has_module("snacks") end, pick = pick_snacks },
-	{ name = "telescope", check = function() return has_module("telescope") end, pick = pick_telescope },
-	{ name = "fzf_lua", check = function() return has_module("fzf-lua") end, pick = pick_fzf_lua },
-	{ name = "native", check = function() return true end, pick = pick_native },
+	{
+		name = "snacks",
+		check = function()
+			return has_module("snacks")
+		end,
+		pick = pick_snacks,
+	},
+	{
+		name = "telescope",
+		check = function()
+			return has_module("telescope")
+		end,
+		pick = pick_telescope,
+	},
+	{
+		name = "fzf_lua",
+		check = function()
+			return has_module("fzf-lua")
+		end,
+		pick = pick_fzf_lua,
+	},
+	{
+		name = "native",
+		check = function()
+			return true
+		end,
+		pick = pick_native,
+	},
 }
 
 --- Get configured preference order, or use default.

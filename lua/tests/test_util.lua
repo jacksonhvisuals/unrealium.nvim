@@ -50,10 +50,8 @@ function M.createValidTreeNewFormat(tmp_dir, engineDir)
 
 	local confFile = Path:new(vim.fs.joinpath(projectDir, "unrealium.json"))
 	confFile:touch()
-	local json = string.format(
-		'{"engine":{"folder":"%s","allow_modifications":false},"logging":{"level":"info"}}',
-		engineDir
-	)
+	local json =
+		string.format('{"engine":{"folder":"%s","allow_modifications":false},"logging":{"level":"info"}}', engineDir)
 	confFile:write(json, "w")
 
 	return projectDir

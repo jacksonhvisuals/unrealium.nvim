@@ -108,7 +108,7 @@ local function buffer_lines(remainder, data)
 	end
 	-- If data has only one element, remainder is already set
 	if #data == 1 then
-		remainder = (remainder == data[1]) and (remainder) or remainder
+		remainder = (remainder == data[1]) and remainder or remainder
 	end
 	return lines, remainder
 end

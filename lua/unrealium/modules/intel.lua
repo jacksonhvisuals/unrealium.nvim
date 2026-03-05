@@ -37,10 +37,7 @@ end
 function M.show_status()
 	local status = lsp.status()
 	if status.running then
-		vim.notify(
-			string.format("[unrealium.intel] clangd running (client %d)", status.client_id),
-			vim.log.levels.INFO
-		)
+		vim.notify(string.format("[unrealium.intel] clangd running (client %d)", status.client_id), vim.log.levels.INFO)
 	else
 		vim.notify("[unrealium.intel] clangd not running", vim.log.levels.INFO)
 	end

@@ -111,9 +111,7 @@ describe("unrealium.core.finder", function()
 	describe("get_platform_name", function()
 		it("returns a valid platform", function()
 			local platform = finder.get_platform_name()
-			assert.truthy(
-				platform == "Linux" or platform == "Mac" or platform == "Windows" or platform == "Unknown"
-			)
+			assert.truthy(platform == "Linux" or platform == "Mac" or platform == "Windows" or platform == "Unknown")
 		end)
 	end)
 
