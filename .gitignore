@@ -1,1 +1,3 @@
 .unrealium/
+.tests/
+.DS_Store
