@@ -119,6 +119,7 @@ function M.start(cfg, intel_settings)
 		name = "unrealium-clangd",
 		cmd = cmd,
 		root_dir = cfg.Project.Folder,
+		filetypes = { "c", "cpp", "objc", "objcpp" },
 		on_attach = function(_, bufnr)
 			log.debug("clangd attached to buffer %d", bufnr)
 			event.emit(event.LSP_READY, { client_id = _client_id })
@@ -154,6 +155,23 @@ function M.restart(cfg, intel_settings)
 	vim.defer_fn(function()
 		M.start(cfg, intel_settings)
 	end, 200)
+end
+
+--- Attach the running clangd client to a buffer.
+---@param bufnr integer
+---@return boolean success
+function M.buf_attach(bufnr)
+	if not _client_id then
+		log.warn("clangd is not running, cannot attach to buffer %d", bufnr)
+		return false
+	end
+	local client = vim.lsp.get_client_by_id(_client_id)
+	if not client then
+		_client_id = nil
+		return false
+	end
+	vim.lsp.buf_attach_client(bufnr, _client_id)
+	return true
 end
 
 --- Check if clangd is currently running.

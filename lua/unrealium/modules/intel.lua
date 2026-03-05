@@ -73,6 +73,12 @@ M.commands = {
 				end,
 				desc = "Show clangd status",
 			},
+			["stop"] = {
+				handler = function(_)
+					lsp.stop()
+				end,
+				desc = "Stop clangd",
+			},
 			["restart"] = {
 				handler = function(_)
 					M.restart_clangd()
