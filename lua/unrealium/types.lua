@@ -25,6 +25,7 @@
 ---@field ui? { picker?: { prefer?: string[] } }
 ---@field build? { configurations?: string[], presets?: UnrealiumPreset[], output_mode?: string, progress_enabled?: boolean, extra_args?: string[] }
 ---@field run? { extra_args?: string[] }
+---@field debug? { adapter?: string, default_preset?: string, extra_init_commands?: string[], extra_args?: string[] }
 
 ---@class UnrealiumModule
 ---@field name string
@@ -60,3 +61,9 @@
 ---@field col? integer
 ---@field text string
 ---@field type string           "error"|"warning"
+
+---@class UnrealiumDebugPreset
+---@field name string           display name, e.g. "MyProjectEditor (DebugGame)"
+---@field target_name string    Target.cs base name
+---@field target_type string    "Editor"|"Server"|"Client"|"Game"
+---@field configuration string  "Debug"|"DebugGame"|"Development"

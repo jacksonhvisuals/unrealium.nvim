@@ -32,6 +32,12 @@ local _defaults = {
 			generate_config = true,
 		},
 	},
+	debug = {
+		adapter = "codelldb",
+		default_preset = nil,
+		extra_init_commands = {},
+		extra_args = {},
+	},
 }
 
 ---@type table
@@ -140,6 +146,9 @@ function M.get()
 	end
 	if raw_config.intel then
 		settings = deep_merge(settings, { intel = raw_config.intel })
+	end
+	if raw_config.debug then
+		settings = deep_merge(settings, { debug = raw_config.debug })
 	end
 	-- Merge runtime overrides
 	settings = deep_merge(settings, _runtime_overrides)
