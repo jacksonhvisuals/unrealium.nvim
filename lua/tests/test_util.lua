@@ -21,9 +21,9 @@ function M.createValidTree(tmp_dir, engineDir)
 		engineDir = vim.fs.joinpath(tmp_dir, "Engine")
 	end
 
-	local confFile = Path:new(vim.fs.joinpath(projectDir, ".unrealium"))
+	local confFile = Path:new(vim.fs.joinpath(projectDir, "unrealium.json"))
 	confFile:touch()
-	confFile:write('{"EnginePath":"' .. engineDir .. '", "allowEngineModifications":false}', "w")
+	confFile:write('{"EnginePath":"' .. engineDir .. '"}', "w")
 
 	return projectDir
 end
@@ -48,7 +48,7 @@ function M.createValidTreeNewFormat(tmp_dir, engineDir)
 		engineDir = vim.fs.joinpath(tmp_dir, "Engine")
 	end
 
-	local confFile = Path:new(vim.fs.joinpath(projectDir, ".unrealium.json"))
+	local confFile = Path:new(vim.fs.joinpath(projectDir, "unrealium.json"))
 	confFile:touch()
 	local json = string.format(
 		'{"engine":{"folder":"%s","allow_modifications":false},"logging":{"level":"info"}}',

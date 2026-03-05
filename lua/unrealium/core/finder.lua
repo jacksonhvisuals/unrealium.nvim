@@ -83,38 +83,135 @@ function M.find_project(start_dir)
 	}
 end
 
---- Read and parse the .unrealium or .unrealium.json config file.
+--- Read and parse a JSON file, returning the decoded table or nil.
+---@param path string
+---@return table|nil
+local function read_json_file(path)
+	if vim.fn.filereadable(path) ~= 1 then
+		return nil
+	end
+	local file = io.open(path, "r")
+	if not file then
+		return nil
+	end
+	local content = file:read("*all")
+	file:close()
+	if not content or content == "" then
+		return nil
+	end
+	-- Strip BOM
+	content = content:gsub("^\xEF\xBB\xBF", "")
+	local ok, data = pcall(vim.fn.json_decode, content)
+	if ok and type(data) == "table" then
+		return data
+	end
+	log.error("Failed to parse JSON file: %s", path)
+	return nil
+end
+
+--- Read the project config file (unrealium.json or legacy variants).
+--- Returns an empty table if no config file is found (config is optional).
 ---@param project_root string
----@return table|nil parsed JSON data
+---@return table parsed JSON data (may be empty)
 function M.read_project_config(project_root)
-	-- Try .unrealium.json first, then legacy .unrealium
 	local candidates = {
+		vim.fs.joinpath(project_root, "unrealium.json"),
 		vim.fs.joinpath(project_root, ".unrealium.json"),
 		vim.fs.joinpath(project_root, ".unrealium"),
 	}
 
 	for _, config_path in ipairs(candidates) do
-		if vim.fn.filereadable(config_path) == 1 then
-			local file = io.open(config_path, "r")
-			if file then
-				local content = file:read("*all")
-				file:close()
-
-				if content and content ~= "" then
-					-- Strip BOM
-					content = content:gsub("^\xEF\xBB\xBF", "")
-					local ok, data = pcall(vim.fn.json_decode, content)
-					if ok and type(data) == "table" and next(data) ~= nil then
-						return data
-					else
-						log.error("Failed to parse config file: %s", config_path)
-					end
-				end
-			end
+		local data = read_json_file(config_path)
+		if data and next(data) ~= nil then
+			return data
 		end
 	end
 
-	log.error("No .unrealium.json or .unrealium config file found in %s", project_root)
+	log.debug("No unrealium.json config file found in %s (using defaults)", project_root)
+	return {}
+end
+
+--- Read the .uproject file and extract the EngineAssociation value.
+---@param uproject_path string
+---@return string|nil engine_association
+function M.read_engine_association(uproject_path)
+	local data = read_json_file(uproject_path)
+	if data and data.EngineAssociation then
+		return data.EngineAssociation
+	end
+	return nil
+end
+
+--- Get the platform-specific path to the Epic engine install registry.
+---@return string|nil
+local function get_install_registry_path()
+	local platform = vim.uv.os_uname().sysname
+	if platform == "Linux" then
+		return vim.fs.joinpath(os.getenv("HOME") or "", ".config", "Epic", "UnrealEngine", "Install.ini")
+	elseif platform == "Darwin" then
+		return vim.fs.joinpath(
+			os.getenv("HOME") or "",
+			"Library",
+			"Application Support",
+			"Epic",
+			"UnrealEngine",
+			"Install.ini"
+		)
+	end
+	return nil
+end
+
+--- Parse the Epic Install.ini file and return a table mapping identifiers to paths.
+---@param ini_path string
+---@return table<string, string>
+local function parse_install_ini(ini_path)
+	local entries = {}
+	if vim.fn.filereadable(ini_path) ~= 1 then
+		return entries
+	end
+	local file = io.open(ini_path, "r")
+	if not file then
+		return entries
+	end
+	for line in file:lines() do
+		local key, value = line:match("^(.-)=(.+)$")
+		if key and value then
+			entries[key] = value
+		end
+	end
+	file:close()
+	return entries
+end
+
+--- Resolve an EngineAssociation value to an engine install path.
+---@param association string GUID or version string from .uproject
+---@return string|nil engine_path
+function M.resolve_engine_association(association)
+	local ini_path = get_install_registry_path()
+	if not ini_path then
+		log.debug("No install registry path for this platform")
+		return nil
+	end
+
+	local entries = parse_install_ini(ini_path)
+	if not next(entries) then
+		log.debug("No entries found in install registry: %s", ini_path)
+		return nil
+	end
+
+	-- Direct match (GUID or exact key)
+	if entries[association] then
+		return entries[association]
+	end
+
+	-- Try matching by version string in paths (e.g. "5.4" matching a path containing "UE_5.4")
+	for _, path in pairs(entries) do
+		if path:find(association, 1, true) then
+			return path
+		end
+	end
+
+	log.debug("Could not resolve EngineAssociation '%s' from install registry", association)
 	return nil
 end
 
@@ -166,25 +263,37 @@ function M.get_platform_name()
 	end
 end
 
---- Resolve engine config from raw project config data.
---- Supports both new format ({ engine = { folder = ... } }) and legacy ({ EnginePath = ... }).
+--- Resolve engine config from raw project config and .uproject engine association.
+--- Priority: explicit EnginePath in config > EngineAssociation from .uproject.
 ---@param raw_config table
+---@param uproject_path? string path to .uproject for engine association resolution
 ---@return { folder: string|nil, allow_modifications: boolean }
-function M.resolve_engine_config(raw_config)
+function M.resolve_engine_config(raw_config, uproject_path)
 	local folder, allow_mods
 
-	-- New format
+	-- Check for explicit engine path in config (new format)
 	if raw_config.engine then
 		folder = raw_config.engine.folder
 		allow_mods = raw_config.engine.allow_modifications
 	end
 
-	-- Legacy format fallback
+	-- Legacy format fallback for explicit path
 	if not folder and raw_config.EnginePath then
 		folder = raw_config.EnginePath
 	end
 	if allow_mods == nil and raw_config.allowEngineModifications ~= nil then
 		allow_mods = raw_config.allowEngineModifications
+	end
+
+	-- If no explicit path, resolve from .uproject EngineAssociation
+	if not folder and uproject_path then
+		local association = M.read_engine_association(uproject_path)
+		if association then
+			folder = M.resolve_engine_association(association)
+			if folder then
+				log.info("Resolved engine path from EngineAssociation '%s': %s", association, folder)
+			end
+		end
 	end
 
 	return {
@@ -195,6 +304,8 @@ end
 
 if _TEST then
 	M._find_file_with_extension = find_file_with_extension
+	M._read_json_file = read_json_file
+	M._parse_install_ini = parse_install_ini
 end
 
 return M

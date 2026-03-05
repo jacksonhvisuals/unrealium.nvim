@@ -86,15 +86,13 @@ function M.get()
 	end
 
 	local raw_config = finder.read_project_config(project.root)
-	if not raw_config then
-		log.error("No config file found in %s", project.root)
-		return nil
-	end
 
-	local engine_data = finder.resolve_engine_config(raw_config)
+	local engine_data = finder.resolve_engine_config(raw_config, project.uproject_path)
 	local engine_folder = finder.validate_engine_path(engine_data.folder)
 	if not engine_folder then
-		log.error("Invalid engine path. Check your .unrealium.json or .unrealium config file.")
+		log.error(
+			"Could not resolve engine path. Set EnginePath in unrealium.json or check your .uproject EngineAssociation."
+		)
 		return nil
 	end
 

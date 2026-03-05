@@ -37,16 +37,20 @@ Unrealium depends on both Telescope and Vim-Dispatch (via the Neovim shim).
 ---
 
 ## Project Configuration
-In an effort to provide per-project flexibility, unrealium.nvim depends on there being a `.unrealium` file in the root folder of your Unreal Project. While it *could* support some sort of magical Unreal Engine detection through other config files, PATH, etc, you often want to be building against a very particular engine anyway. 
+
+unrealium.nvim automatically detects your Unreal Engine installation by reading the `EngineAssociation` field from your `.uproject` file and resolving it via the Epic launcher's install registry.
+
+If you need to override the engine path (e.g. a source build not registered with the launcher), create a `unrealium.json` file in the root folder of your Unreal Project:
 
 ```json
 {
-  "EnginePath": "Path/To/Unreal/Install/Dir",
-  "allowEngineModifications": false,
+  "EnginePath": "/Path/To/Unreal/Install/Dir"
 }
 ```
-`EnginePath` should be the root Engine install directory, not it's Engine subfolder.
-`allowEngineModifications` is optional, and defaults to false.
+
+`EnginePath` should be the root Engine install directory, not its Engine subfolder. This is optional — only needed when automatic detection doesn't work.
+
+Engine files are always read-only by default to prevent accidental recompiles.
 
 ---
 
