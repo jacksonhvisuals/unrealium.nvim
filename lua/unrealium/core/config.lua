@@ -18,6 +18,7 @@ local _defaults = {
 		presets = {},
 		output_mode = "terminal",
 		progress_enabled = true,
+		completion_ttl = 5,
 		extra_args = {},
 	},
 	run = {

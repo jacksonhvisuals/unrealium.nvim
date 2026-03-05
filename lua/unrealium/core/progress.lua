@@ -46,11 +46,20 @@ end
 --- Finish the progress indicator.
 ---@param message string
 ---@param level? integer vim.log.levels value
-function M.finish(message, level)
+---@param ttl? number seconds to keep the completion message visible before dismissing
+function M.finish(message, level, ttl)
 	if _handle then
 		_handle.message = message
-		_handle:finish()
+		_handle.percentage = 100
+		local handle = _handle
 		_handle = nil
+		if ttl and ttl > 0 then
+			vim.defer_fn(function()
+				handle:finish()
+			end, ttl * 1000)
+		else
+			handle:finish()
+		end
 	else
 		vim.notify("[unrealium] " .. message, level or vim.log.levels.INFO)
 	end

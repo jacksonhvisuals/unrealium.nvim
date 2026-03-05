@@ -157,21 +157,6 @@ local function get_or_create_terminal_buf()
 	return buf
 end
 
---- Open the terminal buffer in a horizontal split.
----@param buf integer
-local function open_terminal_split(buf)
-	-- Check if buffer is already displayed
-	for _, win in ipairs(vim.api.nvim_list_wins()) do
-		if vim.api.nvim_win_get_buf(win) == buf then
-			return
-		end
-	end
-
-	vim.cmd("botright split")
-	vim.api.nvim_win_set_buf(0, buf)
-	vim.cmd("resize 15")
-end
-
 --- Append a line to the terminal buffer with auto-scroll.
 ---@param buf integer
 ---@param line string
@@ -271,7 +256,6 @@ local function run_build(preset, extra_args)
 		term_buf = get_or_create_terminal_buf()
 		-- Clear previous output
 		vim.api.nvim_buf_set_lines(term_buf, 0, -1, false, { "--- Build: " .. preset.name .. " ---" })
-		open_terminal_split(term_buf)
 	end
 
 	if progress_enabled then
@@ -299,12 +283,26 @@ local function run_build(preset, extra_args)
 					#handle.warnings
 				)
 
+				local completion_ttl = cfg.settings and cfg.settings.build and cfg.settings.build.completion_ttl or 5
 				if progress_enabled then
-					progress.finish(msg, level)
+					progress.finish(msg, level, completion_ttl)
 				end
 
 				if output_mode == "quickfix" then
 					populate_quickfix(handle)
+				end
+
+				-- Clean up build output buffer on success with no warnings
+				if
+					output_mode == "terminal"
+					and term_buf
+					and handle.exit_code == 0
+					and #handle.errors == 0
+					and #handle.warnings == 0
+				then
+					if vim.api.nvim_buf_is_valid(term_buf) then
+						vim.api.nvim_buf_delete(term_buf, { force = true })
+					end
 				end
 
 				log.info(msg)
