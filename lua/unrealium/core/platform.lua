@@ -51,16 +51,21 @@ end
 --- Get the run editor command.
 ---@param config UnrealiumConfig
 ---@param type string "Debug"|"Development"
+---@param extra_args? string[] additional CLI arguments
 ---@return { command: string }
-function M.run_command(config, type)
+function M.run_command(config, type, extra_args)
 	local suffix = ""
 	if type == "Debug" then
 		suffix = "-" .. config.PlatformName .. "-Debug"
 	end
 
 	local editor = config.Engine.Scripts.EditorBase .. suffix
+	local cmd = "Dispatch " .. editor .. " " .. config.Project.FullPath
+	if extra_args and #extra_args > 0 then
+		cmd = cmd .. " " .. table.concat(extra_args, " ")
+	end
 	return {
-		command = "Dispatch " .. editor .. " " .. config.Project.FullPath,
+		command = cmd,
 	}
 end
 
@@ -129,8 +134,9 @@ end
 --- Assemble a UBT build command from config and preset.
 ---@param config UnrealiumConfig
 ---@param preset UnrealiumPreset
+---@param extra_args? string[] additional CLI arguments (appended after preset args)
 ---@return { cmd: string[], cwd: string }|nil
-function M.ubt_build_command(config, preset)
+function M.ubt_build_command(config, preset, extra_args)
 	local run_ubt = config.Engine.Scripts.RunUBT
 	if not run_ubt or run_ubt == "" then
 		log.error("RunUBT script path not configured")
@@ -148,6 +154,12 @@ function M.ubt_build_command(config, preset)
 
 	if preset.extra_args then
 		for _, arg in ipairs(preset.extra_args) do
+			table.insert(cmd, arg)
+		end
+	end
+
+	if extra_args then
+		for _, arg in ipairs(extra_args) do
 			table.insert(cmd, arg)
 		end
 	end

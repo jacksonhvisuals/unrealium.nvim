@@ -223,7 +223,8 @@ end
 
 --- Run a build with the given preset.
 ---@param preset UnrealiumPreset
-local function run_build(preset)
+---@param extra_args? string[] additional CLI arguments
+local function run_build(preset, extra_args)
 	local cfg = config.get()
 	if not cfg then
 		log.error("Config not available")
@@ -235,7 +236,21 @@ local function run_build(preset)
 		return
 	end
 
-	local cmd_data = platform.ubt_build_command(cfg, preset)
+	-- Merge config-level extra_args with dynamic extra_args
+	local merged_args = {}
+	local config_args = cfg.settings and cfg.settings.build and cfg.settings.build.extra_args
+	if config_args then
+		for _, arg in ipairs(config_args) do
+			table.insert(merged_args, arg)
+		end
+	end
+	if extra_args then
+		for _, arg in ipairs(extra_args) do
+			table.insert(merged_args, arg)
+		end
+	end
+
+	local cmd_data = platform.ubt_build_command(cfg, preset, #merged_args > 0 and merged_args or nil)
 	if not cmd_data then
 		log.error("Failed to assemble build command")
 		return
@@ -326,7 +341,8 @@ end
 --- Execute a build.
 ---@param arg? string preset name, configuration name, or nil for default/last
 ---@param bang? boolean if true, open preset picker
-function M.execute(arg, bang)
+---@param extra_args? string[] additional CLI arguments
+function M.execute(arg, bang, extra_args)
 	if bang then
 		pick_preset()
 		return
@@ -367,13 +383,13 @@ function M.execute(arg, bang)
 		end
 	end
 
-	run_build(preset)
+	run_build(preset, extra_args)
 end
 
 M.commands = {
 	build = {
 		handler = function(opts)
-			M.execute(opts.args[1], opts.bang)
+			M.execute(opts.args[1], opts.bang, { unpack(opts.args, 2) })
 		end,
 		desc = "Build the project (use ! to pick preset)",
 		args = {

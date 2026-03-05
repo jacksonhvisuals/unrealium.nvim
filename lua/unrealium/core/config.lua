@@ -18,6 +18,10 @@ local _defaults = {
 		presets = {},
 		output_mode = "terminal",
 		progress_enabled = true,
+		extra_args = {},
+	},
+	run = {
+		extra_args = {},
 	},
 	intel = {
 		clangd = {
@@ -130,6 +134,9 @@ function M.get()
 	end
 	if raw_config.build then
 		settings = deep_merge(settings, { build = raw_config.build })
+	end
+	if raw_config.run then
+		settings = deep_merge(settings, { run = raw_config.run })
 	end
 	if raw_config.intel then
 		settings = deep_merge(settings, { intel = raw_config.intel })

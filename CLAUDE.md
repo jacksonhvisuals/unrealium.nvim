@@ -104,7 +104,8 @@ Config is hierarchical (4 layers merged):
   "engine": { "folder": "/path/to/UE5", "allow_modifications": false },
   "logging": { "level": "info" },
   "ui": { "picker": { "prefer": ["snacks", "telescope", "native"] } },
-  "build": { "configurations": ["Development", "DebugGame"], "output_mode": "terminal" },
+  "build": { "configurations": ["Development", "DebugGame"], "output_mode": "terminal", "extra_args": [] },
+  "run": { "extra_args": ["-norelativemousemode"] },
   "intel": { "clangd": { "enabled": true, "auto_start": true, "generate_config": true } }
 }
 ```
