@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What This Plugin Does
 
-unrealium.nvim is a Neovim plugin for Unreal Engine 5 project development. It auto-detects UE projects (via `.uproject` files), registers user commands for building/running/searching, enforces Engine file read-only status, and integrates with multiple picker backends (Snacks, Telescope, fzf-lua, native).
+unrealium.nvim is a Neovim plugin for Unreal Engine 5 project development. It auto-detects UE projects (via `.uproject` files), registers user commands for building/running/searching, enforces Engine file read-only status, manages clangd with UE-optimized settings, and integrates with multiple picker backends (Snacks, Telescope, fzf-lua, native).
 
 ## Commands
 
@@ -37,15 +37,24 @@ lua/unrealium/
     platform.lua                         -- OS detection, pure command assembly (no side effects)
     command.lua                          -- Declarative command builder (:UE subcommands + completion)
     provider.lua                         -- Capability registry (register/resolve pattern)
+    job.lua                              -- Async job runner (UBT builds, shell commands)
+    target.lua                           -- .Target.cs discovery and parsing
+    progress.lua                         -- Build progress notifications (fidget/notify)
     ui/
       init.lua                           -- UI dispatch
       picker.lua                         -- Multi-backend picker (Snacks → Telescope → fzf-lua → native)
+    lsp/
+      init.lua                           -- clangd lifecycle management (start/stop/restart/auto-start)
+      config_gen.lua                     -- .clangd YAML generation with UE-optimized settings
   modules/                               -- Feature modules (self-contained, standard interface)
-    build.lua                            -- :UE build
+    build.lua                            -- :UE build (preset-based async builds)
     run.lua                              -- :UE run
     search.lua                           -- :UE search
     generate.lua                         -- :UE generate project-files / clang-database
     editor_lock.lua                      -- BufReadPost engine file read-only enforcement
+    lint.lua                             -- :UE lint (static analysis via UBT)
+    diagnostics.lua                      -- :UE diagnostics (build error parsing)
+    intel.lua                            -- :UE intel (clangd optimization, .clangd config gen)
 ```
 
 ### Initialization Flow
@@ -75,6 +84,11 @@ plugin/unrealium.lua       -- Version guard (0.10.0+), re-init guard, auto-setup
 | `core/command.lua` | Declarative command builder: defines :UE with nested subcommands and tab completion |
 | `core/provider.lua` | Capability registry for extension points (register/resolve by name with priority) |
 | `core/ui/picker.lua` | Multi-backend picker abstraction (Snacks → Telescope → fzf-lua → native) |
+| `core/job.lua` | Async job runner for UBT builds and shell commands via vim.uv |
+| `core/target.lua` | Discovers and parses .Target.cs files for build target enumeration |
+| `core/progress.lua` | Build progress display via fidget.nvim or vim.notify fallback |
+| `core/lsp/init.lua` | clangd lifecycle: start/stop/restart with optimized flags, auto-start on first C++ buffer |
+| `core/lsp/config_gen.lua` | Generates .clangd config excluding ThirdParty/Intermediate from indexing |
 
 ### Configuration
 
@@ -89,7 +103,9 @@ Config is hierarchical (4 layers merged):
 {
   "engine": { "folder": "/path/to/UE5", "allow_modifications": false },
   "logging": { "level": "info" },
-  "ui": { "picker": { "prefer": ["snacks", "telescope", "native"] } }
+  "ui": { "picker": { "prefer": ["snacks", "telescope", "native"] } },
+  "build": { "configurations": ["Development", "DebugGame"], "output_mode": "terminal" },
+  "intel": { "clangd": { "enabled": true, "auto_start": true, "generate_config": true } }
 }
 ```
 
