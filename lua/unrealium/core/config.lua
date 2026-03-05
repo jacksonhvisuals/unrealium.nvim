@@ -81,7 +81,7 @@ function M.get()
 
 	local project = finder.find_project()
 	if not project then
-		log.error("No Unreal project found from current directory")
+		log.debug("No Unreal project found from current directory")
 		return nil
 	end
 
