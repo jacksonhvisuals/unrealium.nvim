@@ -1,0 +1,47 @@
+---@module 'luassert'
+
+_TEST = true
+local platform = require("unrealium.core.platform")
+local tUtil = require("tests.test_util")
+
+describe("modules.build", function()
+	describe("platform.build_command", function()
+		it("returns correct Linux Development build command", function()
+			local cfg = tUtil.mock_config()
+			local result = platform.build_command(cfg, "Development")
+			assert.truthy(result)
+			assert.matches("Make MyProjectEditor%-Linux%-Development", result.command)
+			assert.equals(cfg.Project.Folder, result.cwd)
+		end)
+
+		it("returns correct Linux Debug build command", function()
+			local cfg = tUtil.mock_config()
+			local result = platform.build_command(cfg, "Debug")
+			assert.truthy(result)
+			assert.matches("Make MyProjectEditor%-Linux%-Debug", result.command)
+		end)
+
+		it("returns nil for unsupported platform", function()
+			local cfg = tUtil.mock_config({ PlatformName = "Windows" })
+			local result = platform.build_command(cfg, "Development")
+			assert.is_nil(result)
+		end)
+	end)
+
+	describe("platform.run_command", function()
+		it("returns Development run command", function()
+			local cfg = tUtil.mock_config()
+			local result = platform.run_command(cfg, "Development")
+			assert.truthy(result)
+			assert.matches("Dispatch", result.command)
+			assert.matches("UnrealEditor", result.command)
+			assert.matches("MyProject.uproject", result.command)
+		end)
+
+		it("returns Debug run command with suffix", function()
+			local cfg = tUtil.mock_config()
+			local result = platform.run_command(cfg, "Debug")
+			assert.matches("Linux%-Debug", result.command)
+		end)
+	end)
+end)

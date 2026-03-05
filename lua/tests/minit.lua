@@ -8,6 +8,17 @@ require("lazy.minit").setup({
 	spec = {
 		{ "nvim-telescope/telescope.nvim", dependencies = { "nvim-lua/plenary.nvim" } },
 		{ "radenling/vim-dispatch-neovim", dependencies = { "tpope/vim-dispatch" } },
+		{
+			"echasnovski/mini.test",
+			opts = {
+				collect = {
+					find_files = function()
+						return #_G.arg > 0 and _G.arg
+							or vim.fn.globpath("lua/tests", "**/*_spec.lua", true, true)
+					end,
+				},
+			},
+		},
 		{ dir = vim.uv.cwd() },
 	},
 })

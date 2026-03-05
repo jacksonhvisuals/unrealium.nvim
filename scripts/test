@@ -1,3 +1,3 @@
-#!/bin/env bash
+#!/usr/bin/env bash
 
 nvim -l lua/tests/minit.lua --minitest

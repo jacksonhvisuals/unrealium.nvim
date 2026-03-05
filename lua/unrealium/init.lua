@@ -1,80 +1,135 @@
+--- Unrealium.nvim — Setup orchestrator + module registration.
+
 local M = {}
 
-local function init()
-	local configuration = require("unrealium.configuration")
-	print("Unrealium initializing")
+local config = require("unrealium.core.config")
+local log_mod = require("unrealium.core.log")
+local event = require("unrealium.core.event")
+local command = require("unrealium.core.command")
 
-	local config = configuration.get()
-	if not config then
-		print("Unrealium Config did not work")
+---@type table<string, UnrealiumCommandSpec>
+local _subcommands = {}
+
+--- Built-in module list.
+local BUILTIN_MODULES = { "build", "run", "search", "generate", "editor_lock" }
+
+--- Register commands from a module into the subcommand tree.
+---@param mod_commands table<string, UnrealiumCommandSpec>
+local function register_module_commands(mod_commands)
+	for name, spec in pairs(mod_commands) do
+		_subcommands[name] = spec
+	end
+end
+
+--- Core initialization: discover project, load modules, register commands.
+local function init()
+	local cfg = config.get()
+	if not cfg then
+		-- Not in an Unreal project — silently skip
 		return
 	end
-	print("Unrealium initialized")
 
-	require("unrealium.commands").unrealium = config
+	-- Load built-in modules
+	for _, name in ipairs(BUILTIN_MODULES) do
+		local ok, mod = pcall(require, "unrealium.modules." .. name)
+		if ok then
+			if mod.commands then
+				register_module_commands(mod.commands)
+			end
+			if mod.setup then
+				mod.setup(cfg)
+			end
+		else
+			log_mod.get("init").error("Failed to load module %s: %s", name, mod)
+		end
+	end
 
-	vim.api.nvim_exec_autocmds("User", { pattern = "UnrealiumStart" })
+	-- Create :UE command
+	command.create({ name = "UE", subcommands = _subcommands })
 
-	-- WIP using Telescope UI to have a more interactive mechanism to trigger commands
-	-- vim.api.nvim_create_user_command("UShowActions", function(opts)
-	-- 	require("unrealium.ui").ShowUnrealiumActions(opts)
-	-- end, {})
-
-	vim.api.nvim_create_user_command("UGenProjectFiles", function(opts)
-		require("unrealium.commands"):UGenerateProjectFiles()
-	end, {})
-
-	vim.api.nvim_create_user_command("UGenClangDatabase", function(opts)
-		require("unrealium.commands"):UGenerateClangDatabase(unpack(opts.fargs))
-	end, {
-		nargs = "*",
-		complete = function(_, line)
-			local gen_types = { "Project", "Engine" }
-			return require("unrealium.utils").autocomplete(line, { gen_types })
-		end,
-	})
-
+	-- Legacy aliases
 	vim.api.nvim_create_user_command("UBuild", function(opts)
-		require("unrealium.commands"):UBuild(unpack(opts.fargs))
+		require("unrealium.modules.build").execute(unpack(opts.fargs))
 	end, {
 		nargs = "*",
 		complete = function(_, line)
-			local build_types = { "Development", "Debug" }
-			return require("unrealium.utils").autocomplete(line, { build_types })
+			return filter_complete(line, { "Development", "Debug" })
 		end,
 	})
 
 	vim.api.nvim_create_user_command("URun", function(opts)
-		require("unrealium.commands"):URun(unpack(opts.fargs))
+		require("unrealium.modules.run").execute(unpack(opts.fargs))
 	end, {
 		nargs = "*",
 		complete = function(_, line)
-			local build_types = { "Development", "Debug" }
-			return require("unrealium.utils").autocomplete(line, { build_types })
+			return filter_complete(line, { "Development", "Debug" })
 		end,
 	})
 
 	vim.api.nvim_create_user_command("USearch", function(opts)
-		require("unrealium.commands"):USearch(unpack(opts.fargs))
+		require("unrealium.modules.search").execute(unpack(opts.fargs))
 	end, {
 		nargs = "*",
 		complete = function(_, line)
-			local search_type = { "grep", "files" }
-			local sources_list = { "Engine", "Project", "All" }
-			return require("unrealium.utils").autocomplete(line, { search_type, sources_list })
+			local parts = vim.split(line, "%s+")
+			local n = #parts - 2
+			if n == 0 then
+				return filter_partial(parts[#parts], { "grep", "files" })
+			elseif n == 1 then
+				return filter_partial(parts[#parts], { "Engine", "Project", "All" })
+			end
 		end,
 	})
 
-	-- Automatically check if newly-opened files should be editable
-	vim.api.nvim_create_autocmd("BufReadPost", {
-		callback = function()
-			local filepath = vim.api.nvim_buf_get_name(0)
-			require("unrealium.commands"):DetermineFileEditable(filepath)
+	vim.api.nvim_create_user_command("UGenProjectFiles", function(_)
+		require("unrealium.modules.generate").project_files()
+	end, {})
+
+	vim.api.nvim_create_user_command("UGenClangDatabase", function(opts)
+		require("unrealium.modules.generate").clang_database(unpack(opts.fargs))
+	end, {
+		nargs = "*",
+		complete = function(_, line)
+			return filter_complete(line, { "Project", "Engine" })
 		end,
 	})
+
+	-- Emit ready event (also fires User autocmd for backward compat)
+	event.emit(event.PLUGIN_READY, { config = cfg })
+	-- Fire legacy autocmd pattern too
+	pcall(vim.api.nvim_exec_autocmds, "User", { pattern = "UnrealiumStart" })
 end
 
-function M.setup()
+--- Filter completions by partial match (used by legacy commands).
+---@param partial string
+---@param candidates string[]
+---@return string[]
+function filter_partial(partial, candidates)
+	return vim.tbl_filter(function(v)
+		return vim.startswith(v, partial or "")
+	end, candidates)
+end
+
+--- Simple completion: filter first arg from candidates.
+---@param line string
+---@param candidates string[]
+---@return string[]
+function filter_complete(line, candidates)
+	local parts = vim.split(line, "%s+")
+	local partial = parts[#parts] or ""
+	if #parts <= 2 then
+		return filter_partial(partial, candidates)
+	end
+	return {}
+end
+
+--- Plugin entry point. Called by plugin/unrealium.lua or lazy.nvim setup.
+---@param user_config? UnrealiumUserConfig
+function M.setup(user_config)
+	vim.g.unrealium_setup_called = true
+	config.init(user_config)
+	log_mod.init(user_config and user_config.logging or nil)
+
 	local augroup = vim.api.nvim_create_augroup("Unrealium", { clear = true })
 	vim.api.nvim_create_autocmd("VimEnter", {
 		group = augroup,
@@ -84,8 +139,32 @@ function M.setup()
 	})
 end
 
+--- Extension API: register config defaults for a sub-module.
+---@param namespace string
+---@param defaults table
+function M.register_config(namespace, defaults)
+	config.register_defaults(namespace, defaults)
+end
+
+--- Extension API: register commands under a namespace.
+---@param namespace string
+---@param commands table<string, UnrealiumCommandSpec>
+function M.register_commands(namespace, commands)
+	command.add_subcommands(_subcommands, namespace, commands)
+end
+
+--- Extension API: register a capability provider.
+---@param capability string
+---@param provider { name: string, impl: any, priority?: number }
+function M.register_provider(capability, provider)
+	require("unrealium.core.provider").register(capability, provider)
+end
+
 if _TEST then
 	M._init = init
+	M._subcommands = function()
+		return _subcommands
+	end
 end
 
 return M
