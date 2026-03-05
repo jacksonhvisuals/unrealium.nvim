@@ -285,6 +285,12 @@ function M.resolve_engine_config(raw_config, uproject_path)
 		allow_mods = raw_config.allowEngineModifications
 	end
 
+	-- Validate explicit path exists on disk; fall through to GUID resolution if not
+	if folder and vim.fn.isdirectory(folder) ~= 1 then
+		log.warn("Configured engine path does not exist: %s — falling back to EngineAssociation", folder)
+		folder = nil
+	end
+
 	-- If no explicit path, resolve from .uproject EngineAssociation
 	if not folder and uproject_path then
 		local association = M.read_engine_association(uproject_path)

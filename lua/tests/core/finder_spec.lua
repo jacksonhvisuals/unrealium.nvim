@@ -128,6 +128,17 @@ describe("unrealium.core.finder", function()
 	end)
 
 	describe("resolve_engine_config", function()
+		local orig_isdirectory
+		before_each(function()
+			orig_isdirectory = vim.fn.isdirectory
+			vim.fn.isdirectory = function()
+				return 1
+			end
+		end)
+		after_each(function()
+			vim.fn.isdirectory = orig_isdirectory
+		end)
+
 		it("reads legacy format", function()
 			local result = finder.resolve_engine_config({
 				EnginePath = "/old/path",
@@ -148,6 +159,16 @@ describe("unrealium.core.finder", function()
 		it("defaults allow_modifications to false", function()
 			local result = finder.resolve_engine_config({ EnginePath = "/path" })
 			assert.is_false(result.allow_modifications)
+		end)
+
+		it("falls through to GUID resolution when explicit path does not exist", function()
+			vim.fn.isdirectory = function()
+				return 0
+			end
+			local result = finder.resolve_engine_config({
+				EnginePath = "/nonexistent/path",
+			})
+			assert.is_nil(result.folder)
 		end)
 	end)
 end)
