@@ -71,7 +71,8 @@ local function build_completer(subcommands)
 					completions = arg_spec.complete
 				end
 
-				local partial = parts[#parts] or ""
+				-- Join all args after the subcommand as the partial (supports spaces in names)
+				local partial = table.concat(parts, " ", matched_depth + 1)
 				for _, c in ipairs(completions) do
 					if vim.startswith(c, partial) then
 						table.insert(results, c)

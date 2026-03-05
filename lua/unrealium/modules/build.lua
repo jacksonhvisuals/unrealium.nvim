@@ -389,7 +389,34 @@ end
 M.commands = {
 	build = {
 		handler = function(opts)
-			M.execute(opts.args[1], opts.bang, { unpack(opts.args, 2) })
+			if #opts.args == 0 then
+				M.execute(nil, opts.bang)
+				return
+			end
+			if opts.args[1] == "stop" then
+				M.execute("stop", opts.bang)
+				return
+			end
+			-- Try longest match first to support preset names with spaces
+			local presets = M.get_presets()
+			local preset_set = {}
+			for _, p in ipairs(presets) do
+				preset_set[p.name] = true
+			end
+			for i = #opts.args, 1, -1 do
+				local candidate = table.concat(opts.args, " ", 1, i)
+				if preset_set[candidate] then
+					local extra = {}
+					for j = i + 1, #opts.args do
+						extra[#extra + 1] = opts.args[j]
+					end
+					M.execute(candidate, opts.bang, extra)
+					return
+				end
+			end
+			-- No preset matched — fall through to execute which will try
+			-- single-word config name or show the error
+			M.execute(table.concat(opts.args, " "), opts.bang)
 		end,
 		desc = "Build the project (use ! to pick preset)",
 		args = {
