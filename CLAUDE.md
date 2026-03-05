@@ -20,6 +20,21 @@ unrealium.nvim is a Neovim plugin for Unreal Engine 5 project development. It au
 
 **Formatting:** The project uses stylua. Run via the CI/release GitHub Actions workflows (folke's reusable workflows).
 
+## CI/CD
+
+The project uses [folke's reusable GitHub Actions workflows](https://github.com/folke/github) with release-please for automated releases.
+
+**Workflows:**
+- **CI** (`.github/workflows/ci.yml`) — Runs tests + stylua on pushes to any branch except `main`, and on all PRs
+- **Release** (`.github/workflows/release.yml`) — Runs tests + release-please on pushes to `main`
+- **PR** (`.github/workflows/pr.yml`) — Validates PR titles follow Conventional Commits format
+
+**Release process:** Merging semantic commits to `main` triggers release-please, which maintains a Release PR with changelog and version bump. Merging that PR creates a GitHub Release with a git tag.
+
+**Config files:**
+- `.github/release-please-config.json` — release-please configuration (release type: `simple`)
+- `.release-please-manifest.json` — tracks the current version
+
 ## Commit Convention
 
 All commits must use [Conventional Commits](https://www.conventionalcommits.org/) format:
