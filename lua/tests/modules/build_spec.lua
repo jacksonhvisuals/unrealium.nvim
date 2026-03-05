@@ -130,11 +130,29 @@ describe("modules.build", function()
 		describe("merge_presets", function()
 			it("static presets win on name collision", function()
 				local static = {
-					{ name = "Custom", target_name = "X", platform = "Linux", configuration = "Debug", is_editor = false },
+					{
+						name = "Custom",
+						target_name = "X",
+						platform = "Linux",
+						configuration = "Debug",
+						is_editor = false,
+					},
 				}
 				local dynamic = {
-					{ name = "Custom", target_name = "Y", platform = "Linux", configuration = "Development", is_editor = true },
-					{ name = "Other", target_name = "Z", platform = "Linux", configuration = "Development", is_editor = false },
+					{
+						name = "Custom",
+						target_name = "Y",
+						platform = "Linux",
+						configuration = "Development",
+						is_editor = true,
+					},
+					{
+						name = "Other",
+						target_name = "Z",
+						platform = "Linux",
+						configuration = "Development",
+						is_editor = false,
+					},
 				}
 				local result = build._merge_presets(static, dynamic)
 				assert.equals(2, #result)
