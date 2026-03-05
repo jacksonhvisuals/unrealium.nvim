@@ -61,6 +61,7 @@ require("unrealium").setup({
   intel = {
     clangd = {
       enabled = true,
+      exclusive = false,       -- stop external clangd clients when unrealium starts its own
       cmd = nil,               -- custom clangd binary path
       extra_flags = {},        -- additional clangd flags
       auto_start = true,       -- start clangd on first C++ buffer

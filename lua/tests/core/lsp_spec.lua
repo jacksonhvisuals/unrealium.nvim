@@ -160,6 +160,88 @@ describe("core.lsp", function()
 		end)
 	end)
 
+	describe("stop_external_clangd", function()
+		it("stops non-unrealium clangd clients", function()
+			local stopped_ids = {}
+			local orig_get_clients = vim.lsp.get_clients
+			vim.lsp.get_clients = function()
+				return {
+					{
+						name = "clangd",
+						id = 1,
+						stop = function(self)
+							table.insert(stopped_ids, self.id)
+						end,
+					},
+					{
+						name = "unrealium-clangd",
+						id = 2,
+						stop = function(self)
+							table.insert(stopped_ids, self.id)
+						end,
+					},
+					{
+						name = "lua_ls",
+						id = 3,
+						stop = function(self)
+							table.insert(stopped_ids, self.id)
+						end,
+					},
+				}
+			end
+
+			local count = lsp._stop_external_clangd()
+			assert.equals(1, count)
+			assert.same({ 1 }, stopped_ids)
+
+			vim.lsp.get_clients = orig_get_clients
+		end)
+
+		it("stops multiple clangd variants", function()
+			local stopped_ids = {}
+			local orig_get_clients = vim.lsp.get_clients
+			vim.lsp.get_clients = function()
+				return {
+					{
+						name = "clangd",
+						id = 1,
+						stop = function(self)
+							table.insert(stopped_ids, self.id)
+						end,
+					},
+					{
+						name = "clangd-18",
+						id = 2,
+						stop = function(self)
+							table.insert(stopped_ids, self.id)
+						end,
+					},
+				}
+			end
+
+			local count = lsp._stop_external_clangd()
+			assert.equals(2, count)
+			assert.same({ 1, 2 }, stopped_ids)
+
+			vim.lsp.get_clients = orig_get_clients
+		end)
+
+		it("returns zero when no external clangd found", function()
+			local orig_get_clients = vim.lsp.get_clients
+			vim.lsp.get_clients = function()
+				return {
+					{ name = "unrealium-clangd", id = 1, stop = function() end },
+					{ name = "lua_ls", id = 2, stop = function() end },
+				}
+			end
+
+			local count = lsp._stop_external_clangd()
+			assert.equals(0, count)
+
+			vim.lsp.get_clients = orig_get_clients
+		end)
+	end)
+
 	describe("status", function()
 		it("reports not running initially", function()
 			local status = lsp.status()

@@ -94,6 +94,21 @@ local function build_cmd(cfg, intel_settings)
 	return cmd
 end
 
+--- Stop any non-unrealium clangd clients.
+---@return integer count of clients stopped
+local function stop_external_clangd()
+	local stopped = 0
+	local clients = vim.lsp.get_clients()
+	for _, client in ipairs(clients) do
+		if client.name ~= "unrealium-clangd" and client.name:find("clangd") then
+			log.info("Stopping external clangd client: %s (id %d)", client.name, client.id)
+			client:stop()
+			stopped = stopped + 1
+		end
+	end
+	return stopped
+end
+
 --- Start clangd with optimized flags.
 ---@param cfg UnrealiumConfig
 ---@param intel_settings? table
@@ -128,6 +143,11 @@ function M.start(cfg, intel_settings)
 
 	if not _client_id then
 		log.error("Failed to start clangd")
+		return
+	end
+
+	if intel_settings.exclusive then
+		stop_external_clangd()
 	end
 end
 
@@ -226,6 +246,7 @@ if _TEST then
 	M._find_compile_commands = find_compile_commands
 	M._resolve_clangd = resolve_clangd
 	M._build_cmd = build_cmd
+	M._stop_external_clangd = stop_external_clangd
 	M._reset = function()
 		_client_id = nil
 		_autocmd_id = nil

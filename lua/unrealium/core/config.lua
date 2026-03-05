@@ -27,6 +27,7 @@ local _defaults = {
 	intel = {
 		clangd = {
 			enabled = true,
+			exclusive = false,
 			cmd = nil,
 			extra_flags = {},
 			auto_start = true,
