@@ -13,6 +13,12 @@ local _config = nil
 local _defaults = {
 	logging = { level = "info" },
 	ui = { picker = { prefer = { "snacks", "telescope", "fzf_lua", "native" } } },
+	build = {
+		configurations = { "Development", "DebugGame", "Debug", "Shipping", "Test" },
+		presets = {},
+		output_mode = "terminal",
+		progress_enabled = true,
+	},
 }
 
 ---@type table
@@ -112,6 +118,9 @@ function M.get()
 	end
 	if raw_config.ui then
 		settings = deep_merge(settings, { ui = raw_config.ui })
+	end
+	if raw_config.build then
+		settings = deep_merge(settings, { build = raw_config.build })
 	end
 	-- Merge runtime overrides
 	settings = deep_merge(settings, _runtime_overrides)

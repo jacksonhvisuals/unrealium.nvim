@@ -11,7 +11,7 @@ local command = require("unrealium.core.command")
 local _subcommands = {}
 
 --- Built-in module list.
-local BUILTIN_MODULES = { "build", "run", "search", "generate", "editor_lock" }
+local BUILTIN_MODULES = { "build", "run", "search", "generate", "editor_lock", "lint", "diagnostics" }
 
 --- Register commands from a module into the subcommand tree.
 ---@param mod_commands table<string, UnrealiumCommandSpec>
@@ -49,11 +49,12 @@ local function init()
 
 	-- Legacy aliases
 	vim.api.nvim_create_user_command("UBuild", function(opts)
-		require("unrealium.modules.build").execute(unpack(opts.fargs))
+		require("unrealium.modules.build").execute(opts.fargs[1], opts.bang)
 	end, {
 		nargs = "*",
+		bang = true,
 		complete = function(_, line)
-			return filter_complete(line, { "Development", "Debug" })
+			return filter_complete(line, { "Development", "Debug", "DebugGame", "Shipping", "Test" })
 		end,
 	})
 

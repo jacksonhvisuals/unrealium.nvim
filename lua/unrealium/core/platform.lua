@@ -116,6 +116,110 @@ function M.gen_clang_database_command(config, gen_mode)
 	}
 end
 
+--- Map platform name to UBT platform identifier.
+---@param platform_name string "Linux"|"Mac"|"Windows"
+---@return string
+function M.ubt_platform(platform_name)
+	if platform_name == "Windows" then
+		return "Win64"
+	end
+	return platform_name
+end
+
+--- Assemble a UBT build command from config and preset.
+---@param config UnrealiumConfig
+---@param preset UnrealiumPreset
+---@return { cmd: string[], cwd: string }|nil
+function M.ubt_build_command(config, preset)
+	local run_ubt = config.Engine.Scripts.RunUBT
+	if not run_ubt or run_ubt == "" then
+		log.error("RunUBT script path not configured")
+		return nil
+	end
+
+	local cmd = {
+		run_ubt,
+		preset.target_name,
+		preset.platform,
+		preset.configuration,
+		"-project=" .. config.Project.FullPath,
+		"-progress",
+	}
+
+	if preset.extra_args then
+		for _, arg in ipairs(preset.extra_args) do
+			table.insert(cmd, arg)
+		end
+	end
+
+	return {
+		cmd = cmd,
+		cwd = config.Project.Folder,
+	}
+end
+
+--- Assemble a UHT (UnrealHeaderTool) command.
+---@param config UnrealiumConfig
+---@param preset UnrealiumPreset
+---@param manifest_path? string path to .uhtmanifest for incremental builds
+---@return { cmd: string[], cwd: string }|nil
+function M.uht_command(config, preset, manifest_path)
+	local run_ubt = config.Engine.Scripts.RunUBT
+	if not run_ubt or run_ubt == "" then
+		log.error("RunUBT script path not configured")
+		return nil
+	end
+
+	local cmd = {
+		run_ubt,
+		preset.target_name,
+		preset.platform,
+		preset.configuration,
+		"-project=" .. config.Project.FullPath,
+		"-mode=UnrealHeaderTool",
+	}
+
+	if manifest_path then
+		table.insert(cmd, "-manifest=" .. manifest_path)
+	end
+
+	return {
+		cmd = cmd,
+		cwd = config.Project.Folder,
+	}
+end
+
+--- Assemble a UBT static analysis (lint) command.
+---@param config UnrealiumConfig
+---@param preset UnrealiumPreset
+---@param lint_type? string e.g. "PVS-Studio"
+---@return { cmd: string[], cwd: string }|nil
+function M.ubt_lint_command(config, preset, lint_type)
+	local run_ubt = config.Engine.Scripts.RunUBT
+	if not run_ubt or run_ubt == "" then
+		log.error("RunUBT script path not configured")
+		return nil
+	end
+
+	local cmd = {
+		run_ubt,
+		preset.target_name,
+		preset.platform,
+		preset.configuration,
+		"-project=" .. config.Project.FullPath,
+		"-StaticAnalyzer",
+	}
+
+	if lint_type then
+		table.insert(cmd, "-StaticAnalyzerMode=" .. lint_type)
+	end
+
+	return {
+		cmd = cmd,
+		cwd = config.Project.Folder,
+	}
+end
+
 --- Returns glob patterns to exclude in searches.
 ---@return string[]
 function M.get_exclude_globs()

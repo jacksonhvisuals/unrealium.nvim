@@ -83,6 +83,12 @@ function M.mock_config(overrides)
 		settings = {
 			logging = { level = "info" },
 			ui = { picker = { prefer = { "snacks", "telescope", "fzf_lua", "native" } } },
+			build = {
+				configurations = { "Development", "DebugGame", "Debug", "Shipping", "Test" },
+				presets = {},
+				output_mode = "terminal",
+				progress_enabled = true,
+			},
 		},
 	}
 

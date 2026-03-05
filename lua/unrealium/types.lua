@@ -38,3 +38,23 @@
 ---@class UnrealiumArgSpec
 ---@field name string
 ---@field complete? string[]|fun(): string[]
+
+---@class UnrealiumBuildTarget
+---@field name string           e.g. "MyProjectEditor"
+---@field file string           path to .Target.cs
+---@field type string           "Editor"|"Server"|"Client"|"Game"
+
+---@class UnrealiumPreset
+---@field name string           display name, e.g. "MyProjectEditor Linux Development"
+---@field target_name string    Target.cs base name
+---@field platform string       "Linux"|"Mac"|"Win64"
+---@field configuration string  "Development"|"Debug"|"DebugGame"|"Shipping"|"Test"
+---@field is_editor boolean
+---@field extra_args? string[]
+
+---@class UnrealiumDiagnostic
+---@field file string
+---@field lnum integer
+---@field col? integer
+---@field text string
+---@field type string           "error"|"warning"
