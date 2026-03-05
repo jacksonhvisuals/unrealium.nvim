@@ -19,6 +19,15 @@ local _defaults = {
 		output_mode = "terminal",
 		progress_enabled = true,
 	},
+	intel = {
+		clangd = {
+			enabled = true,
+			cmd = nil,
+			extra_flags = {},
+			auto_start = true,
+			generate_config = true,
+		},
+	},
 }
 
 ---@type table
@@ -121,6 +130,9 @@ function M.get()
 	end
 	if raw_config.build then
 		settings = deep_merge(settings, { build = raw_config.build })
+	end
+	if raw_config.intel then
+		settings = deep_merge(settings, { intel = raw_config.intel })
 	end
 	-- Merge runtime overrides
 	settings = deep_merge(settings, _runtime_overrides)

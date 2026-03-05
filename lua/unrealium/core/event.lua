@@ -10,6 +10,8 @@ M.CONFIG_LOADED = "unrealium.config_loaded"
 M.BUILD_PROGRESS = "unrealium.build_progress"
 M.JOB_START = "unrealium.job_start"
 M.JOB_FINISH = "unrealium.job_finish"
+M.LSP_READY = "unrealium.lsp_ready"
+M.LSP_INDEXED = "unrealium.lsp_indexed"
 
 ---@type table<string, fun(data: any)[]>
 local _listeners = {}
