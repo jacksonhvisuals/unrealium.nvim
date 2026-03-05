@@ -44,7 +44,7 @@ lua/unrealium/
       init.lua                           -- UI dispatch
       picker.lua                         -- Multi-backend picker (Snacks → Telescope → fzf-lua → native)
     lsp/
-      init.lua                           -- clangd lifecycle management (start/stop/restart/auto-start)
+      init.lua                           -- clangd lifecycle (start/stop/restart/buf_attach/auto-start)
       config_gen.lua                     -- .clangd YAML generation with UE-optimized settings
   modules/                               -- Feature modules (self-contained, standard interface)
     build.lua                            -- :UE build (preset-based async builds)
@@ -87,7 +87,7 @@ plugin/unrealium.lua       -- Version guard (0.10.0+), re-init guard, auto-setup
 | `core/job.lua` | Async job runner for UBT builds and shell commands via vim.uv |
 | `core/target.lua` | Discovers and parses .Target.cs files for build target enumeration |
 | `core/progress.lua` | Build progress display via fidget.nvim or vim.notify fallback |
-| `core/lsp/init.lua` | clangd lifecycle: start/stop/restart with optimized flags, auto-start on first C++ buffer |
+| `core/lsp/init.lua` | clangd lifecycle: start/stop/restart/buf_attach with optimized flags, auto-start on first C++ buffer |
 | `core/lsp/config_gen.lua` | Generates .clangd config excluding ThirdParty/Intermediate from indexing |
 
 ### Configuration
