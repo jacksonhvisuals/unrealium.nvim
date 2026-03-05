@@ -3,10 +3,9 @@ name: Release
 on:
   push:
     branches: [main]
-  pull_request:
 
 jobs:
-  ci:
+  release:
     uses: folke/github/.github/workflows/ci.yml@main
     secrets: inherit
     with:

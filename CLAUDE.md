@@ -20,6 +20,27 @@ unrealium.nvim is a Neovim plugin for Unreal Engine 5 project development. It au
 
 **Formatting:** The project uses stylua. Run via the CI/release GitHub Actions workflows (folke's reusable workflows).
 
+## Commit Convention
+
+All commits must use [Conventional Commits](https://www.conventionalcommits.org/) format:
+
+```
+<type>[optional scope][!]: <description>
+```
+
+**Types:** `feat`, `fix`, `chore`, `docs`, `refactor`, `test`, `ci`, `perf`
+
+**Breaking changes:** Use `!` suffix (e.g., `feat!: remove legacy config`) or add a `BREAKING CHANGE` footer.
+
+This convention is enforced on PR titles via CI and drives release-please version bumps and changelog generation:
+- `fix:` → patch bump (0.1.0 → 0.1.1)
+- `feat:` → minor bump (0.1.0 → 0.2.0)
+- `feat!:` / `BREAKING CHANGE` → major bump (0.1.0 → 1.0.0)
+
+## Documentation
+
+When adding new features, adjusting existing commands, removing functionality, or changing configuration options, update `README.md` to reflect those changes. Keep the README in sync with the current state of the plugin.
+
 ## Architecture
 
 ### Directory Structure
