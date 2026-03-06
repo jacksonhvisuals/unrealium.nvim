@@ -8,7 +8,7 @@ A Neovim plugin for Unreal Engine 5 project development.
 
 - Auto-detects UE projects via `.uproject` files
 - Engine file read-only enforcement to prevent accidental recompiles
-- Unified `:UE` command with subcommands (build, run, search, generate, intel, lint, diagnostics)
+- Unified `:UE` command with subcommands (build, run, search, generate, intel, lint, diagnostics, debug, switch)
 - Multi-backend picker support (Snacks, Telescope, fzf-lua, native fallback)
 - clangd integration with auto-start and optimized config generation
 - Build progress notifications via [fidget.nvim](https://github.com/j-hui/fidget.nvim)
@@ -67,6 +67,12 @@ require("unrealium").setup({
       auto_start = true,       -- start clangd on first C++ buffer
       generate_config = true,  -- generate optimized .clangd file
     },
+  },
+  debug = {
+    adapter = "codelldb",        -- DAP adapter name
+    default_preset = nil,        -- preset name to use by default
+    extra_init_commands = {},     -- additional LLDB init commands
+    extra_args = {},             -- extra args passed to the editor binary
   },
 })
 ```
@@ -165,6 +171,24 @@ Run static analysis. Type: `PVS-Studio`.
 ### `:UE diagnostics [filter]`
 
 Browse build diagnostics. Filter: `errors`, `warnings`, `all` (default).
+
+### `:UE debug [preset]`
+
+Debug the project via nvim-dap. Use `:UE debug!` to open a preset picker.
+
+- `:UE debug` — launch with default/last preset (Editor DebugGame)
+- `:UE debug attach` — attach debugger to a running editor process
+- `:UE debug!` — pick a debug preset interactively
+
+Requires [nvim-dap](https://github.com/mfussenegger/nvim-dap). Automatically loads Epic's LLDB data formatters from the engine.
+
+### `:UE switch [mode]`
+
+Switch between header and source files with UE Public/Private directory awareness.
+
+- `:UE switch` — open companion in current window
+- `:UE switch split` — open in horizontal split
+- `:UE switch vsplit` — open in vertical split
 
 ### Legacy Aliases
 
@@ -288,4 +312,6 @@ lua/unrealium/
     lint.lua                             -- :UE lint
     diagnostics.lua                      -- :UE diagnostics
     intel.lua                            -- :UE intel (clangd management)
+    debug.lua                            -- :UE debug (nvim-dap integration)
+    switch.lua                           -- :UE switch (header/source switching)
 ```

@@ -91,6 +91,8 @@ lua/unrealium/
     lint.lua                             -- :UE lint (static analysis via UBT)
     diagnostics.lua                      -- :UE diagnostics (build error parsing)
     intel.lua                            -- :UE intel (clangd optimization, .clangd config gen)
+    debug.lua                            -- :UE debug (nvim-dap launch/attach with UE LLDB formatters)
+    switch.lua                           -- :UE switch (header/source switching, Public/Private aware)
 ```
 
 ### Initialization Flow
@@ -125,6 +127,8 @@ plugin/unrealium.lua       -- Version guard (0.10.0+), re-init guard, auto-setup
 | `core/progress.lua` | Build progress display via fidget.nvim or vim.notify fallback |
 | `core/lsp/init.lua` | clangd lifecycle: start/stop/restart/buf_attach with optimized flags, auto-start on first C++ buffer |
 | `core/lsp/config_gen.lua` | Generates .clangd config excluding ThirdParty/Intermediate from indexing |
+| `modules/debug.lua` | `:UE debug` — nvim-dap launch/attach with UE LLDB formatter injection |
+| `modules/switch.lua` | `:UE switch` — Header/source switching with Public/Private awareness |
 
 ### Configuration
 
