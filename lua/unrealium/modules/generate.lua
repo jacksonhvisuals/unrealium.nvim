@@ -7,40 +7,62 @@ local platform = require("unrealium.core.platform")
 local config = require("unrealium.core.config")
 local job = require("unrealium.core.job")
 local progress = require("unrealium.core.progress")
+local output = require("unrealium.core.output")
 
 M.name = "generate"
 
-M.commands = {
-	generate = {
-		desc = "Generate project files, clang database, or headers",
-		subcommands = {
-			["project-files"] = {
-				handler = function(_)
-					M.project_files()
-				end,
-				desc = "Generate Makefile and compile_commands.json",
-			},
-			["clang-database"] = {
-				handler = function(opts)
-					M.clang_database(opts.args[1])
-				end,
-				desc = "Regenerate compile_commands.json",
-				args = {
-					{ name = "scope", complete = { "Project", "Engine" } },
-				},
-			},
-			["header"] = {
-				handler = function(opts)
-					M.header(opts.args[1])
-				end,
-				desc = "Run UnrealHeaderTool (UHT) for code generation",
-				args = {
-					{ name = "manifest_path", complete = {} },
-				},
-			},
-		},
-	},
-}
+local OUTPUT_BUF_NAME = "generate"
+
+--- Run a generate command with progress, output capture, and quickfix on failure.
+---@param label string display name for progress/logging
+---@param cmd_data { cmd: string[], cwd: string }
+local function run_generate(label, cmd_data)
+	if job.is_running() then
+		log.error("A job is already running.")
+		return
+	end
+
+	local term_buf = output.get_or_create_buf(OUTPUT_BUF_NAME)
+	output.clear(term_buf, "--- " .. label .. " ---")
+
+	progress.begin(label)
+
+	job.start({
+		cmd = cmd_data.cmd,
+		cwd = cmd_data.cwd,
+		on_line = function(line)
+			output.append(term_buf, line)
+		end,
+		on_complete = function(handle)
+			vim.schedule(function()
+				local cancelled = handle.exit_code ~= 0 and handle.exit_code ~= nil and #handle.errors == 0
+				local level, status
+				if handle.exit_code == 0 then
+					level = vim.log.levels.INFO
+					status = "completed"
+				elseif cancelled then
+					level = vim.log.levels.WARN
+					status = "cancelled"
+				else
+					level = vim.log.levels.ERROR
+					status = "failed"
+				end
+
+				local msg = string.format("%s %s (%d errors)", label, status, #handle.errors)
+				progress.finish(msg, level)
+				log.info(msg)
+
+				if handle.exit_code ~= 0 and not cancelled then
+					output.quickfix(handle)
+				end
+
+				if handle.exit_code == 0 and #handle.errors == 0 and #handle.warnings == 0 then
+					output.delete_buf(OUTPUT_BUF_NAME)
+				end
+			end)
+		end,
+	})
+end
 
 --- Generate project files (Makefile + compile_commands).
 function M.project_files()
@@ -50,10 +72,8 @@ function M.project_files()
 		return
 	end
 
-	log.info("Generating project files...")
-	local cmd = platform.gen_project_files_command(cfg)
-	log.info("Running: %s", cmd.command)
-	vim.cmd(cmd.command)
+	local cmd_data = platform.gen_project_files_cmd(cfg)
+	run_generate("Generate project files", cmd_data)
 end
 
 --- Generate clang database.
@@ -70,13 +90,8 @@ function M.clang_database(scope)
 		return
 	end
 
-	log.info("Generating clang database for %s...", scope)
-	local result = platform.gen_clang_database_command(cfg, scope)
-
-	-- Caller sets makeprg (moved from platform.lua — no side effects in platform)
-	vim.cmd("set makeprg=" .. vim.fn.fnameescape(result.makeprg))
-	log.info("Running: %s", result.command)
-	vim.cmd(result.command)
+	local cmd_data = platform.gen_clang_database_cmd(cfg, scope)
+	run_generate("Generate clang database (" .. scope .. ")", cmd_data)
 end
 
 --- Generate headers via UHT (UnrealHeaderTool).
@@ -134,23 +149,47 @@ function M.header(manifest_path)
 		return
 	end
 
-	log.info("Running UnrealHeaderTool...")
-	progress.begin("UHT: " .. preset.name)
-
-	job.start({
-		cmd = cmd_data.cmd,
-		cwd = cmd_data.cwd,
-		preset = preset,
-		on_complete = function(handle)
-			vim.schedule(function()
-				local status = handle.exit_code == 0 and "completed" or "failed"
-				local msg = string.format("UHT %s (%d errors)", status, #handle.errors)
-				local level = handle.exit_code == 0 and vim.log.levels.INFO or vim.log.levels.ERROR
-				progress.finish(msg, level)
-				log.info(msg)
-			end)
-		end,
-	})
+	run_generate("UHT: " .. preset.name, cmd_data)
 end
+
+M.commands = {
+	generate = {
+		desc = "Generate project files, clang database, or headers",
+		subcommands = {
+			["project-files"] = {
+				handler = function(_)
+					M.project_files()
+				end,
+				desc = "Generate Makefile and compile_commands.json",
+			},
+			["clang-database"] = {
+				handler = function(opts)
+					M.clang_database(opts.args[1])
+				end,
+				desc = "Regenerate compile_commands.json",
+				args = {
+					{ name = "scope", complete = { "Project", "Engine" } },
+				},
+			},
+			["header"] = {
+				handler = function(opts)
+					M.header(opts.args[1])
+				end,
+				desc = "Run UnrealHeaderTool (UHT) for code generation",
+				args = {
+					{ name = "manifest_path", complete = {} },
+				},
+			},
+			["log"] = {
+				handler = function(_)
+					if not output.toggle(OUTPUT_BUF_NAME) then
+						log.info("No generate output available")
+					end
+				end,
+				desc = "Toggle generate output log",
+			},
+		},
+	},
+}
 
 return M

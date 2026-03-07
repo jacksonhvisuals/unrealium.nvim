@@ -7,8 +7,11 @@ local platform = require("unrealium.core.platform")
 local config = require("unrealium.core.config")
 local job = require("unrealium.core.job")
 local progress = require("unrealium.core.progress")
+local output = require("unrealium.core.output")
 
 M.name = "lint"
+
+local OUTPUT_BUF_NAME = "lint"
 
 --- Execute static analysis.
 ---@param lint_type? string e.g. "PVS-Studio"
@@ -49,6 +52,9 @@ function M.execute(lint_type)
 		return
 	end
 
+	local term_buf = output.get_or_create_buf(OUTPUT_BUF_NAME)
+	output.clear(term_buf, "--- Lint: " .. preset.name .. " ---")
+
 	log.info("Running static analysis: %s", lint_type or "default")
 	progress.begin("Lint: " .. preset.name)
 
@@ -56,36 +62,34 @@ function M.execute(lint_type)
 		cmd = cmd_data.cmd,
 		cwd = cmd_data.cwd,
 		preset = preset,
+		on_line = function(line)
+			output.append(term_buf, line)
+		end,
 		on_complete = function(handle)
 			vim.schedule(function()
-				local items = {}
-				for _, diag in ipairs(handle.errors) do
-					table.insert(items, {
-						filename = diag.file,
-						lnum = diag.lnum,
-						col = diag.col or 0,
-						text = diag.text,
-						type = "E",
-					})
-				end
-				for _, diag in ipairs(handle.warnings) do
-					table.insert(items, {
-						filename = diag.file,
-						lnum = diag.lnum,
-						col = diag.col or 0,
-						text = diag.text,
-						type = "W",
-					})
+				local cancelled = handle.exit_code ~= 0 and handle.exit_code ~= nil and #handle.errors == 0
+				local level, status
+				if handle.exit_code == 0 then
+					level = vim.log.levels.INFO
+					status = "completed"
+				elseif cancelled then
+					level = vim.log.levels.WARN
+					status = "cancelled"
+				else
+					level = vim.log.levels.ERROR
+					status = "failed"
 				end
 
-				vim.fn.setqflist(items, "r")
-				local status = handle.exit_code == 0 and "completed" or "failed"
 				local msg = string.format("Lint %s: %d errors, %d warnings", status, #handle.errors, #handle.warnings)
-				progress.finish(msg, handle.exit_code == 0 and vim.log.levels.INFO or vim.log.levels.ERROR)
+				progress.finish(msg, level)
 				log.info(msg)
 
-				if #items > 0 then
-					vim.cmd("copen")
+				if handle.exit_code ~= 0 and not cancelled then
+					output.quickfix(handle)
+				end
+
+				if handle.exit_code == 0 and #handle.errors == 0 and #handle.warnings == 0 then
+					output.delete_buf(OUTPUT_BUF_NAME)
 				end
 			end)
 		end,
@@ -95,11 +99,22 @@ end
 M.commands = {
 	lint = {
 		handler = function(opts)
+			if opts.args[1] == "log" then
+				if not output.toggle(OUTPUT_BUF_NAME) then
+					log.info("No lint output available")
+				end
+				return
+			end
 			M.execute(opts.args[1])
 		end,
 		desc = "Run static analysis",
 		args = {
-			{ name = "type", complete = { "PVS-Studio" } },
+			{
+				name = "type",
+				complete = function()
+					return { "log", "PVS-Studio" }
+				end,
+			},
 		},
 	},
 }

@@ -9,6 +9,7 @@ local event = require("unrealium.core.event")
 local job = require("unrealium.core.job")
 local target = require("unrealium.core.target")
 local progress = require("unrealium.core.progress")
+local output = require("unrealium.core.output")
 
 M.name = "build"
 
@@ -135,76 +136,7 @@ local function preset_from_configuration(cfg, configuration)
 	return nil
 end
 
---- Create the terminal output buffer.
----@return integer bufnr
-local function get_or_create_terminal_buf()
-	-- Look for existing buffer
-	for _, buf in ipairs(vim.api.nvim_list_bufs()) do
-		if vim.api.nvim_buf_is_valid(buf) then
-			local name = vim.api.nvim_buf_get_name(buf)
-			if name:match("%[unrealium:build%]$") then
-				return buf
-			end
-		end
-	end
-
-	-- Create new buffer
-	local buf = vim.api.nvim_create_buf(false, true)
-	vim.api.nvim_buf_set_name(buf, "[unrealium:build]")
-	vim.api.nvim_set_option_value("buftype", "nofile", { buf = buf })
-	vim.api.nvim_set_option_value("swapfile", false, { buf = buf })
-	vim.api.nvim_set_option_value("bufhidden", "hide", { buf = buf })
-	return buf
-end
-
---- Append a line to the terminal buffer with auto-scroll.
----@param buf integer
----@param line string
-local function append_to_terminal(buf, line)
-	vim.schedule(function()
-		if not vim.api.nvim_buf_is_valid(buf) then
-			return
-		end
-		vim.api.nvim_buf_set_lines(buf, -1, -1, false, { line })
-
-		-- Auto-scroll windows showing this buffer
-		for _, win in ipairs(vim.api.nvim_list_wins()) do
-			if vim.api.nvim_win_get_buf(win) == buf then
-				local line_count = vim.api.nvim_buf_line_count(buf)
-				vim.api.nvim_win_set_cursor(win, { line_count, 0 })
-			end
-		end
-	end)
-end
-
---- Populate quickfix list from diagnostics.
----@param handle UnrealiumJobHandle
-local function populate_quickfix(handle)
-	local items = {}
-	for _, diag in ipairs(handle.errors) do
-		table.insert(items, {
-			filename = diag.file,
-			lnum = diag.lnum,
-			col = diag.col or 0,
-			text = diag.text,
-			type = "E",
-		})
-	end
-	for _, diag in ipairs(handle.warnings) do
-		table.insert(items, {
-			filename = diag.file,
-			lnum = diag.lnum,
-			col = diag.col or 0,
-			text = diag.text,
-			type = "W",
-		})
-	end
-
-	vim.fn.setqflist(items, "r")
-	if #handle.errors > 0 then
-		vim.cmd("copen")
-	end
-end
+local OUTPUT_BUF_NAME = "build"
 
 --- Run a build with the given preset.
 ---@param preset UnrealiumPreset
@@ -253,9 +185,8 @@ local function run_build(preset, extra_args)
 
 	local term_buf
 	if output_mode == "terminal" then
-		term_buf = get_or_create_terminal_buf()
-		-- Clear previous output
-		vim.api.nvim_buf_set_lines(term_buf, 0, -1, false, { "--- Build: " .. preset.name .. " ---" })
+		term_buf = output.get_or_create_buf(OUTPUT_BUF_NAME)
+		output.clear(term_buf, "--- Build: " .. preset.name .. " ---")
 	end
 
 	if progress_enabled then
@@ -268,7 +199,7 @@ local function run_build(preset, extra_args)
 		preset = preset,
 		on_line = function(line)
 			if output_mode == "terminal" and term_buf then
-				append_to_terminal(term_buf, line)
+				output.append(term_buf, line)
 			end
 		end,
 		on_complete = function(handle)
@@ -298,21 +229,18 @@ local function run_build(preset, extra_args)
 					progress.finish(msg, level, completion_ttl)
 				end
 
-				if output_mode == "quickfix" then
-					populate_quickfix(handle)
+				if output_mode == "quickfix" or (handle.exit_code ~= 0 and not cancelled) then
+					output.quickfix(handle)
 				end
 
 				-- Clean up build output buffer on success with no warnings
 				if
 					output_mode == "terminal"
-					and term_buf
 					and handle.exit_code == 0
 					and #handle.errors == 0
 					and #handle.warnings == 0
 				then
-					if vim.api.nvim_buf_is_valid(term_buf) then
-						vim.api.nvim_buf_delete(term_buf, { force = true })
-					end
+					output.delete_buf(OUTPUT_BUF_NAME)
 				end
 
 				log.info(msg)
@@ -348,41 +276,8 @@ end
 
 --- Toggle the build output log split.
 local function toggle_build_log()
-	-- Check if a window showing the build buffer is already open
-	for _, win in ipairs(vim.api.nvim_list_wins()) do
-		if vim.api.nvim_win_is_valid(win) then
-			local buf = vim.api.nvim_win_get_buf(win)
-			local name = vim.api.nvim_buf_get_name(buf)
-			if name:match("%[unrealium:build%]$") then
-				vim.api.nvim_win_close(win, false)
-				return
-			end
-		end
-	end
-
-	-- Find the build buffer
-	local build_buf = nil
-	for _, buf in ipairs(vim.api.nvim_list_bufs()) do
-		if vim.api.nvim_buf_is_valid(buf) then
-			local name = vim.api.nvim_buf_get_name(buf)
-			if name:match("%[unrealium:build%]$") then
-				build_buf = buf
-				break
-			end
-		end
-	end
-
-	if not build_buf then
+	if not output.toggle(OUTPUT_BUF_NAME) then
 		log.info("No build output available")
-		return
-	end
-
-	-- Open a bottom split with the build buffer
-	vim.cmd("botright split")
-	vim.api.nvim_win_set_buf(0, build_buf)
-	local line_count = vim.api.nvim_buf_line_count(build_buf)
-	if line_count > 0 then
-		vim.api.nvim_win_set_cursor(0, { line_count, 0 })
 	end
 end
 

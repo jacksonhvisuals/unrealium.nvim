@@ -69,55 +69,55 @@ function M.run_command(config, type, extra_args)
 	}
 end
 
---- Get the generate project files command.
+--- Assemble a generate-project-files command for async job execution.
 ---@param config UnrealiumConfig
----@return { command: string }
-function M.gen_project_files_command(config)
-	local args = {
-		"Dispatch",
-		config.Engine.Scripts.GenerateProjectFiles,
-		"-projectfiles",
-		'-project="' .. config.Project.FullPath .. '"',
-		"-Makefile",
-		"-game",
-		"-engine",
-		"-progress",
-	}
+---@return { cmd: string[], cwd: string }
+function M.gen_project_files_cmd(config)
 	return {
-		command = table.concat(args, " "),
+		cmd = {
+			config.Engine.Scripts.GenerateProjectFiles,
+			"-projectfiles",
+			"-project=" .. config.Project.FullPath,
+			"-Makefile",
+			"-game",
+			"-engine",
+			"-progress",
+		},
+		cwd = config.Project.Folder,
 	}
 end
 
---- Get the generate clang database command.
---- Returns pure data — caller is responsible for setting makeprg.
+--- Assemble a generate-clang-database command for async job execution.
 ---@param config UnrealiumConfig
----@param gen_mode string "Project"|"Engine"
----@return { command: string, makeprg: string }
-function M.gen_clang_database_command(config, gen_mode)
-	local output_dir, target_name, project_arg
+---@param scope string "Project"|"Engine"
+---@return { cmd: string[], cwd: string }
+function M.gen_clang_database_cmd(config, scope)
+	local output_dir, target_name
 
-	if gen_mode == "Project" then
+	if scope == "Project" then
 		output_dir = config.Engine.Folder
 		target_name = "Unreal"
-		project_arg = ""
 	else
 		output_dir = config.Project.Folder
 		target_name = config.Project.Name
-		project_arg = "-project='" .. config.Project.FullPath .. "'"
 	end
 
-	local args = {
-		"Dispatch",
+	local cmd = {
 		config.Engine.Scripts.RunUBT,
 		"-mode=GenerateClangDatabase",
-		project_arg,
-		target_name .. "Editor " .. config.PlatformName .. " Development",
-		"-OutputDir='" .. output_dir .. "'",
+		target_name .. "Editor",
+		config.PlatformName,
+		"Development",
+		"-OutputDir=" .. output_dir,
 	}
 
+	if scope == "Engine" then
+		table.insert(cmd, 3, "-project=" .. config.Project.FullPath)
+	end
+
 	return {
-		command = table.concat(args, " "),
-		makeprg = config.Engine.Scripts.RunUBT,
+		cmd = cmd,
+		cwd = config.Project.Folder,
 	}
 end
 
