@@ -223,12 +223,14 @@ function M.start(opts)
 end
 
 --- Stop the active job.
+--- jobstop() triggers the on_exit callback, which handles cleanup.
 function M.stop()
-	if _active_job then
-		vim.fn.jobstop(_active_job.id)
-		log.info("Job %d stopped", _active_job.id)
-		_active_job = nil
+	if not _active_job then
+		log.info("No active job to stop")
+		return
 	end
+	log.info("Stopping job %d", _active_job.id)
+	vim.fn.jobstop(_active_job.id)
 end
 
 --- Check if a job is currently running.

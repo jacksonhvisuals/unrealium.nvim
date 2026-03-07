@@ -273,8 +273,18 @@ local function run_build(preset, extra_args)
 		end,
 		on_complete = function(handle)
 			vim.schedule(function()
-				local level = handle.exit_code == 0 and vim.log.levels.INFO or vim.log.levels.ERROR
-				local status = handle.exit_code == 0 and "succeeded" or "failed"
+				local cancelled = handle.exit_code ~= 0 and handle.exit_code ~= nil and #handle.errors == 0
+				local level, status
+				if handle.exit_code == 0 then
+					level = vim.log.levels.INFO
+					status = "succeeded"
+				elseif cancelled then
+					level = vim.log.levels.WARN
+					status = "cancelled"
+				else
+					level = vim.log.levels.ERROR
+					status = "failed"
+				end
 				local msg = string.format(
 					"Build %s: %s (%d errors, %d warnings)",
 					status,
@@ -336,6 +346,46 @@ local function pick_preset()
 	end)
 end
 
+--- Toggle the build output log split.
+local function toggle_build_log()
+	-- Check if a window showing the build buffer is already open
+	for _, win in ipairs(vim.api.nvim_list_wins()) do
+		if vim.api.nvim_win_is_valid(win) then
+			local buf = vim.api.nvim_win_get_buf(win)
+			local name = vim.api.nvim_buf_get_name(buf)
+			if name:match("%[unrealium:build%]$") then
+				vim.api.nvim_win_close(win, false)
+				return
+			end
+		end
+	end
+
+	-- Find the build buffer
+	local build_buf = nil
+	for _, buf in ipairs(vim.api.nvim_list_bufs()) do
+		if vim.api.nvim_buf_is_valid(buf) then
+			local name = vim.api.nvim_buf_get_name(buf)
+			if name:match("%[unrealium:build%]$") then
+				build_buf = buf
+				break
+			end
+		end
+	end
+
+	if not build_buf then
+		log.info("No build output available")
+		return
+	end
+
+	-- Open a bottom split with the build buffer
+	vim.cmd("botright split")
+	vim.api.nvim_win_set_buf(0, build_buf)
+	local line_count = vim.api.nvim_buf_line_count(build_buf)
+	if line_count > 0 then
+		vim.api.nvim_win_set_cursor(0, { line_count, 0 })
+	end
+end
+
 --- Execute a build.
 ---@param arg? string preset name, configuration name, or nil for default/last
 ---@param bang? boolean if true, open preset picker
@@ -348,6 +398,11 @@ function M.execute(arg, bang, extra_args)
 
 	if arg == "stop" then
 		job.stop()
+		return
+	end
+
+	if arg == "log" then
+		toggle_build_log()
 		return
 	end
 
@@ -391,8 +446,8 @@ M.commands = {
 				M.execute(nil, opts.bang)
 				return
 			end
-			if opts.args[1] == "stop" then
-				M.execute("stop", opts.bang)
+			if opts.args[1] == "stop" or opts.args[1] == "log" then
+				M.execute(opts.args[1], opts.bang)
 				return
 			end
 			-- Try longest match first to support preset names with spaces
@@ -418,7 +473,15 @@ M.commands = {
 		end,
 		desc = "Build the project (use ! to pick preset)",
 		args = {
-			{ name = "preset", complete = preset_names },
+			{
+				name = "preset",
+				complete = function()
+					local names = preset_names()
+					table.insert(names, 1, "stop")
+					table.insert(names, 2, "log")
+					return names
+				end,
+			},
 		},
 	},
 }
@@ -435,6 +498,7 @@ if _TEST then
 	M._preset_from_configuration = preset_from_configuration
 	M._default_preset = default_preset
 	M._run_build = run_build
+	M._toggle_build_log = toggle_build_log
 	M._reset = function()
 		_last_preset = nil
 	end
