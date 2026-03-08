@@ -52,7 +52,7 @@ require("unrealium").setup({
     configurations = { "Development", "DebugGame", "Debug", "Shipping", "Test" },
     presets = {},              -- named build presets
     output_mode = "terminal",
-    progress_enabled = true,
+    progress = true,
     extra_args = {},           -- extra args passed to UBT
   },
   run = {

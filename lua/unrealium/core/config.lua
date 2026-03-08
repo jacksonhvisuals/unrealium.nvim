@@ -17,7 +17,7 @@ local _defaults = {
 		configurations = { "Development", "DebugGame", "Debug", "Shipping", "Test" },
 		presets = {},
 		output_mode = "terminal",
-		progress_enabled = true,
+		progress = true,
 		completion_ttl = 5,
 		extra_args = {},
 	},

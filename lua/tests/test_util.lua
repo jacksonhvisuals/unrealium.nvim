@@ -85,7 +85,7 @@ function M.mock_config(overrides)
 				configurations = { "Development", "DebugGame", "Debug", "Shipping", "Test" },
 				presets = {},
 				output_mode = "terminal",
-				progress_enabled = true,
+				progress = true,
 			},
 		},
 	}

@@ -23,7 +23,7 @@
 ---@field engine? { folder?: string, allow_modifications?: boolean }
 ---@field logging? { level?: string }
 ---@field ui? { picker?: { prefer?: string[] } }
----@field build? { configurations?: string[], presets?: UnrealiumPreset[], output_mode?: string, progress_enabled?: boolean, extra_args?: string[] }
+---@field build? { configurations?: string[], presets?: UnrealiumPreset[], output_mode?: string, progress?: boolean, extra_args?: string[] }
 ---@field run? { extra_args?: string[] }
 ---@field debug? { adapter?: string, default_preset?: string, extra_init_commands?: string[], extra_args?: string[] }
 

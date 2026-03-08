@@ -178,7 +178,7 @@ local function run_build(preset, extra_args)
 	event.emit(event.BUILD_START, { preset = preset })
 
 	local output_mode = cfg.settings and cfg.settings.build and cfg.settings.build.output_mode or "terminal"
-	local progress_enabled = cfg.settings and cfg.settings.build and cfg.settings.build.progress_enabled
+	local progress_enabled = cfg.settings and cfg.settings.build and cfg.settings.build.progress
 	if progress_enabled == nil then
 		progress_enabled = true
 	end
