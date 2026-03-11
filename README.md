@@ -53,10 +53,15 @@ require("unrealium").setup({
     presets = {},              -- named build presets
     output_mode = "terminal",
     progress = true,
+    default_preset = nil,      -- preset name to use when no arg and no last preset
     extra_args = {},           -- extra args passed to UBT
   },
   run = {
-    extra_args = {},           -- extra args passed to the editor
+    default_type = "Development",  -- "Development" or "Debug"
+    extra_args = {},               -- extra args passed to the editor
+  },
+  search = {
+    exclude_patterns = { "**/*.po", "**/*.archive", "**/*.gen.h", "**/Intermediate/Build/**" },
   },
   intel = {
     clangd = {
@@ -66,7 +71,20 @@ require("unrealium").setup({
       extra_flags = {},        -- additional clangd flags
       auto_start = true,       -- start clangd on first C++ buffer
       generate_config = true,  -- generate optimized .clangd file
+      config_gen = {
+        exclude_paths = { "ThirdParty", "Intermediate" },  -- paths to skip indexing
+        extra_compile_flags = {},                           -- additional compile flags
+      },
     },
+  },
+  lint = {
+    default_analyzer = nil,    -- e.g. "PVS-Studio"
+  },
+  generate = {
+    default_clang_scope = nil, -- "Project" or "Engine"
+  },
+  editor_lock = {
+    extra_paths = {},          -- additional paths to enforce read-only
   },
   debug = {
     adapter = "codelldb",        -- DAP adapter name
@@ -94,9 +112,25 @@ For custom engine paths (e.g. source builds), create a config file next to your 
   "engine": { "folder": "/path/to/UE5", "allow_modifications": false },
   "logging": { "level": "info" },
   "ui": { "picker": { "prefer": ["snacks", "telescope", "native"] } },
-  "build": { "configurations": ["Development", "DebugGame"], "output_mode": "terminal", "extra_args": [] },
-  "run": { "extra_args": ["-norelativemousemode"] },
-  "intel": { "clangd": { "enabled": true, "auto_start": true, "generate_config": true } }
+  "build": {
+    "configurations": ["Development", "DebugGame"],
+    "default_preset": "MyProjectEditor Linux Development",
+    "output_mode": "terminal",
+    "extra_args": []
+  },
+  "run": { "default_type": "Development", "extra_args": ["-norelativemousemode"] },
+  "search": { "exclude_patterns": ["**/*.po", "**/*.archive", "**/MyCustomExclude/**"] },
+  "intel": {
+    "clangd": {
+      "enabled": true,
+      "auto_start": true,
+      "generate_config": true,
+      "config_gen": { "exclude_paths": ["ThirdParty", "Intermediate"], "extra_compile_flags": [] }
+    }
+  },
+  "lint": { "default_analyzer": "PVS-Studio" },
+  "generate": { "default_clang_scope": "Project" },
+  "editor_lock": { "extra_paths": ["/path/to/shared/plugins"] }
 }
 ```
 
@@ -126,7 +160,7 @@ The primary command is `:UE <subcommand>`. Tab completion is available for all s
 
 Build the project. Use `:UE build!` to open a preset picker.
 
-- `:UE build` — build with default/last configuration
+- `:UE build` — build with last/default preset (configurable via `build.default_preset`)
 - `:UE build Development` — build a specific configuration
 - `:UE build stop` — cancel the running build
 
@@ -134,7 +168,7 @@ Build the project. Use `:UE build!` to open a preset picker.
 
 Launch the Unreal Editor.
 
-- `:UE run` — run with Development configuration
+- `:UE run` — run with default type (configurable via `run.default_type`)
 - `:UE run Debug` — run with Debug configuration
 
 ### `:UE search [type] [scope] [search-term]`
