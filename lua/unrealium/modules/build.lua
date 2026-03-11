@@ -406,6 +406,9 @@ if _TEST then
 	M._reset = function()
 		_last_preset = nil
 	end
+	M._set_last_preset = function(preset)
+		_last_preset = preset
+	end
 end
 
 return M

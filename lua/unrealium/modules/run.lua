@@ -31,7 +31,13 @@ function M.execute(type, extra_args)
 	end
 
 	if not type then
-		type = cfg.settings and cfg.settings.run and cfg.settings.run.default_type or "Development"
+		local build = require("unrealium.modules.build")
+		local last = build.last_preset()
+		if last and last.is_editor then
+			type = last.configuration == "Debug" and "Debug" or "Development"
+		else
+			type = cfg.settings and cfg.settings.run and cfg.settings.run.default_type or "Development"
+		end
 	end
 
 	-- Merge config-level extra_args with dynamic extra_args
