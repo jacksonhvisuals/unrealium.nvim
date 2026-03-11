@@ -19,10 +19,15 @@ local _defaults = {
 		output_mode = "terminal",
 		progress = true,
 		completion_ttl = 5,
+		default_preset = nil,
 		extra_args = {},
 	},
 	run = {
+		default_type = "Development",
 		extra_args = {},
+	},
+	search = {
+		exclude_patterns = { "**/*.po", "**/*.archive", "**/*.gen.h", "**/Intermediate/Build/**" },
 	},
 	intel = {
 		clangd = {
@@ -32,7 +37,20 @@ local _defaults = {
 			extra_flags = {},
 			auto_start = true,
 			generate_config = true,
+			config_gen = {
+				exclude_paths = { "ThirdParty", "Intermediate" },
+				extra_compile_flags = {},
+			},
 		},
+	},
+	lint = {
+		default_analyzer = nil,
+	},
+	generate = {
+		default_clang_scope = nil,
+	},
+	editor_lock = {
+		extra_paths = {},
 	},
 	debug = {
 		adapter = "codelldb",
@@ -146,8 +164,20 @@ function M.get()
 	if raw_config.run then
 		settings = deep_merge(settings, { run = raw_config.run })
 	end
+	if raw_config.search then
+		settings = deep_merge(settings, { search = raw_config.search })
+	end
 	if raw_config.intel then
 		settings = deep_merge(settings, { intel = raw_config.intel })
+	end
+	if raw_config.lint then
+		settings = deep_merge(settings, { lint = raw_config.lint })
+	end
+	if raw_config.generate then
+		settings = deep_merge(settings, { generate = raw_config.generate })
+	end
+	if raw_config.editor_lock then
+		settings = deep_merge(settings, { editor_lock = raw_config.editor_lock })
 	end
 	if raw_config.debug then
 		settings = deep_merge(settings, { debug = raw_config.debug })

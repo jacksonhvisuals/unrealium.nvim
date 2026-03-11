@@ -79,12 +79,15 @@ end
 --- Generate clang database.
 ---@param scope? string "Project"|"Engine"
 function M.clang_database(scope)
+	local cfg = config.get()
+	if not scope then
+		scope = cfg and cfg.settings and cfg.settings.generate and cfg.settings.generate.default_clang_scope
+	end
+
 	if scope ~= "Project" and scope ~= "Engine" then
 		log.error('Scope must be "Project" or "Engine", got: %s', tostring(scope))
 		return
 	end
-
-	local cfg = config.get()
 	if not cfg then
 		log.error("Config not available")
 		return

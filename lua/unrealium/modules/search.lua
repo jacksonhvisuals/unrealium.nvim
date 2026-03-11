@@ -47,11 +47,14 @@ function M.execute(search_type, scope, search_term)
 
 	log.info("Searching (%s) in %s", search_type, scope)
 
+	local exclude = cfg.settings and cfg.settings.search and cfg.settings.search.exclude_patterns
+		or platform.get_exclude_globs()
+
 	ui.pick({
 		mode = search_type,
 		dirs = dirs,
 		search = search_term,
-		exclude = platform.get_exclude_globs(),
+		exclude = exclude,
 		title = "UE Search: " .. scope,
 	})
 end

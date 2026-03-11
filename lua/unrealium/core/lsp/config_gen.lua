@@ -4,26 +4,47 @@ local M = {}
 
 local log = require("unrealium.core.log").get("intel")
 
-local CLANGD_CONFIG = [[CompileFlags:
-  Add:
-    - -D__INTELLISENSE__
-    - -Wno-unknown-pragmas
+--- Build the .clangd config content from settings.
+---@param cfg UnrealiumConfig
+---@return string
+local function build_config(cfg)
+	local config_gen = cfg.settings
+		and cfg.settings.intel
+		and cfg.settings.intel.clangd
+		and cfg.settings.intel.clangd.config_gen
 
-Index:
-  Background: Build
+	local compile_flags = { "-D__INTELLISENSE__", "-Wno-unknown-pragmas" }
+	if config_gen and config_gen.extra_compile_flags then
+		for _, flag in ipairs(config_gen.extra_compile_flags) do
+			table.insert(compile_flags, flag)
+		end
+	end
 
----
-If:
-  PathMatch: .*/ThirdParty/.*
-  Index:
-    Background: Skip
+	local exclude_paths = { "ThirdParty", "Intermediate" }
+	if config_gen and config_gen.exclude_paths then
+		exclude_paths = config_gen.exclude_paths
+	end
 
----
-If:
-  PathMatch: .*/Intermediate/.*
-  Index:
-    Background: Skip
-]]
+	local lines = { "CompileFlags:", "  Add:" }
+	for _, flag in ipairs(compile_flags) do
+		table.insert(lines, "    - " .. flag)
+	end
+	table.insert(lines, "")
+	table.insert(lines, "Index:")
+	table.insert(lines, "  Background: Build")
+
+	for _, path in ipairs(exclude_paths) do
+		table.insert(lines, "")
+		table.insert(lines, "---")
+		table.insert(lines, "If:")
+		table.insert(lines, string.format("  PathMatch: .*/%s/.*", path))
+		table.insert(lines, "  Index:")
+		table.insert(lines, "    Background: Skip")
+	end
+	table.insert(lines, "")
+
+	return table.concat(lines, "\n")
+end
 
 --- Generate an optimized .clangd config at the project root.
 ---@param cfg UnrealiumConfig
@@ -46,7 +67,7 @@ function M.generate(cfg, force)
 		return false
 	end
 
-	fd:write(CLANGD_CONFIG)
+	fd:write(build_config(cfg))
 	fd:close()
 
 	log.info("Generated .clangd at %s", path)

@@ -21,15 +21,17 @@ M.commands = {
 }
 
 --- Launch Unreal Editor.
----@param type? string "Debug"|"Development" (defaults to "Development")
+---@param type? string "Debug"|"Development" (defaults to config run.default_type)
 ---@param extra_args? string[] additional CLI arguments
 function M.execute(type, extra_args)
-	type = type or "Development"
-
 	local cfg = config.get()
 	if not cfg then
 		log.error("Config not available")
 		return
+	end
+
+	if not type then
+		type = cfg.settings and cfg.settings.run and cfg.settings.run.default_type or "Development"
 	end
 
 	-- Merge config-level extra_args with dynamic extra_args

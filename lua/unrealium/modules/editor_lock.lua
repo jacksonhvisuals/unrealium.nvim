@@ -22,6 +22,18 @@ function M.check_file(file_path)
 	if vim.startswith(file_path, cfg.Engine.Folder) then
 		log.debug("Locking engine file: %s", file_path)
 		vim.bo.modifiable = false
+		return
+	end
+
+	local extra_paths = cfg.settings and cfg.settings.editor_lock and cfg.settings.editor_lock.extra_paths
+	if extra_paths then
+		for _, locked_path in ipairs(extra_paths) do
+			if vim.startswith(file_path, locked_path) then
+				log.debug("Locking file (extra_paths): %s", file_path)
+				vim.bo.modifiable = false
+				return
+			end
+		end
 	end
 end
 

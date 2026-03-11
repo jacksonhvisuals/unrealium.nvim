@@ -22,6 +22,10 @@ function M.execute(lint_type)
 		return
 	end
 
+	if not lint_type then
+		lint_type = cfg.settings and cfg.settings.lint and cfg.settings.lint.default_analyzer
+	end
+
 	if job.is_running() then
 		log.error("A job is already running.")
 		return

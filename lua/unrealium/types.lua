@@ -23,8 +23,13 @@
 ---@field engine? { folder?: string, allow_modifications?: boolean }
 ---@field logging? { level?: string }
 ---@field ui? { picker?: { prefer?: string[] } }
----@field build? { configurations?: string[], presets?: UnrealiumPreset[], output_mode?: string, progress?: boolean, extra_args?: string[] }
----@field run? { extra_args?: string[] }
+---@field build? { configurations?: string[], presets?: UnrealiumPreset[], output_mode?: string, progress?: boolean, default_preset?: string, extra_args?: string[] }
+---@field run? { default_type?: string, extra_args?: string[] }
+---@field search? { exclude_patterns?: string[] }
+---@field intel? { clangd?: { enabled?: boolean, exclusive?: boolean, cmd?: string, extra_flags?: string[], auto_start?: boolean, generate_config?: boolean, config_gen?: { exclude_paths?: string[], extra_compile_flags?: string[] } } }
+---@field lint? { default_analyzer?: string }
+---@field generate? { default_clang_scope?: string }
+---@field editor_lock? { extra_paths?: string[] }
 ---@field debug? { adapter?: string, default_preset?: string, extra_init_commands?: string[], extra_args?: string[] }
 
 ---@class UnrealiumModule

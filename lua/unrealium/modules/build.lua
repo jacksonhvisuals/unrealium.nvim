@@ -323,8 +323,17 @@ function M.execute(arg, bang, extra_args)
 			return
 		end
 	else
-		-- Use last preset, or default
-		preset = _last_preset or default_preset(cfg)
+		-- Use last preset, config default, or heuristic default
+		preset = _last_preset
+		if not preset then
+			local build_settings = cfg.settings and cfg.settings.build
+			if build_settings and build_settings.default_preset then
+				preset = find_preset(build_settings.default_preset)
+			end
+		end
+		if not preset then
+			preset = default_preset(cfg)
+		end
 		if not preset then
 			log.error("No build presets available. Are there *.Target.cs files in Source/?")
 			return
