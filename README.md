@@ -68,7 +68,7 @@ require("unrealium").setup({
       enabled = true,
       exclusive = false,       -- stop external clangd clients when unrealium starts its own
       cmd = nil,               -- custom clangd binary path
-      extra_flags = {},        -- additional clangd flags
+      extra_flags = {},        -- additional clangd flags, e.g. { "--query-driver=/path/to/clang++" }
       auto_start = true,       -- start clangd on first C++ buffer
       generate_config = true,  -- generate optimized .clangd file
       config_gen = {
@@ -124,6 +124,7 @@ For custom engine paths (e.g. source builds), create a config file next to your 
     "clangd": {
       "enabled": true,
       "auto_start": true,
+      "extra_flags": ["--query-driver=/usr/bin/clang++"],
       "generate_config": true,
       "config_gen": { "exclude_paths": ["ThirdParty", "Intermediate"], "extra_compile_flags": [] }
     }
