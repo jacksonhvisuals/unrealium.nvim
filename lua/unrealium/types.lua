@@ -32,6 +32,12 @@
 ---@field editor_lock? { extra_paths?: string[] }
 ---@field debug? { adapter?: string, default_preset?: string, extra_init_commands?: string[], extra_args?: string[] }
 
+---@class SchemaEntry
+---@field type string
+---@field enum? string[]
+---@field nilable? boolean
+---@field children? boolean
+
 ---@class UnrealiumModule
 ---@field name string
 ---@field commands? table<string, UnrealiumCommandSpec>

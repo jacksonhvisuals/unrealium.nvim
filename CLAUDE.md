@@ -115,6 +115,7 @@ plugin/unrealium.lua       -- Version guard (0.10.0+), re-init guard, auto-setup
 | Module | Role |
 |--------|------|
 | `core/config.lua` | 4-layer hierarchical config: defaults → user → project file → runtime. Lazy-loaded, module-local. |
+| `core/schema.lua` | Declarative config schema, type/enum validation, unknown-key detection |
 | `core/log.lua` | Named logger factory with async file writer + vim.notify for errors/warnings |
 | `core/event.lua` | Pub/sub event bus. Each emit() also fires a vim User autocmd. |
 | `core/finder.lua` | Ancestor directory traversal, .uproject discovery, engine path validation |

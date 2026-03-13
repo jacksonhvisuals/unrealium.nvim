@@ -104,6 +104,12 @@ end
 ---@param key string dot-separated path, e.g. "logging.level"
 ---@param value any
 function M.set(key, value)
+	local schema = require("unrealium.core.schema")
+	local warning = schema.validate_key(key, value)
+	if warning then
+		log.warn("config.set: %s", warning)
+	end
+
 	local parts = vim.split(key, ".", { plain = true })
 	local tbl = _runtime_overrides
 	for i = 1, #parts - 1 do
@@ -185,6 +191,11 @@ function M.get()
 	-- Merge runtime overrides
 	settings = deep_merge(settings, _runtime_overrides)
 
+	-- Validate and sanitize merged settings
+	local schema = require("unrealium.core.schema")
+	local ext_namespaces = vim.tbl_keys(_sub_defaults)
+	settings = schema.validate_and_sanitize(settings, _user_overrides, raw_config, ext_namespaces, _defaults)
+
 	-- Apply log level from merged settings
 	require("unrealium.core.log").set_level(settings.logging.level)
 
@@ -215,6 +226,8 @@ end
 
 if _TEST then
 	M._deep_merge = deep_merge
+	M._defaults = _defaults
+	M._sub_defaults = _sub_defaults
 	M._reset = function()
 		_config = nil
 		_user_overrides = {}
