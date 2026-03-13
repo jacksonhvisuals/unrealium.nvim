@@ -93,6 +93,28 @@ describe("modules.switch", function()
 		end)
 	end)
 
+	describe("determine_search_type", function()
+		it("returns 'declaration' for .cpp files", function()
+			assert.equals("declaration", switch._determine_search_type("/foo/MyActor.cpp"))
+		end)
+
+		it("returns 'declaration' for .c files", function()
+			assert.equals("declaration", switch._determine_search_type("/foo/MyActor.c"))
+		end)
+
+		it("returns 'definition' for .h files", function()
+			assert.equals("definition", switch._determine_search_type("/foo/MyActor.h"))
+		end)
+
+		it("returns 'definition' for .hpp files", function()
+			assert.equals("definition", switch._determine_search_type("/foo/MyActor.hpp"))
+		end)
+
+		it("returns nil for unsupported extensions", function()
+			assert.is_nil(switch._determine_search_type("/foo/bar.py"))
+		end)
+	end)
+
 	describe(".generated.h skipping", function()
 		it("strips .generated from base name", function()
 			local base = "MyActor.generated"

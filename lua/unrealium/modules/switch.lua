@@ -3,6 +3,7 @@
 local M = {}
 
 local log = require("unrealium.core.log").get("switch")
+local ts = require("unrealium.core.ts")
 
 M.name = "switch"
 
@@ -13,6 +14,21 @@ local EXT_MAP = {
 	[".cpp"] = { ".h", ".hpp" },
 	[".c"] = { ".h", ".hpp" },
 }
+
+--- Determine what to search for in the companion file.
+--- When switching from .cpp to .h, look for a declaration.
+--- When switching from .h to .cpp, look for a definition.
+---@param filepath string
+---@return "definition"|"declaration"|nil
+local function determine_search_type(filepath)
+	local ext = vim.fn.fnamemodify(filepath, ":e"):lower()
+	if ext == "cpp" or ext == "c" then
+		return "declaration"
+	elseif ext == "h" or ext == "hpp" then
+		return "definition"
+	end
+	return nil
+end
 
 --- Check if a file exists.
 ---@param path string
@@ -130,12 +146,32 @@ function M.execute(mode)
 		return
 	end
 
+	-- Capture function context before switching, only for first-time opens
+	local func_name, search_type
+	if vim.fn.bufloaded(companion) == 0 then
+		local cursor = vim.api.nvim_win_get_cursor(0)
+		local func_info = ts.get_enclosing_function(0, cursor[1] - 1, cursor[2])
+		if func_info then
+			func_name = func_info.name
+			search_type = determine_search_type(filepath)
+		end
+	end
+
 	if mode == "split" then
 		vim.cmd.split(companion)
 	elseif mode == "vsplit" then
 		vim.cmd.vsplit(companion)
 	else
 		vim.cmd.edit(companion)
+	end
+
+	-- Jump to matching function in companion
+	if func_name and search_type then
+		local line = ts.find_function_in_buffer(vim.api.nvim_get_current_buf(), func_name, search_type)
+		if line then
+			vim.api.nvim_win_set_cursor(0, { line, 0 })
+			vim.cmd("normal! zz")
+		end
 	end
 end
 
@@ -154,6 +190,7 @@ M.commands = {
 if _TEST then
 	M._file_exists = file_exists
 	M._split_ext = split_ext
+	M._determine_search_type = determine_search_type
 end
 
 return M
