@@ -5,6 +5,9 @@ local M = {}
 ---@type table|nil fidget progress handle
 local _handle = nil
 
+---@type table|nil handle awaiting user interaction before dismissal
+local _pending_handle = nil
+
 ---@type boolean|nil
 local _has_fidget = nil
 
@@ -20,9 +23,15 @@ end
 --- Begin a progress indicator.
 ---@param title string
 function M.begin(title)
+	if _pending_handle then
+		_pending_handle:finish()
+		_pending_handle = nil
+		pcall(vim.api.nvim_del_augroup_by_name, "unrealium_build_done")
+	end
+
 	if has_fidget() then
-		local progress = require("fidget.progress")
-		_handle = progress.handle.create({
+		local fidget_progress = require("fidget.progress")
+		_handle = fidget_progress.handle.create({
 			title = title,
 			lsp_client = { name = "unrealium" },
 		})
@@ -44,22 +53,32 @@ function M.report(percentage, message)
 end
 
 --- Finish the progress indicator.
+--- Shows a status icon immediately and defers dismissal until user interaction.
 ---@param message string
 ---@param level? integer vim.log.levels value
----@param ttl? number seconds to keep the completion message visible before dismissing
-function M.finish(message, level, ttl)
+function M.finish(message, level)
 	if _handle then
-		_handle.message = message
-		_handle.percentage = 100
-		local handle = _handle
-		_handle = nil
-		if ttl and ttl > 0 then
-			vim.defer_fn(function()
-				handle:finish()
-			end, ttl * 1000)
-		else
-			handle:finish()
+		local icon = "✓"
+		if level == vim.log.levels.ERROR then
+			icon = "✗"
+		elseif level == vim.log.levels.WARN then
+			icon = "⚠"
 		end
+		_handle.title = icon .. " " .. message
+		_handle.percentage = 100
+		_pending_handle = _handle
+		_handle = nil
+
+		local handle = _pending_handle
+		local augroup = vim.api.nvim_create_augroup("unrealium_build_done", { clear = true })
+		vim.api.nvim_create_autocmd({ "CursorMoved", "InsertEnter", "CmdlineEnter" }, {
+			group = augroup,
+			once = true,
+			callback = function()
+				handle:finish()
+				_pending_handle = nil
+			end,
+		})
 	else
 		vim.notify("[unrealium] " .. message, level or vim.log.levels.INFO)
 	end

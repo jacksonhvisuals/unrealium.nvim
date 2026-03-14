@@ -224,9 +224,8 @@ local function run_build(preset, extra_args)
 					#handle.warnings
 				)
 
-				local completion_ttl = cfg.settings and cfg.settings.build and cfg.settings.build.completion_ttl or 5
 				if progress_enabled then
-					progress.finish(msg, level, completion_ttl)
+					progress.finish(msg, level)
 				end
 
 				if output_mode == "quickfix" or (handle.exit_code ~= 0 and not cancelled) then
