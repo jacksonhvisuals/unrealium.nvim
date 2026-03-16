@@ -34,6 +34,7 @@ local SCHEMA = {
 	-- run
 	["run"] = { type = "table", children = true },
 	["run.default_type"] = { type = "string" },
+	["run.build_first"] = { type = "boolean" },
 	["run.extra_args"] = { type = "string[]" },
 
 	-- search

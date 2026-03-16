@@ -24,6 +24,7 @@ local _defaults = {
 	},
 	run = {
 		default_type = "Development",
+		build_first = false,
 		extra_args = {},
 	},
 	search = {

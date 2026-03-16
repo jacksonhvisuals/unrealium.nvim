@@ -58,6 +58,7 @@ require("unrealium").setup({
   },
   run = {
     default_type = "Development",  -- "Development" or "Debug"
+    build_first = false,           -- when true, :UE run builds before launching
     extra_args = {},               -- extra args passed to the editor
   },
   search = {
@@ -162,6 +163,15 @@ Launch the Unreal Editor.
 
 - `:UE run` — run with default type (configurable via `run.default_type`)
 - `:UE run Debug` — run with Debug configuration
+
+When `run.build_first = true`, `:UE run` automatically triggers a build first and only launches the editor on success.
+
+### `:UE build-run [preset]`
+
+Build the project then launch the editor on success. Always builds first regardless of `run.build_first` config. Accepts the same preset arguments as `:UE build`.
+
+- `:UE build-run` — build with default preset, then run
+- `:UE build-run MyProjectEditor Linux Development` — build specific preset, then run
 
 ### `:UE search [type] [scope] [search-term]`
 

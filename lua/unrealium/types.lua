@@ -24,7 +24,7 @@
 ---@field logging? { level?: string }
 ---@field ui? { picker?: { prefer?: string[] } }
 ---@field build? { configurations?: string[], presets?: UnrealiumPreset[], output_mode?: string, progress?: boolean, default_preset?: string, extra_args?: string[] }
----@field run? { default_type?: string, extra_args?: string[] }
+---@field run? { default_type?: string, build_first?: boolean, extra_args?: string[] }
 ---@field search? { exclude_patterns?: string[] }
 ---@field intel? { clangd?: { enabled?: boolean, exclusive?: boolean, cmd?: string, extra_flags?: string[], auto_start?: boolean, generate_config?: boolean, config_gen?: { exclude_paths?: string[], extra_compile_flags?: string[] } } }
 ---@field lint? { default_analyzer?: string }
