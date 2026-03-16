@@ -12,6 +12,8 @@ M.JOB_START = "unrealium.job_start"
 M.JOB_FINISH = "unrealium.job_finish"
 M.LSP_READY = "unrealium.lsp_ready"
 M.LSP_INDEXED = "unrealium.lsp_indexed"
+M.EDITOR_START = "unrealium.editor_start"
+M.EDITOR_EXIT = "unrealium.editor_exit"
 
 ---@type table<string, fun(data: any)[]>
 local _listeners = {}

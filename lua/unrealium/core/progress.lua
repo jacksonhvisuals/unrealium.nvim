@@ -84,4 +84,13 @@ function M.finish(message, level)
 	end
 end
 
+--- Dismiss any pending notification without waiting for user interaction.
+function M.dismiss()
+	if _pending_handle then
+		_pending_handle:finish()
+		_pending_handle = nil
+		pcall(vim.api.nvim_del_augroup_by_name, "unrealium_build_done")
+	end
+end
+
 return M

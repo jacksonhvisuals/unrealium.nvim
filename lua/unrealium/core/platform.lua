@@ -48,11 +48,11 @@ function M.build_command(config, type)
 	}
 end
 
---- Get the run editor command.
+--- Get the run editor command as an argv array for termopen().
 ---@param config UnrealiumConfig
 ---@param type string "Debug"|"Development"
 ---@param extra_args? string[] additional CLI arguments
----@return { command: string }
+---@return { cmd: string[] }
 function M.run_command(config, type, extra_args)
 	local suffix = ""
 	if type == "Debug" then
@@ -60,12 +60,14 @@ function M.run_command(config, type, extra_args)
 	end
 
 	local editor = config.Engine.Scripts.EditorBase .. suffix
-	local cmd = "Dispatch " .. editor .. " " .. config.Project.FullPath
-	if extra_args and #extra_args > 0 then
-		cmd = cmd .. " " .. table.concat(extra_args, " ")
+	local cmd = { editor, config.Project.FullPath }
+	if extra_args then
+		for _, arg in ipairs(extra_args) do
+			table.insert(cmd, arg)
+		end
 	end
 	return {
-		command = cmd,
+		cmd = cmd,
 	}
 end
 
