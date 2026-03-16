@@ -105,7 +105,7 @@ local function read_json_file(path)
 	if ok and type(data) == "table" then
 		return data
 	end
-	log.error("Failed to parse JSON file: %s", path)
+	log.error("Failed to parse JSON file: %s\n%s", path, ok and "unexpected type: " .. type(data) or tostring(data))
 	return nil
 end
 
