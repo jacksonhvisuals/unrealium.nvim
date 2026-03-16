@@ -23,33 +23,6 @@ function M.createValidTree(tmp_dir, engineDir)
 
 	local confFile = Path:new(vim.fs.joinpath(projectDir, "unrealium.json"))
 	confFile:touch()
-	confFile:write('{"EnginePath":"' .. engineDir .. '"}', "w")
-
-	return projectDir
-end
-
---- Create a valid tree with the new .unrealium.json format.
----@param tmp_dir string
----@param engineDir? string
----@return string projectDir
-function M.createValidTreeNewFormat(tmp_dir, engineDir)
-	local projectDir = tmp_dir .. "/MyTestProject"
-	local pluginsDir = projectDir .. "/Plugins"
-	local subDir = projectDir .. "/Plugins/test"
-
-	vim.fn.mkdir(projectDir, "p")
-	vim.fn.mkdir(pluginsDir, "p")
-	vim.fn.mkdir(subDir, "p")
-
-	Path:new(vim.fs.joinpath(projectDir, "MyTestProject.uproject")):touch()
-	Path:new(vim.fs.joinpath(subDir, "MyTestClass.cpp")):touch()
-
-	if engineDir == nil then
-		engineDir = vim.fs.joinpath(tmp_dir, "Engine")
-	end
-
-	local confFile = Path:new(vim.fs.joinpath(projectDir, "unrealium.json"))
-	confFile:touch()
 	local json =
 		string.format('{"engine":{"folder":"%s","allow_modifications":false},"logging":{"level":"info"}}', engineDir)
 	confFile:write(json, "w")

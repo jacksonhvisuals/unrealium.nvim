@@ -109,15 +109,13 @@ local function read_json_file(path)
 	return nil
 end
 
---- Read the project config file (unrealium.json or legacy variants).
+--- Read the project config file (unrealium.json).
 --- Returns an empty table if no config file is found (config is optional).
 ---@param project_root string
 ---@return table parsed JSON data (may be empty)
 function M.read_project_config(project_root)
 	local candidates = {
 		vim.fs.joinpath(project_root, "unrealium.json"),
-		vim.fs.joinpath(project_root, ".unrealium.json"),
-		vim.fs.joinpath(project_root, ".unrealium"),
 	}
 
 	for _, config_path in ipairs(candidates) do
@@ -264,25 +262,17 @@ function M.get_platform_name()
 end
 
 --- Resolve engine config from raw project config and .uproject engine association.
---- Priority: explicit EnginePath in config > EngineAssociation from .uproject.
+--- Priority: explicit engine.folder in config > EngineAssociation from .uproject.
 ---@param raw_config table
 ---@param uproject_path? string path to .uproject for engine association resolution
 ---@return { folder: string|nil, allow_modifications: boolean }
 function M.resolve_engine_config(raw_config, uproject_path)
 	local folder, allow_mods
 
-	-- Check for explicit engine path in config (new format)
+	-- Check for explicit engine path in config
 	if raw_config.engine then
 		folder = raw_config.engine.folder
 		allow_mods = raw_config.engine.allow_modifications
-	end
-
-	-- Legacy format fallback for explicit path
-	if not folder and raw_config.EnginePath then
-		folder = raw_config.EnginePath
-	end
-	if allow_mods == nil and raw_config.allowEngineModifications ~= nil then
-		allow_mods = raw_config.allowEngineModifications
 	end
 
 	-- Validate explicit path exists on disk; fall through to GUID resolution if not

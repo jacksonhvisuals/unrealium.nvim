@@ -136,10 +136,10 @@ plugin/unrealium.lua       -- Version guard (0.10.0+), re-init guard, auto-setup
 Config is hierarchical (4 layers merged):
 1. **Defaults** — hardcoded in `core/config.lua`
 2. **User overrides** — passed via `require("unrealium").setup({ ... })`
-3. **Project file** — `.unrealium.json` (new) or `.unrealium` (legacy) near `.uproject`
+3. **Project file** — `unrealium.json` near `.uproject`
 4. **Runtime overrides** — `config.set(key, value)`
 
-**New `.unrealium.json` format:**
+**`unrealium.json` format:**
 ```json
 {
   "engine": { "folder": "/path/to/UE5", "allow_modifications": false },
@@ -149,11 +149,6 @@ Config is hierarchical (4 layers merged):
   "run": { "extra_args": ["-norelativemousemode"] },
   "intel": { "clangd": { "enabled": true, "auto_start": true, "generate_config": true } }
 }
-```
-
-**Legacy `.unrealium` format (still supported):**
-```json
-{ "EnginePath": "Path/To/Unreal/Install/Dir", "allowEngineModifications": false }
 ```
 
 ### Feature Module Interface

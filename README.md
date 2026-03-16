@@ -105,7 +105,7 @@ unrealium.nvim auto-detects your Unreal Engine installation by reading the `Engi
 
 For custom engine paths (e.g. source builds), create a config file next to your `.uproject`:
 
-### `.unrealium.json` (recommended)
+### `unrealium.json`
 
 ```json
 {
@@ -135,20 +135,11 @@ For custom engine paths (e.g. source builds), create a config file next to your 
 }
 ```
 
-### `.unrealium` (legacy, still supported)
-
-```json
-{
-  "EnginePath": "/path/to/UE5",
-  "allowEngineModifications": false
-}
-```
-
 Configuration is hierarchical (4 layers merged in order):
 
 1. **Defaults** — hardcoded
 2. **User overrides** — passed via `setup()`
-3. **Project file** — `.unrealium.json` or `.unrealium`
+3. **Project file** — `unrealium.json`
 4. **Runtime overrides** — `config.set(key, value)`
 
 ---

@@ -142,7 +142,7 @@ function M.get()
 	local engine_folder = finder.validate_engine_path(engine_data.folder)
 	if not engine_folder then
 		log.error(
-			"Could not resolve engine path. Set EnginePath in unrealium.json or check your .uproject EngineAssociation."
+			"Could not resolve engine path. Set engine.folder in unrealium.json or check your .uproject EngineAssociation."
 		)
 		return nil
 	end

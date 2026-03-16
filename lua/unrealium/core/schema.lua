@@ -377,10 +377,6 @@ function M.validate_and_sanitize(settings, user_overrides, project_config, ext_n
 		skip[ns] = true
 	end
 
-	-- Legacy project-file keys to skip
-	local legacy_keys = { EnginePath = true, allowEngineModifications = true }
-	local project_skip = vim.tbl_extend("force", skip, legacy_keys)
-
 	-- Detect unknown keys in user overrides
 	if user_overrides and next(user_overrides) then
 		local uw = detect_unknown_keys(user_overrides, skip, "")
@@ -391,7 +387,7 @@ function M.validate_and_sanitize(settings, user_overrides, project_config, ext_n
 
 	-- Detect unknown keys in project config
 	if project_config and next(project_config) then
-		local pw = detect_unknown_keys(project_config, project_skip, "")
+		local pw = detect_unknown_keys(project_config, skip, "")
 		for _, w in ipairs(pw) do
 			table.insert(all_warnings, "project config: " .. w)
 		end

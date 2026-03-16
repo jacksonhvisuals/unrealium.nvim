@@ -67,15 +67,8 @@ describe("unrealium.core.finder", function()
 	end)
 
 	describe("read_project_config", function()
-		it("reads unrealium.json with legacy keys", function()
+		it("reads unrealium.json", function()
 			local projDir = tUtil.createValidTree(tmp_dir, "/some/engine")
-			local data = finder.read_project_config(projDir)
-			assert.truthy(data)
-			assert.equals("/some/engine", data.EnginePath)
-		end)
-
-		it("reads unrealium.json with new format", function()
-			local projDir = tUtil.createValidTreeNewFormat(tmp_dir, "/some/engine")
 			local data = finder.read_project_config(projDir)
 			assert.truthy(data)
 			assert.equals("/some/engine", data.engine.folder)
@@ -137,16 +130,7 @@ describe("unrealium.core.finder", function()
 			vim.fn.isdirectory = orig_isdirectory
 		end)
 
-		it("reads legacy format", function()
-			local result = finder.resolve_engine_config({
-				EnginePath = "/old/path",
-				allowEngineModifications = true,
-			})
-			assert.equals("/old/path", result.folder)
-			assert.is_true(result.allow_modifications)
-		end)
-
-		it("reads new format", function()
+		it("reads engine config", function()
 			local result = finder.resolve_engine_config({
 				engine = { folder = "/new/path", allow_modifications = false },
 			})
@@ -155,7 +139,9 @@ describe("unrealium.core.finder", function()
 		end)
 
 		it("defaults allow_modifications to false", function()
-			local result = finder.resolve_engine_config({ EnginePath = "/path" })
+			local result = finder.resolve_engine_config({
+				engine = { folder = "/path" },
+			})
 			assert.is_false(result.allow_modifications)
 		end)
 
@@ -164,7 +150,7 @@ describe("unrealium.core.finder", function()
 				return 0
 			end
 			local result = finder.resolve_engine_config({
-				EnginePath = "/nonexistent/path",
+				engine = { folder = "/nonexistent/path" },
 			})
 			assert.is_nil(result.folder)
 		end)

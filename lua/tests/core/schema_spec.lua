@@ -229,13 +229,6 @@ describe("unrealium.core.schema", function()
 			assert.equals(0, #warnings)
 		end)
 
-		it("skips legacy keys", function()
-			local tbl = { EnginePath = "/path/to/engine", allowEngineModifications = false }
-			local skip = { EnginePath = true, allowEngineModifications = true }
-			local warnings = schema._detect_unknown_keys(tbl, skip, "")
-			assert.equals(0, #warnings)
-		end)
-
 		it("passes for valid config", function()
 			local tbl = { logging = { level = "debug" }, build = { progress = false } }
 			local warnings = schema._detect_unknown_keys(tbl, nil, "")
@@ -320,10 +313,11 @@ describe("unrealium.core.schema", function()
 			assert.truthy(sanitized)
 		end)
 
-		it("skips legacy keys in project config", function()
+		it("warns on unknown keys in project config", function()
 			local settings = vim.deepcopy(defaults)
 			local project_config = { EnginePath = "/path", allowEngineModifications = false }
 
+			-- These are now unknown keys (no longer legacy-skipped)
 			local sanitized = schema.validate_and_sanitize(settings, {}, project_config, {}, defaults)
 			assert.truthy(sanitized)
 		end)
