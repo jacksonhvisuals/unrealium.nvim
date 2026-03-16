@@ -11,6 +11,9 @@ local _client_id = nil
 ---@type integer|nil
 local _autocmd_id = nil
 
+---@type integer|nil
+local _exclusive_autocmd_id = nil
+
 local BASE_FLAGS = {
 	"--background-index",
 	"--pch-storage=memory",
@@ -148,6 +151,21 @@ function M.start(cfg, intel_settings)
 
 	if intel_settings.exclusive then
 		stop_external_clangd()
+		-- Guard against external clangd clients that start after ours
+		if not _exclusive_autocmd_id then
+			local group = vim.api.nvim_create_augroup("UnrealiumExclusive", { clear = true })
+			_exclusive_autocmd_id = vim.api.nvim_create_autocmd("LspAttach", {
+				group = group,
+				desc = "Stop external clangd clients (exclusive mode)",
+				callback = function(args)
+					local client = vim.lsp.get_client_by_id(args.data.client_id)
+					if client and client.name ~= "unrealium-clangd" and client.name:find("clangd") then
+						log.info("Stopping external clangd client: %s (id %d) [exclusive mode]", client.name, client.id)
+						client:stop()
+					end
+				end,
+			})
+		end
 	end
 end
 
@@ -164,6 +182,10 @@ function M.stop()
 		log.info("Stopped clangd (client %d)", _client_id)
 	end
 	_client_id = nil
+	if _exclusive_autocmd_id then
+		vim.api.nvim_del_autocmd(_exclusive_autocmd_id)
+		_exclusive_autocmd_id = nil
+	end
 end
 
 --- Restart clangd.
