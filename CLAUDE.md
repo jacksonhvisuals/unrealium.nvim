@@ -80,8 +80,12 @@ lua/unrealium/
       init.lua                           -- UI dispatch
       picker.lua                         -- Multi-backend picker (Snacks → Telescope → fzf-lua → native)
     lsp/
-      init.lua                           -- clangd lifecycle (start/stop/restart/buf_attach/auto-start)
+      init.lua                           -- LSP lifecycle (start/stop/restart/buf_attach/auto-start)
       config_gen.lua                     -- .clangd YAML generation with UE-optimized settings
+      unrealisense_config_gen.lua        -- .unrealisense.toml generation
+      backends/
+        clangd.lua                       -- clangd backend (binary resolution, command building)
+        unrealisense.lua                 -- UnrealISense backend
   modules/                               -- Feature modules (self-contained, standard interface)
     build.lua                            -- :UE build (preset-based async builds)
     run.lua                              -- :UE run
@@ -90,7 +94,7 @@ lua/unrealium/
     editor_lock.lua                      -- BufReadPost engine file read-only enforcement
     lint.lua                             -- :UE lint (static analysis via UBT)
     diagnostics.lua                      -- :UE diagnostics (build error parsing)
-    intel.lua                            -- :UE intel (clangd optimization, .clangd config gen)
+    intel.lua                            -- :UE intel (clangd / UnrealISense management)
     debug.lua                            -- :UE debug (nvim-dap launch/attach with UE LLDB formatters)
     switch.lua                           -- :UE switch (header/source switching, Public/Private aware)
 ```
@@ -126,8 +130,11 @@ plugin/unrealium.lua       -- Version guard (0.10.0+), re-init guard, auto-setup
 | `core/job.lua` | Async job runner for UBT builds and shell commands via vim.uv |
 | `core/target.lua` | Discovers and parses .Target.cs files for build target enumeration |
 | `core/progress.lua` | Build progress display via fidget.nvim or vim.notify fallback |
-| `core/lsp/init.lua` | clangd lifecycle: start/stop/restart/buf_attach with optimized flags, auto-start on first C++ buffer |
+| `core/lsp/init.lua` | Backend-agnostic LSP lifecycle: start/stop/restart/buf_attach, auto-start on first C++ buffer |
 | `core/lsp/config_gen.lua` | Generates .clangd config excluding ThirdParty/Intermediate from indexing |
+| `core/lsp/unrealisense_config_gen.lua` | Generates .unrealisense.toml with engine path |
+| `core/lsp/backends/clangd.lua` | clangd backend: binary resolution, command building with UE-optimized flags |
+| `core/lsp/backends/unrealisense.lua` | UnrealISense backend: binary resolution, command building with --engine-path |
 | `modules/debug.lua` | `:UE debug` — nvim-dap launch/attach with UE LLDB formatter injection |
 | `modules/switch.lua` | `:UE switch` — Header/source switching with Public/Private awareness |
 
@@ -147,7 +154,7 @@ Config is hierarchical (4 layers merged):
   "ui": { "picker": { "prefer": ["snacks", "telescope", "native"] } },
   "build": { "configurations": ["Development", "DebugGame"], "output_mode": "terminal", "extra_args": [] },
   "run": { "extra_args": ["-norelativemousemode"] },
-  "intel": { "clangd": { "enabled": true, "auto_start": true, "generate_config": true } }
+  "intel": { "server": "clangd", "clangd": { "enabled": true, "auto_start": true, "generate_config": true } }
 }
 ```
 

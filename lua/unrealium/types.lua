@@ -26,7 +26,19 @@
 ---@field build? { configurations?: string[], presets?: UnrealiumPreset[], output_mode?: string, progress?: boolean, default_preset?: string, extra_args?: string[] }
 ---@field run? { default_type?: string, build_first?: boolean, extra_args?: string[] }
 ---@field search? { exclude_patterns?: string[] }
----@field intel? { clangd?: { enabled?: boolean, exclusive?: boolean, cmd?: string, extra_flags?: string[], auto_start?: boolean, generate_config?: boolean, config_gen?: { exclude_paths?: string[], extra_compile_flags?: string[] } } }
+---@field intel? UnrealiumIntelUserConfig
+
+---@class UnrealiumIntelUserConfig
+---@field server? string "clangd"|"unrealisense"
+---@field clangd? { enabled?: boolean, exclusive?: boolean, cmd?: string, extra_flags?: string[], auto_start?: boolean, generate_config?: boolean, config_gen?: { exclude_paths?: string[], extra_compile_flags?: string[] } }
+---@field unrealisense? UnrealiumUnrealisenseSettings
+
+---@class UnrealiumUnrealisenseSettings
+---@field cmd? string binary path (default: "unrealisense" from PATH)
+---@field engine_path? string override; defaults to cfg.Engine.Folder
+---@field extra_args? string[] extra CLI args passed to unrealisense
+---@field auto_start? boolean
+---@field generate_config? boolean generate .unrealisense.toml
 ---@field lint? { default_analyzer?: string }
 ---@field generate? { default_clang_scope?: string }
 ---@field editor_lock? { extra_paths?: string[] }

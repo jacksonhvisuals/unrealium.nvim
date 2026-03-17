@@ -43,6 +43,7 @@ local SCHEMA = {
 
 	-- intel
 	["intel"] = { type = "table", children = true },
+	["intel.server"] = { type = "string", enum = { "clangd", "unrealisense" } },
 	["intel.clangd"] = { type = "table", children = true },
 	["intel.clangd.enabled"] = { type = "boolean" },
 	["intel.clangd.exclusive"] = { type = "boolean" },
@@ -53,6 +54,12 @@ local SCHEMA = {
 	["intel.clangd.config_gen"] = { type = "table", children = true },
 	["intel.clangd.config_gen.exclude_paths"] = { type = "string[]" },
 	["intel.clangd.config_gen.extra_compile_flags"] = { type = "string[]" },
+	["intel.unrealisense"] = { type = "table", children = true },
+	["intel.unrealisense.cmd"] = { type = "string", nilable = true },
+	["intel.unrealisense.engine_path"] = { type = "string", nilable = true },
+	["intel.unrealisense.extra_args"] = { type = "string[]" },
+	["intel.unrealisense.auto_start"] = { type = "boolean" },
+	["intel.unrealisense.generate_config"] = { type = "boolean" },
 
 	-- lint
 	["lint"] = { type = "table", children = true },

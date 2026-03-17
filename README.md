@@ -10,7 +10,7 @@ A Neovim plugin for Unreal Engine 5 project development.
 - Engine file read-only enforcement to prevent accidental recompiles
 - Unified `:UE` command with subcommands (build, run, search, generate, intel, lint, diagnostics, debug, switch)
 - Multi-backend picker support (Snacks, Telescope, fzf-lua, native fallback)
-- clangd integration with auto-start and optimized config generation
+- LSP integration: clangd and [UnrealISense](https://github.com/jacksonhvisuals/unrealisense) with auto-start and config generation
 - Build progress notifications via [fidget.nvim](https://github.com/j-hui/fidget.nvim)
 - Event bus for extensibility with vim autocmd bridge
 - Extension API for external plugins
@@ -65,6 +65,7 @@ require("unrealium").setup({
     exclude_patterns = { "**/*.po", "**/*.archive", "**/*.gen.h", "**/Intermediate/Build/**" },
   },
   intel = {
+    server = "clangd",         -- "clangd" or "unrealisense"
     clangd = {
       enabled = true,
       exclusive = false,       -- stop external clangd clients when unrealium starts its own
@@ -76,6 +77,13 @@ require("unrealium").setup({
         exclude_paths = { "ThirdParty", "Intermediate" },  -- paths to skip indexing
         extra_compile_flags = {},                           -- additional compile flags
       },
+    },
+    unrealisense = {
+      cmd = nil,               -- custom binary path (default: "unrealisense" from PATH)
+      engine_path = nil,       -- override engine path; defaults to engine.folder
+      extra_args = {},         -- extra CLI args passed to unrealisense
+      auto_start = true,       -- start on first C++ buffer
+      generate_config = true,  -- generate .unrealisense.toml
     },
   },
   lint = {
@@ -122,12 +130,17 @@ For custom engine paths (e.g. source builds), create a config file next to your 
   "run": { "default_type": "Development", "extra_args": ["-norelativemousemode"] },
   "search": { "exclude_patterns": ["**/*.po", "**/*.archive", "**/MyCustomExclude/**"] },
   "intel": {
+    "server": "clangd",
     "clangd": {
       "enabled": true,
       "auto_start": true,
       "extra_flags": ["--query-driver=/usr/bin/clang++"],
       "generate_config": true,
       "config_gen": { "exclude_paths": ["ThirdParty", "Intermediate"], "extra_compile_flags": [] }
+    },
+    "unrealisense": {
+      "auto_start": true,
+      "generate_config": true
     }
   },
   "lint": { "default_analyzer": "PVS-Studio" },
@@ -195,10 +208,12 @@ Types: `grep`, `files`. Scopes: `Project`, `Engine`, `All` (default).
 
 | Subcommand | Description |
 |---|---|
+| `setup` | Generate config and start the configured LSP server (`intel.server`) |
 | `setup-clangd` | Generate optimized `.clangd` config and start clangd |
-| `status` | Show clangd status |
-| `stop` | Stop clangd |
-| `restart` | Restart clangd |
+| `setup-unrealisense` | Generate `.unrealisense.toml` and start UnrealISense |
+| `status` | Show LSP server status |
+| `stop` | Stop the active LSP server |
+| `restart` | Restart the active LSP server |
 
 ### `:UE lint [type]`
 
@@ -337,8 +352,12 @@ lua/unrealium/
       init.lua                           -- UI dispatch
       picker.lua                         -- Multi-backend picker abstraction
     lsp/
-      init.lua                           -- clangd lifecycle (start/stop/restart/buf_attach/auto-start)
+      init.lua                           -- LSP lifecycle (start/stop/restart/buf_attach/auto-start)
       config_gen.lua                     -- .clangd YAML generation with UE-optimized settings
+      unrealisense_config_gen.lua        -- .unrealisense.toml generation
+      backends/
+        clangd.lua                       -- clangd backend (binary resolution, command building)
+        unrealisense.lua                 -- UnrealISense backend
   modules/
     build.lua                            -- :UE build
     run.lua                              -- :UE run
@@ -347,7 +366,7 @@ lua/unrealium/
     editor_lock.lua                      -- Engine file read-only enforcement
     lint.lua                             -- :UE lint
     diagnostics.lua                      -- :UE diagnostics
-    intel.lua                            -- :UE intel (clangd management)
+    intel.lua                            -- :UE intel (clangd / UnrealISense management)
     debug.lua                            -- :UE debug (nvim-dap integration)
     switch.lua                           -- :UE switch (header/source switching)
 ```

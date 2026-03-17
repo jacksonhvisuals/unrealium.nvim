@@ -31,6 +31,7 @@ local _defaults = {
 		exclude_patterns = { "**/*.po", "**/*.archive", "**/*.gen.h", "**/Intermediate/Build/**" },
 	},
 	intel = {
+		server = "clangd",
 		clangd = {
 			enabled = true,
 			exclusive = false,
@@ -42,6 +43,13 @@ local _defaults = {
 				exclude_paths = { "ThirdParty", "Intermediate" },
 				extra_compile_flags = {},
 			},
+		},
+		unrealisense = {
+			cmd = nil,
+			engine_path = nil,
+			extra_args = {},
+			auto_start = true,
+			generate_config = true,
 		},
 	},
 	lint = {
