@@ -1,7 +1,6 @@
 ---@module 'luassert'
 
 _TEST = true
-local tUtil = require("tests.test_util")
 
 describe("core.lsp", function()
 	local lsp = require("unrealium.core.lsp")
@@ -10,235 +9,22 @@ describe("core.lsp", function()
 		lsp._reset()
 	end)
 
-	describe("resolve_clangd", function()
-		it("returns configured path when executable", function()
-			-- Stub vim.fn.executable to return 1 for our path
-			local orig = vim.fn.executable
-			vim.fn.executable = function(cmd)
-				if cmd == "/usr/bin/clangd-17" then
-					return 1
-				end
-				return 0
-			end
-
-			local result = lsp._resolve_clangd("/usr/bin/clangd-17")
-			assert.equals("/usr/bin/clangd-17", result)
-
-			vim.fn.executable = orig
+	describe("get_backend", function()
+		it("resolves clangd backend", function()
+			local backend = lsp._get_backend("clangd")
+			assert.truthy(backend)
+			assert.equals("unrealium-clangd", backend.client_name())
 		end)
 
-		it("returns nil when configured path is not executable", function()
-			local orig = vim.fn.executable
-			vim.fn.executable = function(_)
-				return 0
-			end
-
-			local result = lsp._resolve_clangd("/nonexistent/clangd")
-			assert.is_nil(result)
-
-			vim.fn.executable = orig
+		it("resolves unrealisense backend", function()
+			local backend = lsp._get_backend("unrealisense")
+			assert.truthy(backend)
+			assert.equals("unrealium-unrealisense", backend.client_name())
 		end)
 
-		it("falls back to PATH clangd when no config", function()
-			local orig = vim.fn.executable
-			vim.fn.executable = function(cmd)
-				if cmd == "clangd" then
-					return 1
-				end
-				return 0
-			end
-
-			local result = lsp._resolve_clangd(nil)
-			assert.equals("clangd", result)
-
-			vim.fn.executable = orig
-		end)
-
-		it("returns nil when clangd not in PATH and no config", function()
-			local orig = vim.fn.executable
-			vim.fn.executable = function(_)
-				return 0
-			end
-
-			local result = lsp._resolve_clangd(nil)
-			assert.is_nil(result)
-
-			vim.fn.executable = orig
-		end)
-	end)
-
-	describe("find_compile_commands", function()
-		it("finds compile_commands.json in project folder", function()
-			local tmp = vim.fn.tempname()
-			vim.fn.mkdir(tmp, "p")
-			local f = io.open(tmp .. "/compile_commands.json", "w")
-			f:write("[]")
-			f:close()
-
-			local cfg = tUtil.mock_config({ Project = { Folder = tmp } })
-			local result = lsp._find_compile_commands(cfg)
-			assert.equals(tmp, result)
-
-			os.remove(tmp .. "/compile_commands.json")
-			vim.fn.delete(tmp, "rf")
-		end)
-
-		it("finds compile_commands.json in Intermediate subdir", function()
-			local tmp = vim.fn.tempname()
-			local intermediate = tmp .. "/Intermediate"
-			vim.fn.mkdir(intermediate, "p")
-			local f = io.open(intermediate .. "/compile_commands.json", "w")
-			f:write("[]")
-			f:close()
-
-			local cfg = tUtil.mock_config({ Project = { Folder = tmp } })
-			local result = lsp._find_compile_commands(cfg)
-			assert.equals(intermediate, result)
-
-			vim.fn.delete(tmp, "rf")
-		end)
-
-		it("returns nil when not found", function()
-			local tmp = vim.fn.tempname()
-			vim.fn.mkdir(tmp, "p")
-
-			local cfg = tUtil.mock_config({ Project = { Folder = tmp } })
-			local result = lsp._find_compile_commands(cfg)
-			assert.is_nil(result)
-
-			vim.fn.delete(tmp, "rf")
-		end)
-	end)
-
-	describe("build_cmd", function()
-		it("builds command with base flags", function()
-			local orig = vim.fn.executable
-			vim.fn.executable = function(_)
-				return 1
-			end
-
-			local cfg = tUtil.mock_config()
-			local cmd = lsp._build_cmd(cfg, {})
-			assert.truthy(cmd)
-			assert.equals("clangd", cmd[1])
-			-- Check that base flags are present
-			local flags = table.concat(cmd, " ")
-			assert.matches("--background%-index", flags)
-			assert.matches("--pch%-storage=memory", flags)
-			assert.matches("--header%-insertion=never", flags)
-
-			vim.fn.executable = orig
-		end)
-
-		it("includes extra_flags from settings", function()
-			local orig = vim.fn.executable
-			vim.fn.executable = function(_)
-				return 1
-			end
-
-			local cfg = tUtil.mock_config()
-			local cmd = lsp._build_cmd(cfg, { extra_flags = { "--log=verbose", "-j=4" } })
-			assert.truthy(cmd)
-			local flags = table.concat(cmd, " ")
-			assert.matches("--log=verbose", flags)
-			assert.matches("-j=4", flags)
-
-			vim.fn.executable = orig
-		end)
-
-		it("returns nil when clangd not found", function()
-			local orig = vim.fn.executable
-			vim.fn.executable = function(_)
-				return 0
-			end
-
-			local cfg = tUtil.mock_config()
-			local cmd = lsp._build_cmd(cfg, {})
-			assert.is_nil(cmd)
-
-			vim.fn.executable = orig
-		end)
-	end)
-
-	describe("stop_external_clangd", function()
-		it("stops non-unrealium clangd clients", function()
-			local stopped_ids = {}
-			local orig_get_clients = vim.lsp.get_clients
-			vim.lsp.get_clients = function()
-				return {
-					{
-						name = "clangd",
-						id = 1,
-						stop = function(self)
-							table.insert(stopped_ids, self.id)
-						end,
-					},
-					{
-						name = "unrealium-clangd",
-						id = 2,
-						stop = function(self)
-							table.insert(stopped_ids, self.id)
-						end,
-					},
-					{
-						name = "lua_ls",
-						id = 3,
-						stop = function(self)
-							table.insert(stopped_ids, self.id)
-						end,
-					},
-				}
-			end
-
-			local count = lsp._stop_external_clangd()
-			assert.equals(1, count)
-			assert.same({ 1 }, stopped_ids)
-
-			vim.lsp.get_clients = orig_get_clients
-		end)
-
-		it("stops multiple clangd variants", function()
-			local stopped_ids = {}
-			local orig_get_clients = vim.lsp.get_clients
-			vim.lsp.get_clients = function()
-				return {
-					{
-						name = "clangd",
-						id = 1,
-						stop = function(self)
-							table.insert(stopped_ids, self.id)
-						end,
-					},
-					{
-						name = "clangd-18",
-						id = 2,
-						stop = function(self)
-							table.insert(stopped_ids, self.id)
-						end,
-					},
-				}
-			end
-
-			local count = lsp._stop_external_clangd()
-			assert.equals(2, count)
-			assert.same({ 1, 2 }, stopped_ids)
-
-			vim.lsp.get_clients = orig_get_clients
-		end)
-
-		it("returns zero when no external clangd found", function()
-			local orig_get_clients = vim.lsp.get_clients
-			vim.lsp.get_clients = function()
-				return {
-					{ name = "unrealium-clangd", id = 1, stop = function() end },
-					{ name = "lua_ls", id = 2, stop = function() end },
-				}
-			end
-
-			local count = lsp._stop_external_clangd()
-			assert.equals(0, count)
-
-			vim.lsp.get_clients = orig_get_clients
+		it("returns nil for unknown backend", function()
+			local backend = lsp._get_backend("unknown")
+			assert.is_nil(backend)
 		end)
 	end)
 
@@ -247,6 +33,7 @@ describe("core.lsp", function()
 			local status = lsp.status()
 			assert.is_false(status.running)
 			assert.is_nil(status.client_id)
+			assert.is_nil(status.server)
 		end)
 	end)
 
