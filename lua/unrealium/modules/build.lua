@@ -229,7 +229,8 @@ local function run_build(preset, extra_args)
 				end
 
 				if output_mode == "quickfix" or (handle.exit_code ~= 0 and not cancelled) then
-					output.quickfix(handle)
+					local auto_qf = cfg.settings and cfg.settings.build and cfg.settings.build.auto_open_quickfix
+					output.quickfix(handle, auto_qf)
 				end
 
 				-- Clean up build output buffer on success with no warnings

@@ -12,6 +12,17 @@ local progress = require("unrealium.core.progress")
 
 M.name = "run"
 
+--- Compute the split height from config.
+---@param cfg UnrealiumConfig|nil
+---@return integer
+local function compute_split_height(cfg)
+	local split_height_cfg = cfg and cfg.settings and cfg.settings.run and cfg.settings.run.split_height or 0.33
+	if split_height_cfg > 0 and split_height_cfg < 1 then
+		return math.floor(vim.o.lines * split_height_cfg)
+	end
+	return math.floor(split_height_cfg)
+end
+
 --- Active editor terminal state (only one at a time).
 ---@type { bufnr: integer, job_id: integer }|nil
 local _editor_terminal = nil
@@ -66,14 +77,45 @@ local function build_then_run(build_arg, run_type, run_extra_args)
 	build.execute(build_arg, false)
 end
 
+--- Toggle the run terminal split visibility.
+local function toggle_run_log()
+	if not _editor_terminal or not vim.api.nvim_buf_is_valid(_editor_terminal.bufnr) then
+		log.info("No editor terminal active")
+		return
+	end
+
+	local buf = _editor_terminal.bufnr
+	-- Close if already visible
+	for _, win in ipairs(vim.api.nvim_list_wins()) do
+		if vim.api.nvim_win_is_valid(win) and vim.api.nvim_win_get_buf(win) == buf then
+			vim.api.nvim_win_close(win, false)
+			return
+		end
+	end
+
+	-- Open in a bottom split with configured height
+	local cfg = config.get()
+	local split_height = compute_split_height(cfg)
+	vim.cmd("botright " .. split_height .. "split")
+	vim.api.nvim_win_set_buf(0, buf)
+	local line_count = vim.api.nvim_buf_line_count(buf)
+	if line_count > 0 then
+		vim.api.nvim_win_set_cursor(0, { line_count, 0 })
+	end
+end
+
 M.commands = {
 	run = {
 		handler = function(opts)
+			if opts.args[1] == "log" then
+				toggle_run_log()
+				return
+			end
 			M.execute(opts.args[1], { unpack(opts.args, 2) })
 		end,
 		desc = "Run Unreal Editor",
 		args = {
-			{ name = "type", complete = { "Development", "Debug" } },
+			{ name = "type", complete = { "log", "Development", "Debug" } },
 		},
 	},
 	["build-run"] = {
@@ -172,7 +214,8 @@ function M.execute(type, extra_args, _skip_build)
 	local prev_win = vim.api.nvim_get_current_win()
 
 	-- Create a new buffer and open it in a bottom split
-	vim.cmd("botright split")
+	local split_height = compute_split_height(cfg)
+	vim.cmd("botright " .. split_height .. "split")
 	local buf = vim.api.nvim_create_buf(false, true)
 	vim.api.nvim_set_current_buf(buf)
 	local term_win = vim.api.nvim_get_current_win()
@@ -227,6 +270,14 @@ function M.execute(type, extra_args, _skip_build)
 	_editor_terminal = { bufnr = buf, job_id = job_id }
 	event.emit(event.EDITOR_START, { cmd = cmd_data.cmd })
 
+	-- Close split if show_log is disabled (process continues in background)
+	local show_log = cfg.settings and cfg.settings.run and cfg.settings.run.show_log
+	if show_log == false then
+		if vim.api.nvim_win_is_valid(term_win) then
+			vim.api.nvim_win_close(term_win, false)
+		end
+	end
+
 	-- Return focus to previous window
 	if vim.api.nvim_win_is_valid(prev_win) then
 		vim.api.nvim_set_current_win(prev_win)
@@ -236,6 +287,7 @@ end
 if _TEST then
 	M._build_then_run = build_then_run
 	M._close_editor_terminal = close_editor_terminal
+	M._toggle_run_log = toggle_run_log
 	M._get_editor_terminal = function()
 		return _editor_terminal
 	end

@@ -29,12 +29,15 @@ local SCHEMA = {
 	["build.progress"] = { type = "boolean" },
 	["build.completion_ttl"] = { type = "number" },
 	["build.default_preset"] = { type = "string", nilable = true },
+	["build.auto_open_quickfix"] = { type = "boolean" },
 	["build.extra_args"] = { type = "string[]" },
 
 	-- run
 	["run"] = { type = "table", children = true },
 	["run.default_type"] = { type = "string" },
 	["run.build_first"] = { type = "boolean" },
+	["run.split_height"] = { type = "number" },
+	["run.show_log"] = { type = "boolean" },
 	["run.extra_args"] = { type = "string[]" },
 
 	-- search

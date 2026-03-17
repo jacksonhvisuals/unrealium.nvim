@@ -20,11 +20,14 @@ local _defaults = {
 		progress = true,
 		completion_ttl = 5,
 		default_preset = nil,
+		auto_open_quickfix = true,
 		extra_args = {},
 	},
 	run = {
 		default_type = "Development",
 		build_first = false,
+		split_height = 0.33,
+		show_log = true,
 		extra_args = {},
 	},
 	search = {

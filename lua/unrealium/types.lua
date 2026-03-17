@@ -23,8 +23,8 @@
 ---@field engine? { folder?: string, allow_modifications?: boolean }
 ---@field logging? { level?: string }
 ---@field ui? { picker?: { prefer?: string[] } }
----@field build? { configurations?: string[], presets?: UnrealiumPreset[], output_mode?: string, progress?: boolean, default_preset?: string, extra_args?: string[] }
----@field run? { default_type?: string, build_first?: boolean, extra_args?: string[] }
+---@field build? { configurations?: string[], presets?: UnrealiumPreset[], output_mode?: string, progress?: boolean, default_preset?: string, auto_open_quickfix?: boolean, extra_args?: string[] }
+---@field run? { default_type?: string, build_first?: boolean, split_height?: number, show_log?: boolean, extra_args?: string[] }
 ---@field search? { exclude_patterns?: string[] }
 ---@field intel? UnrealiumIntelUserConfig
 

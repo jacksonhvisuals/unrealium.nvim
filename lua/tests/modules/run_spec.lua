@@ -306,7 +306,7 @@ describe("modules.run", function()
 			assert.is_true(stubs.termopen_called)
 			assert.truthy(stubs.termopen_cmd)
 			assert.matches("UnrealEditor", stubs.termopen_cmd[1])
-			assert.equals("botright split", stubs.cmd_called)
+			assert.truthy(stubs.cmd_called:match("^botright %d+split$"))
 
 			-- Should have set editor terminal state
 			local term = run._get_editor_terminal()

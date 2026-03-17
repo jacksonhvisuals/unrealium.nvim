@@ -54,11 +54,14 @@ require("unrealium").setup({
     output_mode = "terminal",
     progress = true,
     default_preset = nil,      -- preset name to use when no arg and no last preset
+    auto_open_quickfix = true, -- auto-open quickfix window on build errors
     extra_args = {},           -- extra args passed to UBT
   },
   run = {
     default_type = "Development",  -- "Development" or "Debug"
     build_first = false,           -- when true, :UE run builds before launching
+    split_height = 0.33,           -- terminal split height (0-1 = fraction, >= 1 = lines)
+    show_log = true,               -- auto-show terminal split on run (false = background)
     extra_args = {},               -- extra args passed to the editor
   },
   search = {
@@ -127,7 +130,7 @@ For custom engine paths (e.g. source builds), create a config file next to your 
     "output_mode": "terminal",
     "extra_args": []
   },
-  "run": { "default_type": "Development", "extra_args": ["-norelativemousemode"] },
+  "run": { "default_type": "Development", "split_height": 0.33, "show_log": true, "extra_args": ["-norelativemousemode"] },
   "search": { "exclude_patterns": ["**/*.po", "**/*.archive", "**/MyCustomExclude/**"] },
   "intel": {
     "server": "clangd",
@@ -176,8 +179,11 @@ Launch the Unreal Editor.
 
 - `:UE run` — run with default type (configurable via `run.default_type`)
 - `:UE run Debug` — run with Debug configuration
+- `:UE run log` — toggle the run terminal split (show/hide)
 
 When `run.build_first = true`, `:UE run` automatically triggers a build first and only launches the editor on success.
+
+When `run.show_log = false`, the editor process starts in the background without opening a terminal split. Use `:UE run log` to view the output.
 
 ### `:UE build-run [preset]`
 

@@ -102,7 +102,8 @@ end
 
 --- Populate quickfix list from a job handle's diagnostics.
 ---@param handle UnrealiumJobHandle
-function M.quickfix(handle)
+---@param auto_open? boolean whether to auto-open quickfix (default true)
+function M.quickfix(handle, auto_open)
 	local items = {}
 	for _, diag in ipairs(handle.errors) do
 		table.insert(items, {
@@ -124,8 +125,8 @@ function M.quickfix(handle)
 	end
 
 	vim.fn.setqflist(items, "r")
-	if #handle.errors > 0 then
-		vim.cmd("copen")
+	if auto_open ~= false and #handle.errors > 0 then
+		vim.cmd("botright copen")
 	end
 end
 
