@@ -70,4 +70,32 @@ function M.mock_config(overrides)
 	return cfg
 end
 
+--- Create a plugin directory structure under a project's Plugins/ dir.
+---@param project_dir string project root (must exist)
+---@param plugin_name string e.g. "MyPlugin"
+---@param opts? { subdirs?: string[], content_python?: boolean }
+---@return string plugin_dir the created plugin directory path
+function M.createPluginTree(project_dir, plugin_name, opts)
+	opts = opts or {}
+	local plugin_dir = vim.fs.joinpath(project_dir, "Plugins", plugin_name)
+	vim.fn.mkdir(plugin_dir, "p")
+
+	-- Create .uplugin file
+	Path:new(vim.fs.joinpath(plugin_dir, plugin_name .. ".uplugin")):touch()
+
+	-- Create standard subdirs
+	local subdirs = opts.subdirs or { "Source", "Resources", "Config" }
+	for _, subdir in ipairs(subdirs) do
+		vim.fn.mkdir(vim.fs.joinpath(plugin_dir, subdir), "p")
+	end
+
+	-- Optionally create Content/Python
+	if opts.content_python then
+		vim.fn.mkdir(vim.fs.joinpath(plugin_dir, "Content", "Python"), "p")
+		Path:new(vim.fs.joinpath(plugin_dir, "Content", "Python", "init.py")):touch()
+	end
+
+	return plugin_dir
+end
+
 return M

@@ -90,3 +90,8 @@
 ---@field target_name string    Target.cs base name
 ---@field target_type string    "Editor"|"Server"|"Client"|"Game"
 ---@field configuration string  "Debug"|"DebugGame"|"Development"
+
+---@class UnrealiumPlugin
+---@field name string
+---@field path string
+---@field uplugin string

@@ -298,6 +298,60 @@ function M.resolve_engine_config(raw_config, uproject_path)
 	}
 end
 
+--- Discover plugins in the project's Plugins/ directory.
+--- Scans one level deep for direct plugins and two levels deep for publisher-grouped
+--- plugins (e.g. Plugins/Epic/OnlineSubsystem/).
+---@param project_root string
+---@return UnrealiumPlugin[]
+function M.discover_plugins(project_root)
+	local plugins_dir = vim.fs.joinpath(project_root, "Plugins")
+	local handle = vim.uv.fs_scandir(plugins_dir)
+	if not handle then
+		return {}
+	end
+
+	local plugins = {}
+
+	while true do
+		local name, typ = vim.uv.fs_scandir_next(handle)
+		if not name then
+			break
+		end
+		if typ == "directory" then
+			local dir_path = vim.fs.joinpath(plugins_dir, name)
+			-- Check if this directory itself contains a .uplugin
+			local uplugin = find_file_with_extension(dir_path, "uplugin")
+			if uplugin then
+				table.insert(plugins, { name = name, path = dir_path, uplugin = uplugin })
+			else
+				-- Check one level deeper for publisher-grouped plugins
+				local sub_handle = vim.uv.fs_scandir(dir_path)
+				if sub_handle then
+					while true do
+						local sub_name, sub_typ = vim.uv.fs_scandir_next(sub_handle)
+						if not sub_name then
+							break
+						end
+						if sub_typ == "directory" then
+							local sub_path = vim.fs.joinpath(dir_path, sub_name)
+							local sub_uplugin = find_file_with_extension(sub_path, "uplugin")
+							if sub_uplugin then
+								table.insert(plugins, { name = sub_name, path = sub_path, uplugin = sub_uplugin })
+							end
+						end
+					end
+				end
+			end
+		end
+	end
+
+	table.sort(plugins, function(a, b)
+		return a.name < b.name
+	end)
+
+	return plugins
+end
+
 if _TEST then
 	M._find_file_with_extension = find_file_with_extension
 	M._read_json_file = read_json_file

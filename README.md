@@ -105,6 +105,7 @@ require("unrealium").setup({
     extra_args = {},             -- extra args passed to the editor binary
   },
   tree = {
+    default_view = "solution",   -- "solution" (dev-focused) or "files" (flat filesystem)
     engine_dirs = { "Source" },  -- engine subdirs to show (single entry points directly to that subdir)
     reveal_on_open = true,       -- expand and jump to current buffer's file when tree opens
     follow_file = true,          -- auto-reveal current buffer as you switch files
@@ -258,11 +259,20 @@ Switch between header and source files with UE Public/Private directory awarenes
 
 Multi-root file tree showing both the project and engine source as sibling roots in a sidebar. Requires [snacks.nvim](https://github.com/folke/snacks.nvim) for the full tree experience; falls back to `vim.ui.select` without it.
 
-- `:UE tree` — toggle the tree sidebar (default action)
+- `:UE tree` — toggle the tree sidebar (default view mode)
+- `:UE tree solution` — toggle solution view (dev-focused hierarchy)
+- `:UE tree files` — toggle filesystem view (flat dual-root)
 - `:UE tree open` — open the tree sidebar
 - `:UE tree close` — close the tree sidebar
 - `:UE tree focus` — focus the tree sidebar (opens it if closed)
 - `:UE tree reveal` — reveal the current buffer's file in the tree
+
+**View modes:**
+
+- **Solution** (default): Reorganizes the tree into a development-focused hierarchy. The project shows only `Config/` and `Source/`, each plugin is promoted to a top-level sibling with only relevant directories (Source, Resources, Config, Content/Python, .uplugin), and noise directories (Intermediate, Binaries, Content assets) are hidden.
+- **Files**: Shows the raw filesystem tree with project and engine as dual roots.
+
+When toggling with a different view mode than the currently open tree, the tree closes and reopens with the new view.
 
 The project root starts expanded and the engine root starts collapsed to avoid scanning the large engine directory on startup. Mutation actions (add, delete, rename, move, copy, paste) on engine files are blocked when `engine.allow_modifications` is `false` (the default).
 

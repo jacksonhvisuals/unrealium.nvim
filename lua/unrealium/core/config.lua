@@ -71,6 +71,7 @@ local _defaults = {
 		extra_args = {},
 	},
 	tree = {
+		default_view = "solution",
 		engine_dirs = { "Source" },
 		reveal_on_open = true,
 		follow_file = true,

@@ -4,8 +4,12 @@ local M = {}
 
 local log = require("unrealium.core.log").get("tree")
 local config = require("unrealium.core.config")
+local finder = require("unrealium.core.finder")
 
 M.name = "tree"
+
+--- View mode keywords that select a view instead of being an action.
+local VIEW_MODES = { solution = true, files = true }
 
 --- Resolve the engine root path for the tree.
 --- Uses engine_dirs config to determine which subdirectories to show.
@@ -44,9 +48,16 @@ local function resolve_engine_root(cfg)
 end
 
 --- Execute the tree command.
----@param action? string "toggle"|"open"|"close"|"focus"|"reveal"
+---@param action? string "toggle"|"open"|"close"|"focus"|"reveal"|"solution"|"files"
 function M.execute(action)
 	action = action or "toggle"
+
+	-- If action is a view mode keyword, set view and toggle
+	local view = nil
+	if VIEW_MODES[action] then
+		view = action
+		action = "toggle"
+	end
 
 	local cfg = config.get()
 	if not cfg then
@@ -57,7 +68,16 @@ function M.execute(action)
 	local project_root = cfg.Project.Folder
 	local engine_root = resolve_engine_root(cfg)
 	local allow_engine_mods = cfg.Engine.AllowEngineModifications or false
-	local tree_opts = cfg.settings.tree
+	local tree_opts = vim.deepcopy(cfg.settings.tree)
+
+	-- Resolve view mode
+	view = view or tree_opts.default_view or "solution"
+	tree_opts.view = view
+
+	-- Discover plugins for solution view
+	if view == "solution" then
+		tree_opts.plugins = finder.discover_plugins(project_root)
+	end
 
 	local tree_ui = require("unrealium.core.ui.tree")
 	tree_ui.execute(action, project_root, engine_root, allow_engine_mods, tree_opts)
@@ -70,7 +90,10 @@ M.commands = {
 		end,
 		desc = "Multi-root file tree (Project + Engine)",
 		args = {
-			{ name = "action", complete = { "toggle", "open", "close", "focus", "reveal" } },
+			{
+				name = "action",
+				complete = { "toggle", "open", "close", "focus", "reveal", "solution", "files" },
+			},
 		},
 	},
 }

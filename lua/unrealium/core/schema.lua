@@ -85,6 +85,7 @@ local SCHEMA = {
 
 	-- tree
 	["tree"] = { type = "table", children = true },
+	["tree.default_view"] = { type = "string", enum = { "solution", "files" } },
 	["tree.engine_dirs"] = { type = "string[]" },
 	["tree.reveal_on_open"] = { type = "boolean" },
 	["tree.follow_file"] = { type = "boolean" },

@@ -118,6 +118,48 @@ describe("unrealium.core.finder", function()
 		end)
 	end)
 
+	describe("discover_plugins", function()
+		it("finds direct plugins with .uplugin files", function()
+			local projDir = tUtil.createValidTree(tmp_dir)
+			tUtil.createPluginTree(projDir, "MyPlugin")
+			tUtil.createPluginTree(projDir, "AnotherPlugin")
+
+			local plugins = finder.discover_plugins(projDir)
+			assert.equals(2, #plugins)
+			-- Should be sorted alphabetically
+			assert.equals("AnotherPlugin", plugins[1].name)
+			assert.equals("MyPlugin", plugins[2].name)
+			assert.matches("AnotherPlugin.uplugin", plugins[1].uplugin)
+			assert.matches("MyPlugin.uplugin", plugins[2].uplugin)
+		end)
+
+		it("finds nested publisher-grouped plugins", function()
+			local projDir = tUtil.createValidTree(tmp_dir)
+			-- Create Plugins/Epic/OnlineSubsystem/ with .uplugin
+			local nested_dir = vim.fs.joinpath(projDir, "Plugins", "Epic", "OnlineSubsystem")
+			vim.fn.mkdir(nested_dir, "p")
+			Path:new(vim.fs.joinpath(nested_dir, "OnlineSubsystem.uplugin")):touch()
+
+			local plugins = finder.discover_plugins(projDir)
+			assert.equals(1, #plugins)
+			assert.equals("OnlineSubsystem", plugins[1].name)
+		end)
+
+		it("returns empty table when no Plugins directory", function()
+			local isolated = tmp_dir .. "/no_plugins"
+			vim.fn.mkdir(isolated, "p")
+			local plugins = finder.discover_plugins(isolated)
+			assert.same({}, plugins)
+		end)
+
+		it("ignores directories without .uplugin files", function()
+			local projDir = tUtil.createValidTree(tmp_dir)
+			-- The "test" directory from createValidTree has no .uplugin
+			local plugins = finder.discover_plugins(projDir)
+			assert.same({}, plugins)
+		end)
+	end)
+
 	describe("resolve_engine_config", function()
 		local orig_isdirectory
 		before_each(function()

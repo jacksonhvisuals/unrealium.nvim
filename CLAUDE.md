@@ -69,7 +69,7 @@ lua/unrealium/
     config.lua                           -- Hierarchical config (defaults → user → project file → runtime)
     log.lua                              -- Per-module logger factory (file + notify writers)
     event.lua                            -- Pub/sub event bus + vim User autocmd bridge
-    finder.lua                           -- .uproject discovery, ancestor traversal, engine path resolution
+    finder.lua                           -- .uproject discovery, ancestor traversal, engine path resolution, plugin discovery
     platform.lua                         -- OS detection, pure command assembly (no side effects)
     command.lua                          -- Declarative command builder (:UE subcommands + completion)
     provider.lua                         -- Capability registry (register/resolve pattern)
@@ -79,7 +79,7 @@ lua/unrealium/
     ui/
       init.lua                           -- UI dispatch
       picker.lua                         -- Multi-backend picker (Snacks → Telescope → fzf-lua → native)
-      tree.lua                           -- Multi-root file tree (Snacks explorer + vim.ui.select fallback)
+      tree.lua                           -- Multi-root file tree (Snacks explorer + fallback, files + solution views)
     lsp/
       init.lua                           -- LSP lifecycle (start/stop/restart/buf_attach/auto-start)
       config_gen.lua                     -- .clangd YAML generation with UE-optimized settings
@@ -124,7 +124,7 @@ plugin/unrealium.lua       -- Version guard (0.10.0+), re-init guard, auto-setup
 | `core/schema.lua` | Declarative config schema, type/enum validation, unknown-key detection |
 | `core/log.lua` | Named logger factory with async file writer + vim.notify for errors/warnings |
 | `core/event.lua` | Pub/sub event bus. Each emit() also fires a vim User autocmd. |
-| `core/finder.lua` | Ancestor directory traversal, .uproject discovery, engine path validation |
+| `core/finder.lua` | Ancestor directory traversal, .uproject discovery, engine path validation, plugin discovery |
 | `core/platform.lua` | Pure command assembly per platform — returns data, never mutates state |
 | `core/command.lua` | Declarative command builder: defines :UE with nested subcommands and tab completion |
 | `core/provider.lua` | Capability registry for extension points (register/resolve by name with priority) |
@@ -140,7 +140,7 @@ plugin/unrealium.lua       -- Version guard (0.10.0+), re-init guard, auto-setup
 | `modules/debug.lua` | `:UE debug` — nvim-dap launch/attach with UE LLDB formatter injection |
 | `modules/switch.lua` | `:UE switch` — Header/source switching with Public/Private awareness |
 | `modules/tree.lua` | `:UE tree` — Multi-root file tree (Project + Engine sidebar) |
-| `core/ui/tree.lua` | Snacks explorer backend for dual-root tree + `vim.ui.select` fallback |
+| `core/ui/tree.lua` | Snacks explorer backend for dual-root tree (files + solution views) + `vim.ui.select` fallback |
 
 ### Configuration
 
