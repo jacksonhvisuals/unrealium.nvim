@@ -9,6 +9,7 @@ A Neovim plugin for Unreal Engine 5 project development.
 - Auto-detects UE projects via `.uproject` files
 - Engine file read-only enforcement to prevent accidental recompiles
 - Unified `:UE` command with subcommands (build, run, search, generate, intel, lint, diagnostics, debug, switch, tree)
+- UE_LOG / UE_LOGFMT snippet completion via [blink.cmp](https://github.com/Saghen/blink.cmp) with smart category discovery
 - Multi-backend picker support (Snacks, Telescope, fzf-lua, native fallback)
 - LSP integration: clangd and [UnrealISense](https://github.com/jacksonhvisuals/unrealisense) with auto-start and config generation
 - Build progress notifications via [fidget.nvim](https://github.com/j-hui/fidget.nvim)
@@ -111,6 +112,9 @@ require("unrealium").setup({
     follow_file = true,          -- auto-reveal current buffer as you switch files
     show_hidden = false,         -- show hidden (dot) files
     show_ignored = false,        -- show gitignored files
+  },
+  snippets = {
+    enabled = true,              -- enable UE_LOG/UE_LOGFMT snippet completion
   },
 })
 ```
@@ -276,6 +280,35 @@ When toggling with a different view mode than the currently open tree, the tree 
 
 The project root starts expanded and the engine root starts collapsed to avoid scanning the large engine directory on startup. Mutation actions (add, delete, rename, move, copy, paste) on engine files are blocked when `engine.allow_modifications` is `false` (the default).
 
+### Snippets (blink.cmp)
+
+unrealium.nvim provides `ULOG` and `ULOGFMT` snippet completions via a [blink.cmp](https://github.com/Saghen/blink.cmp) custom source. When triggered, the snippets expand to `UE_LOG(...)` and `UE_LOGFMT(...)` calls with smart log category suggestions.
+
+**Category discovery:**
+
+1. Scans the current buffer for existing `UE_LOG` / `UE_LOGFMT` calls
+2. Scans sibling `.cpp` / `.h` / `.hpp` files in the same directory
+3. Ranks categories by frequency (most-used first)
+4. Falls back to `LogTemp` if no categories are found; appends `LogTemp` at the end if not already present
+
+**blink.cmp setup:**
+
+```lua
+require("blink.cmp").setup({
+  sources = {
+    default = { "lsp", "path", "buffer", "unrealium" },
+    providers = {
+      unrealium = {
+        name = "unrealium",
+        module = "unrealium.integrations.blink",
+      },
+    },
+  },
+})
+```
+
+The source is only active in `cpp` / `c` filetype buffers within a detected UE project. Disable with `snippets = { enabled = false }` in your config.
+
 ### Legacy Aliases
 
 These aliases are registered for backward compatibility:
@@ -406,4 +439,7 @@ lua/unrealium/
     debug.lua                            -- :UE debug (nvim-dap integration)
     switch.lua                           -- :UE switch (header/source switching)
     tree.lua                             -- :UE tree (multi-root file tree)
+    snippets.lua                         -- UE_LOG/UE_LOGFMT snippet completion
+  integrations/
+    blink.lua                            -- blink.cmp custom source for snippets
 ```

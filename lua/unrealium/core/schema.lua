@@ -91,6 +91,10 @@ local SCHEMA = {
 	["tree.follow_file"] = { type = "boolean" },
 	["tree.show_hidden"] = { type = "boolean" },
 	["tree.show_ignored"] = { type = "boolean" },
+
+	-- snippets
+	["snippets"] = { type = "table", children = true },
+	["snippets.enabled"] = { type = "boolean" },
 }
 
 --- Type checker functions.

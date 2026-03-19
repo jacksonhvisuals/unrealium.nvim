@@ -11,8 +11,20 @@ local command = require("unrealium.core.command")
 local _subcommands = {}
 
 --- Built-in module list.
-local BUILTIN_MODULES =
-	{ "build", "run", "search", "generate", "editor_lock", "lint", "diagnostics", "intel", "debug", "switch", "tree" }
+local BUILTIN_MODULES = {
+	"build",
+	"run",
+	"search",
+	"generate",
+	"editor_lock",
+	"lint",
+	"diagnostics",
+	"intel",
+	"debug",
+	"switch",
+	"tree",
+	"snippets",
+}
 
 --- Register commands from a module into the subcommand tree.
 ---@param mod_commands table<string, UnrealiumCommandSpec>

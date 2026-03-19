@@ -78,6 +78,9 @@ local _defaults = {
 		show_hidden = false,
 		show_ignored = false,
 	},
+	snippets = {
+		enabled = true,
+	},
 }
 
 ---@type table
@@ -210,6 +213,9 @@ function M.get()
 	end
 	if raw_config.tree then
 		settings = deep_merge(settings, { tree = raw_config.tree })
+	end
+	if raw_config.snippets then
+		settings = deep_merge(settings, { snippets = raw_config.snippets })
 	end
 	-- Merge runtime overrides
 	settings = deep_merge(settings, _runtime_overrides)
