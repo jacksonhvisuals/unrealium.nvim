@@ -82,6 +82,13 @@ local SCHEMA = {
 	["debug.default_preset"] = { type = "string", nilable = true },
 	["debug.extra_init_commands"] = { type = "string[]" },
 	["debug.extra_args"] = { type = "string[]" },
+
+	-- tree
+	["tree"] = { type = "table", children = true },
+	["tree.engine_dirs"] = { type = "string[]" },
+	["tree.follow_file"] = { type = "boolean" },
+	["tree.show_hidden"] = { type = "boolean" },
+	["tree.show_ignored"] = { type = "boolean" },
 }
 
 --- Type checker functions.

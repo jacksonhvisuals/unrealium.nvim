@@ -70,6 +70,12 @@ local _defaults = {
 		extra_init_commands = {},
 		extra_args = {},
 	},
+	tree = {
+		engine_dirs = { "Source" },
+		follow_file = true,
+		show_hidden = false,
+		show_ignored = false,
+	},
 }
 
 ---@type table
@@ -199,6 +205,9 @@ function M.get()
 	end
 	if raw_config.debug then
 		settings = deep_merge(settings, { debug = raw_config.debug })
+	end
+	if raw_config.tree then
+		settings = deep_merge(settings, { tree = raw_config.tree })
 	end
 	-- Merge runtime overrides
 	settings = deep_merge(settings, _runtime_overrides)

@@ -8,7 +8,7 @@ A Neovim plugin for Unreal Engine 5 project development.
 
 - Auto-detects UE projects via `.uproject` files
 - Engine file read-only enforcement to prevent accidental recompiles
-- Unified `:UE` command with subcommands (build, run, search, generate, intel, lint, diagnostics, debug, switch)
+- Unified `:UE` command with subcommands (build, run, search, generate, intel, lint, diagnostics, debug, switch, tree)
 - Multi-backend picker support (Snacks, Telescope, fzf-lua, native fallback)
 - LSP integration: clangd and [UnrealISense](https://github.com/jacksonhvisuals/unrealisense) with auto-start and config generation
 - Build progress notifications via [fidget.nvim](https://github.com/j-hui/fidget.nvim)
@@ -103,6 +103,12 @@ require("unrealium").setup({
     default_preset = nil,        -- preset name to use by default
     extra_init_commands = {},     -- additional LLDB init commands
     extra_args = {},             -- extra args passed to the editor binary
+  },
+  tree = {
+    engine_dirs = { "Source" },  -- engine subdirs to show (single entry points directly to that subdir)
+    follow_file = true,          -- auto-reveal current buffer in tree
+    show_hidden = false,         -- show hidden (dot) files
+    show_ignored = false,        -- show gitignored files
   },
 })
 ```
@@ -247,6 +253,18 @@ Switch between header and source files with UE Public/Private directory awarenes
 - `:UE switch split` — open in horizontal split
 - `:UE switch vsplit` — open in vertical split
 
+### `:UE tree [action]`
+
+Multi-root file tree showing both the project and engine source as sibling roots in a sidebar. Requires [snacks.nvim](https://github.com/folke/snacks.nvim) for the full tree experience; falls back to `vim.ui.select` without it.
+
+- `:UE tree` — toggle the tree sidebar (default action)
+- `:UE tree open` — open the tree sidebar
+- `:UE tree close` — close the tree sidebar
+- `:UE tree focus` — focus the tree sidebar (opens it if closed)
+- `:UE tree reveal` — reveal the current buffer's file in the tree
+
+The project root starts expanded and the engine root starts collapsed to avoid scanning the large engine directory on startup. Mutation actions (add, delete, rename, move, copy, paste) on engine files are blocked when `engine.allow_modifications` is `false` (the default).
+
 ### Legacy Aliases
 
 These aliases are registered for backward compatibility:
@@ -357,6 +375,7 @@ lua/unrealium/
     ui/
       init.lua                           -- UI dispatch
       picker.lua                         -- Multi-backend picker abstraction
+      tree.lua                           -- Multi-root file tree (Snacks + fallback)
     lsp/
       init.lua                           -- LSP lifecycle (start/stop/restart/buf_attach/auto-start)
       config_gen.lua                     -- .clangd YAML generation with UE-optimized settings
@@ -375,4 +394,5 @@ lua/unrealium/
     intel.lua                            -- :UE intel (clangd / UnrealISense management)
     debug.lua                            -- :UE debug (nvim-dap integration)
     switch.lua                           -- :UE switch (header/source switching)
+    tree.lua                             -- :UE tree (multi-root file tree)
 ```

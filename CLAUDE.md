@@ -79,6 +79,7 @@ lua/unrealium/
     ui/
       init.lua                           -- UI dispatch
       picker.lua                         -- Multi-backend picker (Snacks → Telescope → fzf-lua → native)
+      tree.lua                           -- Multi-root file tree (Snacks explorer + vim.ui.select fallback)
     lsp/
       init.lua                           -- LSP lifecycle (start/stop/restart/buf_attach/auto-start)
       config_gen.lua                     -- .clangd YAML generation with UE-optimized settings
@@ -97,6 +98,7 @@ lua/unrealium/
     intel.lua                            -- :UE intel (clangd / UnrealISense management)
     debug.lua                            -- :UE debug (nvim-dap launch/attach with UE LLDB formatters)
     switch.lua                           -- :UE switch (header/source switching, Public/Private aware)
+    tree.lua                             -- :UE tree (multi-root file tree)
 ```
 
 ### Initialization Flow
@@ -137,6 +139,8 @@ plugin/unrealium.lua       -- Version guard (0.10.0+), re-init guard, auto-setup
 | `core/lsp/backends/unrealisense.lua` | UnrealISense backend: binary resolution, command building with --engine-path |
 | `modules/debug.lua` | `:UE debug` — nvim-dap launch/attach with UE LLDB formatter injection |
 | `modules/switch.lua` | `:UE switch` — Header/source switching with Public/Private awareness |
+| `modules/tree.lua` | `:UE tree` — Multi-root file tree (Project + Engine sidebar) |
+| `core/ui/tree.lua` | Snacks explorer backend for dual-root tree + `vim.ui.select` fallback |
 
 ### Configuration
 

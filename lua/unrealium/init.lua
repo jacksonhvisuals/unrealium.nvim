@@ -12,7 +12,7 @@ local _subcommands = {}
 
 --- Built-in module list.
 local BUILTIN_MODULES =
-	{ "build", "run", "search", "generate", "editor_lock", "lint", "diagnostics", "intel", "debug", "switch" }
+	{ "build", "run", "search", "generate", "editor_lock", "lint", "diagnostics", "intel", "debug", "switch", "tree" }
 
 --- Register commands from a module into the subcommand tree.
 ---@param mod_commands table<string, UnrealiumCommandSpec>
