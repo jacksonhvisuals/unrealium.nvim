@@ -86,6 +86,7 @@ local SCHEMA = {
 	-- tree
 	["tree"] = { type = "table", children = true },
 	["tree.engine_dirs"] = { type = "string[]" },
+	["tree.reveal_on_open"] = { type = "boolean" },
 	["tree.follow_file"] = { type = "boolean" },
 	["tree.show_hidden"] = { type = "boolean" },
 	["tree.show_ignored"] = { type = "boolean" },

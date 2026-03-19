@@ -72,6 +72,7 @@ local _defaults = {
 	},
 	tree = {
 		engine_dirs = { "Source" },
+		reveal_on_open = true,
 		follow_file = true,
 		show_hidden = false,
 		show_ignored = false,

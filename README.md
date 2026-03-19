@@ -106,7 +106,8 @@ require("unrealium").setup({
   },
   tree = {
     engine_dirs = { "Source" },  -- engine subdirs to show (single entry points directly to that subdir)
-    follow_file = true,          -- auto-reveal current buffer in tree
+    reveal_on_open = true,       -- expand and jump to current buffer's file when tree opens
+    follow_file = true,          -- auto-reveal current buffer as you switch files
     show_hidden = false,         -- show hidden (dot) files
     show_ignored = false,        -- show gitignored files
   },

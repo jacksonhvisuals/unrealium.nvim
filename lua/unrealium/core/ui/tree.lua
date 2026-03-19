@@ -23,6 +23,8 @@ end
 ---@return fun(opts: table, ctx: table): fun(cb: fun(item: table))
 local function make_finder(project_root, engine_root, tree_opts)
 	local Tree = require("snacks.explorer.tree")
+	local ExplorerActions = require("snacks.explorer.actions")
+	local first_call = true
 
 	return function(opts, ctx)
 		local state = require("snacks.picker.source.explorer").get_state(ctx.picker)
@@ -35,6 +37,42 @@ local function make_finder(project_root, engine_root, tree_opts)
 
 		local on_find = state.on_find
 		state.on_find = nil
+
+		-- First call: dual-root setup and reveal_on_open
+		if first_call then
+			first_call = false
+
+			-- State.new only refreshed picker:cwd(); also refresh the engine root
+			if engine_root then
+				Tree:refresh(engine_root)
+			end
+
+			if tree_opts.reveal_on_open then
+				if not on_find then
+					-- follow_file is false; create our own on_find for initial reveal
+					local buf = vim.api.nvim_win_get_buf(ctx.picker.main)
+					local buf_file = vim.fs.normalize(vim.api.nvim_buf_get_name(buf))
+					if buf_file ~= "" and vim.uv.fs_stat(buf_file) then
+						local in_root = vim.startswith(buf_file, project_root)
+							or (engine_root and vim.startswith(buf_file, engine_root))
+						if in_root then
+							Tree:open(buf_file)
+							local r = ctx.picker:ref()
+							on_find = function()
+								local p = r.value
+								if p and not p.closed then
+									ExplorerActions.update(p, { target = buf_file })
+								end
+							end
+						end
+					end
+				end
+				-- else: on_find from State.new already handles initial reveal
+			else
+				-- reveal_on_open is false: suppress any initial reveal from follow_file
+				on_find = nil
+			end
+		end
 
 		-- Git status for both roots
 		if opts.git_status then
@@ -265,88 +303,6 @@ local function make_actions(project_root, engine_root, allow_engine_mods)
 	return actions
 end
 
---- Set up custom state for the multi-root tree (watch, follow_file for both roots).
----@param picker any Snacks picker instance
----@param project_root string
----@param engine_root string|nil
----@param tree_opts table
-local function setup_state(picker, project_root, engine_root, tree_opts)
-	local Tree = require("snacks.explorer.tree")
-	local ExplorerActions = require("snacks.explorer.actions")
-
-	Tree:refresh(project_root)
-	if engine_root then
-		Tree:refresh(engine_root)
-	end
-
-	-- Open current buffer file in the correct root
-	local buf = vim.api.nvim_win_get_buf(picker.main)
-	local buf_file = vim.fs.normalize(vim.api.nvim_buf_get_name(buf))
-	if vim.uv.fs_stat(buf_file) then
-		Tree:open(buf_file)
-	end
-
-	-- Watch setup
-	if picker.opts.watch then
-		local on_close = picker.opts.on_close
-		picker.opts.on_close = function(p)
-			vim.schedule(function()
-				require("snacks.explorer.watch").watch()
-			end)
-			if on_close then
-				on_close(p)
-			end
-		end
-	end
-
-	-- BufWritePost: detect which root and refresh
-	local r = picker:ref()
-	local function ref()
-		local v = r.value
-		return v and not v.closed and v or nil
-	end
-
-	picker.list.win:on("BufWritePost", function(_, ev)
-		local p = ref()
-		if p then
-			Tree:refresh(ev.file)
-			ExplorerActions.update(p)
-		end
-	end)
-
-	-- Follow file: detect which root the buffer belongs to
-	if tree_opts.follow_file then
-		picker.list.win:on({ "WinEnter", "BufEnter" }, function(_, ev)
-			vim.schedule(function()
-				if ev.buf ~= vim.api.nvim_get_current_buf() then
-					return
-				end
-				local p = ref()
-				if not p or p:is_focused() or not p:on_current_tab() or p.closed then
-					return
-				end
-				local win = vim.api.nvim_get_current_win()
-				if vim.api.nvim_win_get_config(win).relative ~= "" then
-					return
-				end
-				local file = vim.api.nvim_buf_get_name(ev.buf)
-				local norm_file = vim.fs.normalize(file)
-				-- Only follow if file belongs to one of our roots
-				local in_root = vim.startswith(norm_file, project_root)
-					or (engine_root and vim.startswith(norm_file, engine_root))
-				if not in_root then
-					return
-				end
-				local item = p:current()
-				if item and item.file == norm_file then
-					return
-				end
-				ExplorerActions.update(p, { target = file })
-			end)
-		end)
-	end
-end
-
 --- Open the Snacks multi-root tree picker.
 ---@param project_root string
 ---@param engine_root string|nil
@@ -358,10 +314,6 @@ function M.open_snacks(project_root, engine_root, allow_engine_mods, tree_opts)
 
 	local finder = make_finder(project_root, engine_root, tree_opts)
 	local actions = make_actions(project_root, engine_root, allow_engine_mods)
-
-	-- Override State.new to use our custom setup
-	local orig_get_state = ExplorerSource.get_state
-	local state_installed = false
 
 	local picker_instance = Snacks.picker({
 		source = "ue_tree",
@@ -387,12 +339,6 @@ function M.open_snacks(project_root, engine_root, allow_engine_mods, tree_opts)
 		matcher = { sort_empty = false, fuzzy = false },
 		config = function(opts)
 			return ExplorerSource.setup(opts)
-		end,
-		on_show = function(picker)
-			if not state_installed then
-				state_installed = true
-				setup_state(picker, project_root, engine_root, tree_opts)
-			end
 		end,
 		actions = vim.tbl_extend("force", ExplorerSource.actions or {}, actions),
 		win = {
