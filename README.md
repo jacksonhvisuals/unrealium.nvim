@@ -9,7 +9,7 @@ A Neovim plugin for Unreal Engine 5 project development.
 - Auto-detects UE projects via `.uproject` files
 - Engine file read-only enforcement to prevent accidental recompiles
 - Unified `:UE` command with subcommands (build, run, search, generate, intel, lint, diagnostics, debug, switch, tree)
-- UE_LOG / UE_LOGFMT snippet completion via [blink.cmp](https://github.com/Saghen/blink.cmp) with smart category discovery
+- UE5 snippet completions via [blink.cmp](https://github.com/Saghen/blink.cmp) (ULOG, ULOGFMT, UENUM, USTRUCT, UCLASS, UINTERFACE, UCAST, UFUNCTION, UPROPERTY) with smart log category and MODULE_API discovery
 - Multi-backend picker support (Snacks, Telescope, fzf-lua, native fallback)
 - LSP integration: clangd and [UnrealISense](https://github.com/jacksonhvisuals/unrealisense) with auto-start and config generation
 - Build progress notifications via [fidget.nvim](https://github.com/j-hui/fidget.nvim)
@@ -114,7 +114,7 @@ require("unrealium").setup({
     show_ignored = false,        -- show gitignored files
   },
   snippets = {
-    enabled = true,              -- enable UE_LOG/UE_LOGFMT snippet completion
+    enabled = true,              -- enable UE5 snippet completions (ULOG, UENUM, UCLASS, etc.)
   },
 })
 ```
@@ -282,14 +282,24 @@ The project root starts expanded and the engine root starts collapsed to avoid s
 
 ### Snippets (blink.cmp)
 
-unrealium.nvim provides `ULOG` and `ULOGFMT` snippet completions via a [blink.cmp](https://github.com/Saghen/blink.cmp) custom source. When triggered, the snippets expand to `UE_LOG(...)` and `UE_LOGFMT(...)` calls with smart log category suggestions.
+unrealium.nvim provides UE5 snippet completions via a [blink.cmp](https://github.com/Saghen/blink.cmp) custom source.
 
-**Category discovery:**
+| Snippet | Expands To | Smart Features |
+|---|---|---|
+| `ULOG` | `UE_LOG(Category, Verbosity, TEXT("..."))` | Log categories ranked by frequency from buffer + sibling files |
+| `ULOGFMT` | `UE_LOGFMT(Category, Verbosity, "...")` | Same category discovery as ULOG |
+| `UENUM` | `UENUM(BlueprintType) enum class ...` | Base type choice list (uint8, uint16, uint32, int32) |
+| `USTRUCT` | `USTRUCT(BlueprintType) struct ...` | Modern `GENERATED_BODY()`, includes UPROPERTY member |
+| `UCLASS` | `UCLASS() class MODULE_API ...` | MODULE_API from `*.Build.cs`, parent class choices, mirrored constructor |
+| `UINTERFACE` | `UINTERFACE() class U.../I...` | MODULE_API from `*.Build.cs`, mirrored U-prefix/I-prefix names |
+| `UCAST` | `Cast<Type>(Source)` | Type name mirrored into Cast template parameter |
+| `UFUNCTION` | `UFUNCTION(Specifier)` | Common specifier choices (BlueprintCallable, Server, Client, etc.) |
+| `UPROPERTY` | `UPROPERTY(Visibility, Access, Category)` | 3-stop: visibility, Blueprint access, category name |
 
-1. Scans the current buffer for existing `UE_LOG` / `UE_LOGFMT` calls
-2. Scans sibling `.cpp` / `.h` / `.hpp` files in the same directory
-3. Ranks categories by frequency (most-used first)
-4. Falls back to `LogTemp` if no categories are found; appends `LogTemp` at the end if not already present
+**Smart discovery:**
+
+- **Log categories**: Scans the current buffer and sibling C++ files for `UE_LOG`/`UE_LOGFMT` calls, ranks by frequency, falls back to `LogTemp`
+- **MODULE_API**: Walks up directories from the current file looking for `*.Build.cs` (e.g., `MyModule.Build.cs` → `MYMODULE_API`). Falls back to scanning sibling files for `_API` patterns, then to `PROJECTNAME_API` placeholder
 
 **blink.cmp setup:**
 
@@ -439,7 +449,7 @@ lua/unrealium/
     debug.lua                            -- :UE debug (nvim-dap integration)
     switch.lua                           -- :UE switch (header/source switching)
     tree.lua                             -- :UE tree (multi-root file tree)
-    snippets.lua                         -- UE_LOG/UE_LOGFMT snippet completion
+    snippets.lua                         -- UE5 snippet builders (ULOG, UENUM, UCLASS, etc.) + MODULE_API discovery
   integrations/
-    blink.lua                            -- blink.cmp custom source for snippets
+    blink.lua                            -- blink.cmp custom source for UE5 snippets
 ```
