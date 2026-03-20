@@ -298,19 +298,14 @@ function M.resolve_engine_config(raw_config, uproject_path)
 	}
 end
 
---- Discover plugins in the project's Plugins/ directory.
---- Scans one level deep for direct plugins and two levels deep for publisher-grouped
---- plugins (e.g. Plugins/Epic/OnlineSubsystem/).
----@param project_root string
----@return UnrealiumPlugin[]
-function M.discover_plugins(project_root)
-	local plugins_dir = vim.fs.joinpath(project_root, "Plugins")
-	local handle = vim.uv.fs_scandir(plugins_dir)
+--- Recursively scan a directory for .uplugin files.
+---@param dir string directory to scan
+---@param plugins UnrealiumPlugin[] accumulator for discovered plugins
+local function scan_for_plugins(dir, plugins)
+	local handle = vim.uv.fs_scandir(dir)
 	if not handle then
-		return {}
+		return
 	end
-
-	local plugins = {}
 
 	while true do
 		local name, typ = vim.uv.fs_scandir_next(handle)
@@ -318,32 +313,26 @@ function M.discover_plugins(project_root)
 			break
 		end
 		if typ == "directory" then
-			local dir_path = vim.fs.joinpath(plugins_dir, name)
-			-- Check if this directory itself contains a .uplugin
+			local dir_path = vim.fs.joinpath(dir, name)
 			local uplugin = find_file_with_extension(dir_path, "uplugin")
 			if uplugin then
 				table.insert(plugins, { name = name, path = dir_path, uplugin = uplugin })
 			else
-				-- Check one level deeper for publisher-grouped plugins
-				local sub_handle = vim.uv.fs_scandir(dir_path)
-				if sub_handle then
-					while true do
-						local sub_name, sub_typ = vim.uv.fs_scandir_next(sub_handle)
-						if not sub_name then
-							break
-						end
-						if sub_typ == "directory" then
-							local sub_path = vim.fs.joinpath(dir_path, sub_name)
-							local sub_uplugin = find_file_with_extension(sub_path, "uplugin")
-							if sub_uplugin then
-								table.insert(plugins, { name = sub_name, path = sub_path, uplugin = sub_uplugin })
-							end
-						end
-					end
-				end
+				-- Recurse deeper to find nested plugins
+				scan_for_plugins(dir_path, plugins)
 			end
 		end
 	end
+end
+
+--- Discover plugins in the project's Plugins/ directory.
+--- Recursively scans for directories containing .uplugin files at any depth.
+---@param project_root string
+---@return UnrealiumPlugin[]
+function M.discover_plugins(project_root)
+	local plugins_dir = vim.fs.joinpath(project_root, "Plugins")
+	local plugins = {}
+	scan_for_plugins(plugins_dir, plugins)
 
 	table.sort(plugins, function(a, b)
 		return a.name < b.name

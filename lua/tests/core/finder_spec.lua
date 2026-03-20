@@ -158,6 +158,40 @@ describe("unrealium.core.finder", function()
 			local plugins = finder.discover_plugins(projDir)
 			assert.same({}, plugins)
 		end)
+
+		it("finds deeply nested plugins (3+ levels)", function()
+			local projDir = tUtil.createValidTree(tmp_dir)
+			-- Create Plugins/Publisher/Category/DeepPlugin/ with .uplugin
+			local deep_dir = vim.fs.joinpath(projDir, "Plugins", "Publisher", "Category", "DeepPlugin")
+			vim.fn.mkdir(deep_dir, "p")
+			Path:new(vim.fs.joinpath(deep_dir, "DeepPlugin.uplugin")):touch()
+
+			local plugins = finder.discover_plugins(projDir)
+			assert.equals(1, #plugins)
+			assert.equals("DeepPlugin", plugins[1].name)
+			assert.matches("DeepPlugin.uplugin", plugins[1].uplugin)
+		end)
+
+		it("finds plugins at mixed depths", function()
+			local projDir = tUtil.createValidTree(tmp_dir)
+			-- Direct plugin
+			tUtil.createPluginTree(projDir, "DirectPlugin")
+			-- Nested publisher plugin
+			local nested_dir = vim.fs.joinpath(projDir, "Plugins", "Epic", "OnlineSubsystem")
+			vim.fn.mkdir(nested_dir, "p")
+			Path:new(vim.fs.joinpath(nested_dir, "OnlineSubsystem.uplugin")):touch()
+			-- Deeply nested plugin
+			local deep_dir = vim.fs.joinpath(projDir, "Plugins", "ThirdParty", "Vendor", "DeepPlugin")
+			vim.fn.mkdir(deep_dir, "p")
+			Path:new(vim.fs.joinpath(deep_dir, "DeepPlugin.uplugin")):touch()
+
+			local plugins = finder.discover_plugins(projDir)
+			assert.equals(3, #plugins)
+			-- Should be sorted alphabetically
+			assert.equals("DeepPlugin", plugins[1].name)
+			assert.equals("DirectPlugin", plugins[2].name)
+			assert.equals("OnlineSubsystem", plugins[3].name)
+		end)
 	end)
 
 	describe("resolve_engine_config", function()

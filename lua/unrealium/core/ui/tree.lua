@@ -14,44 +14,6 @@ local function has_snacks()
 end
 
 -- ---------------------------------------------------------------------------
--- Shared helpers
--- ---------------------------------------------------------------------------
-
---- Determine whether a plugin child item should be shown in solution view.
---- Allows: Source/, Resources/, Config/, .uplugin at plugin root,
---- Content/Python/ and descendants. Blocks everything else.
----@param rel_path string path relative to the plugin root (e.g. "Source/Foo.cpp")
----@return boolean
-local function should_show_plugin_item(rel_path)
-	-- Top-level directory check
-	local top_dir = rel_path:match("^([^/]+)")
-	if not top_dir then
-		return false
-	end
-
-	-- Allowed top-level directories
-	if top_dir == "Source" or top_dir == "Resources" or top_dir == "Config" then
-		return true
-	end
-
-	-- .uplugin file at plugin root (no slashes)
-	if not rel_path:find("/") and rel_path:match("%.uplugin$") then
-		return true
-	end
-
-	-- Content/Python and descendants
-	if top_dir == "Content" then
-		local second = rel_path:match("^Content/([^/]+)")
-		if second == "Python" then
-			return true
-		end
-		return false
-	end
-
-	return false
-end
-
--- ---------------------------------------------------------------------------
 -- Snacks backend — files view (existing dual-root)
 -- ---------------------------------------------------------------------------
 
@@ -157,15 +119,16 @@ local function make_finder(project_root, engine_root, tree_opts)
 				ctx.picker.matcher.task:on("done", vim.schedule_wrap(on_find))
 			end
 
-			-- Virtual root that parents both project and engine
+			-- Master root: visible node labeled with project name
+			local project_name = vim.fn.fnamemodify(project_root, ":t")
 			---@type snacks.picker.explorer.Item
 			local virtual_root = {
-				file = "",
+				file = project_root,
 				dir = true,
 				open = true,
-				text = "",
+				text = project_root,
 				sort = "",
-				internal = true,
+				label = project_name,
 			}
 			cb(virtual_root)
 
@@ -245,8 +208,7 @@ local function make_finder(project_root, engine_root, tree_opts)
 			end
 
 			-- Project root: expanded by default
-			local project_name = vim.fn.fnamemodify(project_root, ":t")
-			yield_root(project_root, project_name, engine_root == nil, true)
+			yield_root(project_root, "Project", engine_root == nil, true)
 
 			-- Engine root: collapsed by default (lazy expansion)
 			if engine_root then
@@ -261,23 +223,16 @@ end
 -- ---------------------------------------------------------------------------
 
 --- Build a finder for solution view that reorganizes the tree into a
---- development-focused hierarchy: project shows only Config/ and Source/,
---- each plugin is promoted to a top-level sibling, and engine is shown as-is.
+--- development-focused hierarchy: project shows Config/, Source/, Plugins/,
+--- and .uproject; engine is shown as-is.
 ---@param project_root string
 ---@param engine_root string|nil
----@param tree_opts table tree config settings (must include .plugins)
+---@param tree_opts table tree config settings
 ---@return fun(opts: table, ctx: table): fun(cb: fun(item: table))
 local function make_solution_finder(project_root, engine_root, tree_opts)
 	local Tree = require("snacks.explorer.tree")
 	local ExplorerActions = require("snacks.explorer.actions")
 	local first_call = true
-	local plugins = tree_opts.plugins or {}
-
-	-- Build a lookup: plugin_path -> plugin for quick routing
-	local plugin_by_path = {}
-	for _, plugin in ipairs(plugins) do
-		plugin_by_path[plugin.path] = plugin
-	end
 
 	return function(opts, ctx)
 		local state = require("snacks.picker.source.explorer").get_state(ctx.picker)
@@ -299,27 +254,13 @@ local function make_solution_finder(project_root, engine_root, tree_opts)
 				Tree:refresh(engine_root)
 			end
 
-			-- Determine reveal roots: project + all plugins
-			local all_roots = { project_root }
-			for _, plugin in ipairs(plugins) do
-				table.insert(all_roots, plugin.path)
-			end
-
 			if tree_opts.reveal_on_open then
 				if not on_find then
 					local buf = vim.api.nvim_win_get_buf(ctx.picker.main)
 					local buf_file = vim.fs.normalize(vim.api.nvim_buf_get_name(buf))
 					if buf_file ~= "" and vim.uv.fs_stat(buf_file) then
-						local in_root = false
-						for _, root in ipairs(all_roots) do
-							if vim.startswith(buf_file, root) then
-								in_root = true
-								break
-							end
-						end
-						if not in_root and engine_root then
-							in_root = vim.startswith(buf_file, engine_root)
-						end
+						local in_root = vim.startswith(buf_file, project_root)
+							or (engine_root and vim.startswith(buf_file, engine_root))
 						if in_root then
 							Tree:open(buf_file)
 							local r = ctx.picker:ref()
@@ -381,25 +322,24 @@ local function make_solution_finder(project_root, engine_root, tree_opts)
 				ctx.picker.matcher.task:on("done", vim.schedule_wrap(on_find))
 			end
 
-			-- Virtual root
+			-- Master root: visible node labeled with project name
+			local project_name = vim.fn.fnamemodify(project_root, ":t")
 			---@type snacks.picker.explorer.Item
 			local virtual_root = {
-				file = "",
+				file = project_root,
 				dir = true,
 				open = true,
-				text = "",
+				text = project_root,
 				sort = "",
-				internal = true,
+				label = project_name,
 			}
 			cb(virtual_root)
 
 			local items = {} ---@type table<string, snacks.picker.explorer.Item>
 			local last = {} ---@type table<snacks.picker.explorer.Node, snacks.picker.explorer.Item>
 
-			-- Compute sort indices: project first, then plugins alphabetically, engine last
-			local project_name = vim.fn.fnamemodify(project_root, ":t")
+			-- Compute sort indices: project first, engine last
 			local has_engine = engine_root ~= nil
-			local total_roots = 1 + #plugins + (has_engine and 1 or 0)
 			local root_idx = 0
 
 			--- Helper: create a root-level label item.
@@ -470,81 +410,35 @@ local function make_solution_finder(project_root, engine_root, tree_opts)
 				cb(item)
 			end
 
-			-- 1. Project root (only Config/ and Source/ shown)
-			local project_is_last = total_roots == 1
-			local project_item = make_root_item(project_root, project_name, project_is_last, true)
+			-- 1. Project root (Config/, Source/, Plugins/, and .uproject shown)
+			local project_is_last = not has_engine
+			local project_item = make_root_item(project_root, "Project", project_is_last, true)
 
 			Tree:get(project_root, function(node)
 				if node.path == project_root then
 					return
 				end
 
-				-- Determine top-level directory relative to project root
 				local rel = node.path:sub(#project_root + 2) -- strip project_root + "/"
 				local top_dir = rel:match("^([^/]+)")
 
-				-- Only show Config/ and Source/ under the project root
 				if top_dir == "Config" or top_dir == "Source" then
+					yield_node(node, project_item)
+				elseif top_dir == "Plugins" then
+					-- Filter out Intermediate/ and Binaries/ within Plugins/ (build artifacts)
+					for segment in rel:gmatch("[^/]+") do
+						if segment == "Intermediate" or segment == "Binaries" then
+							return
+						end
+					end
+					yield_node(node, project_item)
+				elseif not rel:find("/") and rel:match("%.uproject$") then
+					-- .uproject files at project root level
 					yield_node(node, project_item)
 				end
 			end, filter_opts)
 
-			-- 2. Plugin roots (promoted as siblings)
-			for i, plugin in ipairs(plugins) do
-				local is_last_plugin = (i == #plugins) and not has_engine
-				local plugin_item = make_root_item(plugin.path, plugin.name, is_last_plugin, false)
-
-				Tree:get(plugin.path, function(node)
-					if node.path == plugin.path then
-						return
-					end
-
-					local rel = node.path:sub(#plugin.path + 2)
-					if should_show_plugin_item(rel) then
-						-- Reparent Content/Python as just "Python" under plugin root
-						local is_content_dir = rel == "Content"
-						if is_content_dir then
-							-- Skip the Content/ directory itself; Python will attach to plugin_item
-							return
-						end
-						local is_python_under_content = rel == "Content/Python"
-						if is_python_under_content then
-							-- Reparent: make Python a direct child of the plugin root
-							local parent = plugin_item
-							local status = node.status
-							if not status and parent and parent.dir_status then
-								status = parent.dir_status
-							end
-							local item = {
-								file = node.path,
-								dir = node.dir,
-								open = node.open,
-								dir_status = node.dir_status or (parent and parent.dir_status),
-								text = node.path,
-								parent = parent,
-								hidden = node.hidden,
-								ignored = node.ignored,
-								status = (not node.dir or not node.open or opts.git_status_open) and status or nil,
-								last = true,
-								type = node.type,
-								label = "Python",
-								severity = (not node.dir or not node.open or opts.diagnostics_open) and node.severity
-									or nil,
-							}
-							if last[node.parent] then
-								last[node.parent].last = false
-							end
-							last[node.parent] = item
-							items[node.path] = item
-							cb(item)
-							return
-						end
-						yield_node(node, plugin_item)
-					end
-				end, filter_opts)
-			end
-
-			-- 3. Engine root (same as files view)
+			-- 2. Engine root (same as files view)
 			if engine_root then
 				local engine_item = make_root_item(engine_root, "Engine", true, false)
 
@@ -645,80 +539,6 @@ local function make_actions(project_root, engine_root, allow_engine_mods)
 	return actions
 end
 
---- Build action overrides for the solution view multi-root tree.
---- Same as make_actions but explorer_focus checks plugin roots too.
----@param project_root string
----@param engine_root string|nil
----@param allow_engine_mods boolean
----@param plugins UnrealiumPlugin[]
----@return table<string, function>
-local function make_solution_actions(project_root, engine_root, allow_engine_mods, plugins)
-	local Tree = require("snacks.explorer.tree")
-	local ExplorerActions = require("snacks.explorer.actions")
-	local base_actions = make_actions(project_root, engine_root, allow_engine_mods)
-
-	-- Override explorer_focus to be aware of plugin roots
-	base_actions.explorer_focus = function(picker, item)
-		if not item or not item.file or item.file == "" then
-			return
-		end
-
-		local target_root
-		-- Check plugins first (they're subdirectories of project_root)
-		for _, plugin in ipairs(plugins) do
-			if vim.startswith(item.file, plugin.path) then
-				target_root = plugin.path
-				break
-			end
-		end
-		if not target_root then
-			if vim.startswith(item.file, project_root) then
-				target_root = project_root
-			elseif engine_root and vim.startswith(item.file, engine_root) then
-				target_root = engine_root
-			end
-		end
-
-		if target_root then
-			Tree:close_all(project_root)
-			for _, plugin in ipairs(plugins) do
-				Tree:close_all(plugin.path)
-			end
-			if engine_root then
-				Tree:close_all(engine_root)
-			end
-			Tree:open(item.file)
-			ExplorerActions.update(picker, { refresh = true })
-		end
-	end
-
-	-- Override explorer_update to refresh all roots including plugins
-	base_actions.explorer_update = function(picker)
-		Tree:refresh(project_root)
-		for _, plugin in ipairs(plugins) do
-			Tree:refresh(plugin.path)
-		end
-		if engine_root then
-			Tree:refresh(engine_root)
-		end
-		ExplorerActions.update(picker)
-	end
-
-	-- Override explorer_close_all for all roots
-	base_actions.explorer_close_all = function(picker)
-		Tree:close_all(project_root)
-		for _, plugin in ipairs(plugins) do
-			Tree:close_all(plugin.path)
-		end
-		if engine_root then
-			Tree:close_all(engine_root)
-		end
-		ExplorerActions.update(picker, { refresh = true })
-	end
-
-	return base_actions
-end
-
 --- Open the Snacks multi-root tree picker.
 ---@param project_root string
 ---@param engine_root string|nil
@@ -729,17 +549,17 @@ function M.open_snacks(project_root, engine_root, allow_engine_mods, tree_opts)
 	local ExplorerSource = require("snacks.picker.source.explorer")
 
 	local view = tree_opts.view or "files"
-	local finder, actions
+	local finder
 	if view == "solution" then
 		finder = make_solution_finder(project_root, engine_root, tree_opts)
-		actions = make_solution_actions(project_root, engine_root, allow_engine_mods, tree_opts.plugins or {})
 	else
 		finder = make_finder(project_root, engine_root, tree_opts)
-		actions = make_actions(project_root, engine_root, allow_engine_mods)
 	end
+	local actions = make_actions(project_root, engine_root, allow_engine_mods)
 
 	local picker_instance = Snacks.picker({
 		source = "ue_tree",
+		title = "UE Tree",
 		finder = finder,
 		sort = { fields = { "sort" } },
 		supports_live = true,
@@ -954,7 +774,7 @@ function M.open_fallback(project_root, engine_root, tree_opts)
 	local choices = { "Project: " .. vim.fn.fnamemodify(project_root, ":t") }
 	local paths = { project_root }
 
-	-- In solution mode, show plugins as separate choices
+	-- In solution mode with fallback, show plugins as separate choices
 	if tree_opts and tree_opts.view == "solution" and tree_opts.plugins then
 		for _, plugin in ipairs(tree_opts.plugins) do
 			table.insert(choices, "Plugin: " .. plugin.name)
@@ -1013,10 +833,8 @@ if _TEST then
 	M._make_finder = make_finder
 	M._make_solution_finder = make_solution_finder
 	M._make_actions = make_actions
-	M._make_solution_actions = make_solution_actions
 	M._has_snacks = has_snacks
 	M._browse_dir = browse_dir
-	M._should_show_plugin_item = should_show_plugin_item
 end
 
 return M

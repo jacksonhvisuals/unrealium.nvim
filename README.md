@@ -273,8 +273,8 @@ Multi-root file tree showing both the project and engine source as sibling roots
 
 **View modes:**
 
-- **Solution** (default): Reorganizes the tree into a development-focused hierarchy. The project shows only `Config/` and `Source/`, each plugin is promoted to a top-level sibling with only relevant directories (Source, Resources, Config, Content/Python, .uplugin), and noise directories (Intermediate, Binaries, Content assets) are hidden.
-- **Files**: Shows the raw filesystem tree with project and engine as dual roots.
+- **Solution** (default): Reorganizes the tree into a development-focused hierarchy. A master root node shows the project name, with `Project` and `Engine` as children. The Project node shows `Config/`, `Source/`, `Plugins/`, and the `.uproject` file. Within `Plugins/`, build artifact directories (`Intermediate`, `Binaries`) are filtered out.
+- **Files**: Shows the raw filesystem tree with a master root node (project name) containing `Project` and `Engine` as children.
 
 When toggling with a different view mode than the currently open tree, the tree closes and reopens with the new view.
 

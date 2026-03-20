@@ -74,9 +74,12 @@ function M.execute(action)
 	view = view or tree_opts.default_view or "solution"
 	tree_opts.view = view
 
-	-- Discover plugins for solution view
+	-- Discover plugins for fallback picker (Snacks solution view shows Plugins/ as a directory)
 	if view == "solution" then
-		tree_opts.plugins = finder.discover_plugins(project_root)
+		local snacks_available = pcall(require, "snacks")
+		if not snacks_available then
+			tree_opts.plugins = finder.discover_plugins(project_root)
+		end
 	end
 
 	local tree_ui = require("unrealium.core.ui.tree")
