@@ -144,7 +144,7 @@ end
 function M.build_uelog_snippet(categories)
 	local cat_choices = table.concat(categories, ",")
 	return string.format(
-		'UE_LOG(${1|%s|}, ${2|Log,Warning,Error,Display,Verbose,VeryVerbose,Fatal|}, TEXT("$0"));',
+		'UE_LOG(${1|%s|}, ${2|Log,Warning,Error,Display,Verbose,VeryVerbose,Fatal|}, TEXT("${3}"));$0',
 		cat_choices
 	)
 end
@@ -155,7 +155,7 @@ end
 function M.build_uelogfmt_snippet(categories)
 	local cat_choices = table.concat(categories, ",")
 	return string.format(
-		'UE_LOGFMT(${1|%s|}, ${2|Log,Warning,Error,Display,Verbose,VeryVerbose,Fatal|}, "$0");',
+		'UE_LOGFMT(${1|%s|}, ${2|Log,Warning,Error,Display,Verbose,VeryVerbose,Fatal|}, "${3}");$0',
 		cat_choices
 	)
 end
