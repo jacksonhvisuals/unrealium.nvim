@@ -9,7 +9,7 @@ local finder = require("unrealium.core.finder")
 M.name = "tree"
 
 --- View mode keywords that select a view instead of being an action.
-local VIEW_MODES = { solution = true, files = true }
+local VIEW_MODES = { solution = true, files = true, symbols = true }
 
 --- Resolve the engine root path for the tree.
 --- Uses engine_dirs config to determine which subdirectories to show.
@@ -65,14 +65,22 @@ function M.execute(action)
 		return
 	end
 
-	local project_root = cfg.Project.Folder
-	local engine_root = resolve_engine_root(cfg)
-	local allow_engine_mods = cfg.Engine.AllowEngineModifications or false
 	local tree_opts = vim.deepcopy(cfg.settings.tree)
 
 	-- Resolve view mode
 	view = view or tree_opts.default_view or "solution"
 	tree_opts.view = view
+
+	-- Symbols view doesn't need project/engine roots
+	if view == "symbols" then
+		local tree_ui = require("unrealium.core.ui.tree")
+		tree_ui.execute(action, nil, nil, false, tree_opts)
+		return
+	end
+
+	local project_root = cfg.Project.Folder
+	local engine_root = resolve_engine_root(cfg)
+	local allow_engine_mods = cfg.Engine.AllowEngineModifications or false
 
 	-- Discover plugins for fallback picker (Snacks solution view shows Plugins/ as a directory)
 	if view == "solution" then
@@ -95,7 +103,7 @@ M.commands = {
 		args = {
 			{
 				name = "action",
-				complete = { "toggle", "open", "close", "focus", "reveal", "solution", "files" },
+				complete = { "toggle", "open", "close", "focus", "reveal", "solution", "files", "symbols" },
 			},
 		},
 	},

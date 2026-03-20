@@ -95,3 +95,17 @@
 ---@field name string
 ---@field path string
 ---@field uplugin string
+
+---@class UnrealiumSymbol
+---@field name string
+---@field kind string           "Class"|"Struct"|"Enum"|"Method"|"Function"|"Field"|"EnumMember"|"Namespace"
+---@field pos integer[]         {line_1indexed, col_0indexed}
+---@field end_pos integer[]
+---@field ue_macro string|nil   "UCLASS"|"USTRUCT"|"UENUM"|"UFUNCTION"|"UPROPERTY"
+---@field access string|nil     "public"|"protected"|"private"|"impl"
+---@field children UnrealiumSymbol[]
+---@field source_file string|nil
+---@field class_name string|nil  set on qualified methods (e.g. "AMyActor" for AMyActor::BeginPlay)
+---@field has_impl boolean|nil   set by merge when source implementation exists
+---@field impl_file string|nil
+---@field impl_pos integer[]|nil

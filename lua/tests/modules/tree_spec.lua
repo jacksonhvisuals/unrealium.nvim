@@ -33,6 +33,7 @@ describe("modules.tree", function()
 		assert.truthy(vim.tbl_contains(completions, "reveal"))
 		assert.truthy(vim.tbl_contains(completions, "solution"))
 		assert.truthy(vim.tbl_contains(completions, "files"))
+		assert.truthy(vim.tbl_contains(completions, "symbols"))
 	end)
 
 	describe("resolve_engine_root", function()

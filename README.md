@@ -106,7 +106,7 @@ require("unrealium").setup({
     extra_args = {},             -- extra args passed to the editor binary
   },
   tree = {
-    default_view = "solution",   -- "solution" (dev-focused) or "files" (flat filesystem)
+    default_view = "solution",   -- "solution" (dev-focused), "files" (flat filesystem), or "symbols" (C++ outline)
     engine_dirs = { "Source" },  -- engine subdirs to show (single entry points directly to that subdir)
     reveal_on_open = true,       -- expand and jump to current buffer's file when tree opens
     follow_file = true,          -- auto-reveal current buffer as you switch files
@@ -266,6 +266,7 @@ Multi-root file tree showing both the project and engine source as sibling roots
 - `:UE tree` — toggle the tree sidebar (default view mode)
 - `:UE tree solution` — toggle solution view (dev-focused hierarchy)
 - `:UE tree files` — toggle filesystem view (flat dual-root)
+- `:UE tree symbols` — toggle symbols view (treesitter-based C++ outline)
 - `:UE tree open` — open the tree sidebar
 - `:UE tree close` — close the tree sidebar
 - `:UE tree focus` — focus the tree sidebar (opens it if closed)
@@ -275,6 +276,7 @@ Multi-root file tree showing both the project and engine source as sibling roots
 
 - **Solution** (default): Reorganizes the tree into a development-focused hierarchy. A master root node shows the project name, with `Project` and `Engine` as children. The Project node shows `Config/`, `Source/`, `Plugins/`, and the `.uproject` file. Within `Plugins/`, build artifact directories (`Intermediate`, `Binaries`) are filtered out.
 - **Files**: Shows the raw filesystem tree with a master root node (project name) containing `Project` and `Engine` as children.
+- **Symbols**: Treesitter-based C++ symbol outline for the current buffer. Shows classes, structs, enums, functions, methods, and fields in a hierarchical tree with LSP kind icons. Detects UE macros (UCLASS, USTRUCT, UENUM, UFUNCTION, UPROPERTY) and tracks access specifiers (public/protected/private). Automatically merges header declarations with source implementations when a companion `.h`/`.cpp` file exists. The sidebar auto-refreshes when switching C++ buffers or saving.
 
 When toggling with a different view mode than the currently open tree, the tree closes and reopens with the new view.
 
@@ -426,10 +428,11 @@ lua/unrealium/
     job.lua                              -- Async job runner via vim.uv
     target.lua                           -- .Target.cs discovery and parsing
     progress.lua                         -- Build progress (fidget/notify)
+    ts_symbols.lua                       -- Treesitter-based C++ symbol extraction + UE macro detection
     ui/
       init.lua                           -- UI dispatch
       picker.lua                         -- Multi-backend picker abstraction
-      tree.lua                           -- Multi-root file tree (Snacks + fallback)
+      tree.lua                           -- Multi-root file tree + symbols view (Snacks + fallback)
     lsp/
       init.lua                           -- LSP lifecycle (start/stop/restart/buf_attach/auto-start)
       config_gen.lua                     -- .clangd YAML generation with UE-optimized settings

@@ -76,10 +76,11 @@ lua/unrealium/
     job.lua                              -- Async job runner (UBT builds, shell commands)
     target.lua                           -- .Target.cs discovery and parsing
     progress.lua                         -- Build progress notifications (fidget/notify)
+    ts_symbols.lua                       -- Treesitter-based C++ symbol extraction + UE macro detection
     ui/
       init.lua                           -- UI dispatch
       picker.lua                         -- Multi-backend picker (Snacks → Telescope → fzf-lua → native)
-      tree.lua                           -- Multi-root file tree (Snacks explorer + fallback, files + solution views)
+      tree.lua                           -- Multi-root file tree + symbols view (Snacks explorer/picker + fallback)
     lsp/
       init.lua                           -- LSP lifecycle (start/stop/restart/buf_attach/auto-start)
       config_gen.lua                     -- .clangd YAML generation with UE-optimized settings
@@ -132,6 +133,7 @@ plugin/unrealium.lua       -- Version guard (0.10.0+), re-init guard, auto-setup
 | `core/job.lua` | Async job runner for UBT builds and shell commands via vim.uv |
 | `core/target.lua` | Discovers and parses .Target.cs files for build target enumeration |
 | `core/progress.lua` | Build progress display via fidget.nvim or vim.notify fallback |
+| `core/ts_symbols.lua` | Treesitter-based C++ symbol extraction with UE macro detection and H/CPP merge |
 | `core/lsp/init.lua` | Backend-agnostic LSP lifecycle: start/stop/restart/buf_attach, auto-start on first C++ buffer |
 | `core/lsp/config_gen.lua` | Generates .clangd config excluding ThirdParty/Intermediate from indexing |
 | `core/lsp/unrealisense_config_gen.lua` | Generates .unrealisense.toml with engine path |
@@ -139,8 +141,8 @@ plugin/unrealium.lua       -- Version guard (0.10.0+), re-init guard, auto-setup
 | `core/lsp/backends/unrealisense.lua` | UnrealISense backend: binary resolution, command building with --engine-path |
 | `modules/debug.lua` | `:UE debug` — nvim-dap launch/attach with UE LLDB formatter injection |
 | `modules/switch.lua` | `:UE switch` — Header/source switching with Public/Private awareness |
-| `modules/tree.lua` | `:UE tree` — Multi-root file tree (Project + Engine sidebar) |
-| `core/ui/tree.lua` | Snacks explorer backend for dual-root tree (files + solution views) + `vim.ui.select` fallback |
+| `modules/tree.lua` | `:UE tree` — Multi-root file tree + symbols outline (Project + Engine sidebar) |
+| `core/ui/tree.lua` | Snacks explorer/picker backend for tree views (files + solution + symbols) + `vim.ui.select` fallback |
 
 ### Configuration
 

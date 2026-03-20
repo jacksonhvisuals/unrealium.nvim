@@ -636,6 +636,13 @@ end
 ---@param tree_opts table
 function M.toggle_snacks(project_root, engine_root, allow_engine_mods, tree_opts)
 	local Snacks = require("snacks")
+
+	-- Close any symbols picker when switching to file/solution view
+	local symbols_pickers = Snacks.picker.get({ source = "ue_symbols" })
+	for _, p in ipairs(symbols_pickers) do
+		p:close()
+	end
+
 	local existing = Snacks.picker.get({ source = "ue_tree" })
 	if #existing > 0 then
 		local current_view = existing[1]._ue_view
@@ -653,15 +660,17 @@ function M.toggle_snacks(project_root, engine_root, allow_engine_mods, tree_opts
 	end
 end
 
---- Close any open Snacks tree picker.
+--- Close any open Snacks tree or symbols picker.
 function M.close_snacks()
 	local ok, Snacks = pcall(require, "snacks")
 	if not ok then
 		return
 	end
-	local existing = Snacks.picker.get({ source = "ue_tree" })
-	for _, picker in ipairs(existing) do
-		picker:close()
+	for _, source in ipairs({ "ue_tree", "ue_symbols" }) do
+		local existing = Snacks.picker.get({ source = source })
+		for _, picker in ipairs(existing) do
+			picker:close()
+		end
 	end
 end
 
@@ -672,12 +681,20 @@ end
 ---@param tree_opts table
 function M.focus_snacks(project_root, engine_root, allow_engine_mods, tree_opts)
 	local Snacks = require("snacks")
-	local existing = Snacks.picker.get({ source = "ue_tree" })
-	if #existing > 0 then
-		existing[1]:focus()
-	else
-		M.open_snacks(project_root, engine_root, allow_engine_mods, tree_opts)
+
+	-- Focus whichever UE picker is already open
+	local tree_pickers = Snacks.picker.get({ source = "ue_tree" })
+	if #tree_pickers > 0 then
+		tree_pickers[1]:focus()
+		return
 	end
+	local symbol_pickers = Snacks.picker.get({ source = "ue_symbols" })
+	if #symbol_pickers > 0 then
+		symbol_pickers[1]:focus()
+		return
+	end
+
+	M.open_snacks(project_root, engine_root, allow_engine_mods, tree_opts)
 end
 
 --- Reveal the current buffer's file in the tree.
@@ -703,6 +720,208 @@ function M.reveal_snacks(project_root, engine_root, allow_engine_mods, tree_opts
 			ExplorerActions.update(picker, { target = file })
 		end
 	end
+end
+
+-- ---------------------------------------------------------------------------
+-- Snacks backend — symbols view
+-- ---------------------------------------------------------------------------
+
+--- Convert a hierarchical symbol tree into flat items for the Snacks tree picker.
+---@param symbols UnrealiumSymbol[]
+---@param bufnr integer current buffer (default jump target)
+---@return table[] items
+local function flatten_symbols(symbols, bufnr)
+	local items = {}
+
+	local function flatten(syms, parent_item, depth)
+		for i, sym in ipairs(syms) do
+			local is_last = (i == #syms)
+			local item = {
+				text = sym.name,
+				name = sym.name,
+				kind = sym.kind,
+				pos = sym.pos,
+				end_pos = sym.end_pos,
+				tree = true,
+				depth = depth,
+				parent = parent_item,
+				last = is_last,
+			}
+
+			-- Jump target: companion file or current buffer
+			if sym.source_file then
+				item.file = sym.source_file
+			else
+				item.buf = bufnr
+			end
+
+			table.insert(items, item)
+
+			if sym.children and #sym.children > 0 then
+				flatten(sym.children, item, depth + 1)
+			end
+		end
+	end
+
+	flatten(symbols, nil, 0)
+	return items
+end
+
+--- Build a finder function for the symbols picker.
+---@param tree_opts table
+---@return fun(opts: table, ctx: table): fun(cb: fun(item: table))
+local function make_symbols_finder(tree_opts)
+	return function(opts, ctx)
+		local main_win = ctx.picker.main
+		if not main_win or not vim.api.nvim_win_is_valid(main_win) then
+			return function(cb) end
+		end
+
+		local bufnr = vim.api.nvim_win_get_buf(main_win)
+		local ft = vim.bo[bufnr].filetype
+		if ft ~= "cpp" and ft ~= "c" then
+			return function(cb) end
+		end
+
+		local ts_symbols = require("unrealium.core.ts_symbols")
+		local symbols = ts_symbols.get_symbols_for_buffer(bufnr)
+
+		return function(cb)
+			local items = flatten_symbols(symbols, bufnr)
+			for _, item in ipairs(items) do
+				cb(item)
+			end
+		end
+	end
+end
+
+--- Open the Snacks symbols picker.
+---@param tree_opts table
+---@return table|nil picker
+function M.open_symbols_snacks(tree_opts)
+	local Snacks = require("snacks")
+
+	local picker = Snacks.picker({
+		source = "ue_symbols",
+		title = "UE Symbols",
+		finder = make_symbols_finder(tree_opts),
+		format = "lsp_symbol",
+		tree = true,
+		focus = "list",
+		auto_close = false,
+		jump = { close = false },
+		layout = { preset = "sidebar", preview = true },
+		matcher = { sort_empty = false, fuzzy = false },
+		win = {
+			list = {
+				keys = {
+					["l"] = "confirm",
+					["h"] = "close",
+				},
+			},
+		},
+	})
+
+	if picker then
+		picker._ue_view = "symbols"
+
+		-- Auto-refresh on buffer switch and save
+		local group = vim.api.nvim_create_augroup("unrealium_symbols_refresh", { clear = true })
+		vim.api.nvim_create_autocmd({ "BufEnter", "BufWritePost" }, {
+			group = group,
+			pattern = { "*.cpp", "*.h", "*.hpp", "*.c" },
+			callback = function()
+				if picker.closed then
+					pcall(vim.api.nvim_del_augroup_by_id, group)
+					return true
+				end
+				picker:find()
+			end,
+		})
+	end
+
+	return picker
+end
+
+--- Toggle the Snacks symbols picker.
+--- Closes any file/solution tree picker when switching views.
+---@param tree_opts table
+function M.toggle_symbols_snacks(tree_opts)
+	local Snacks = require("snacks")
+
+	-- Close any existing file/solution tree (different view)
+	local file_tree = Snacks.picker.get({ source = "ue_tree" })
+	for _, p in ipairs(file_tree) do
+		p:close()
+	end
+
+	-- Toggle symbols picker
+	local existing = Snacks.picker.get({ source = "ue_symbols" })
+	if #existing > 0 then
+		existing[1]:close()
+	else
+		M.open_symbols_snacks(tree_opts)
+	end
+end
+
+--- Focus the Snacks symbols picker, opening it if not already open.
+---@param tree_opts table
+function M.focus_symbols_snacks(tree_opts)
+	local Snacks = require("snacks")
+	local existing = Snacks.picker.get({ source = "ue_symbols" })
+	if #existing > 0 then
+		existing[1]:focus()
+	else
+		M.open_symbols_snacks(tree_opts)
+	end
+end
+
+--- Open a symbols fallback using vim.ui.select.
+---@param tree_opts table
+function M.open_symbols_fallback(tree_opts)
+	vim.notify("[unrealium] Install snacks.nvim for a richer symbols experience", vim.log.levels.INFO, { once = true })
+
+	local bufnr = vim.api.nvim_get_current_buf()
+	local ft = vim.bo[bufnr].filetype
+	if ft ~= "cpp" and ft ~= "c" then
+		vim.notify("[unrealium] Current buffer is not C/C++", vim.log.levels.WARN)
+		return
+	end
+
+	local ts_symbols = require("unrealium.core.ts_symbols")
+	local symbols = ts_symbols.get_symbols_for_buffer(bufnr)
+
+	local entries = {}
+	local function collect(syms, indent)
+		for _, sym in ipairs(syms) do
+			local prefix = string.rep("  ", indent)
+			local label = prefix .. sym.kind .. ": " .. sym.name
+			if sym.ue_macro then
+				label = label .. " [" .. sym.ue_macro .. "]"
+			end
+			table.insert(entries, { label = label, sym = sym })
+			if sym.children then
+				collect(sym.children, indent + 1)
+			end
+		end
+	end
+	collect(symbols, 0)
+
+	vim.ui.select(entries, {
+		prompt = "UE Symbols",
+		format_item = function(item)
+			return item.label
+		end,
+	}, function(choice)
+		if not choice then
+			return
+		end
+		local sym = choice.sym
+		if sym.source_file then
+			vim.cmd("edit " .. vim.fn.fnameescape(sym.source_file))
+		end
+		vim.api.nvim_win_set_cursor(0, { sym.pos[1], sym.pos[2] })
+	end)
 end
 
 -- ---------------------------------------------------------------------------
@@ -806,6 +1025,33 @@ end
 ---@param allow_engine_mods boolean
 ---@param tree_opts table
 function M.execute(action, project_root, engine_root, allow_engine_mods, tree_opts)
+	local view = tree_opts and tree_opts.view or "files"
+
+	-- Symbols view: separate picker, doesn't need project/engine roots
+	if view == "symbols" then
+		if has_snacks() then
+			if action == "toggle" then
+				M.toggle_symbols_snacks(tree_opts)
+			elseif action == "open" then
+				M.close_snacks()
+				M.open_symbols_snacks(tree_opts)
+			elseif action == "close" then
+				M.close_snacks()
+			elseif action == "focus" then
+				M.focus_symbols_snacks(tree_opts)
+			else
+				log.warn("Unknown tree action: %s", action)
+			end
+		else
+			if action == "close" then
+				return
+			end
+			M.open_symbols_fallback(tree_opts)
+		end
+		return
+	end
+
+	-- File/solution views
 	if has_snacks() then
 		if action == "toggle" then
 			M.toggle_snacks(project_root, engine_root, allow_engine_mods, tree_opts)
@@ -832,9 +1078,11 @@ end
 if _TEST then
 	M._make_finder = make_finder
 	M._make_solution_finder = make_solution_finder
+	M._make_symbols_finder = make_symbols_finder
 	M._make_actions = make_actions
 	M._has_snacks = has_snacks
 	M._browse_dir = browse_dir
+	M._flatten_symbols = flatten_symbols
 end
 
 return M
