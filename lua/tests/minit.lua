@@ -9,6 +9,12 @@ require("lazy.minit").setup({
 		{ "nvim-telescope/telescope.nvim", dependencies = { "nvim-lua/plenary.nvim" } },
 		{ "radenling/vim-dispatch-neovim", dependencies = { "tpope/vim-dispatch" } },
 		{
+			"nvim-treesitter/nvim-treesitter",
+			build = function()
+				require("nvim-treesitter.install").install({ "cpp" })
+			end,
+		},
+		{
 			"echasnovski/mini.test",
 			opts = {
 				collect = {
@@ -21,3 +27,10 @@ require("lazy.minit").setup({
 		{ dir = vim.uv.cwd() },
 	},
 })
+
+-- Make system-installed treesitter parsers available in the sandboxed test env.
+-- Tests that need specific parsers use has_cpp_parser() guards and skip gracefully in CI.
+local sys_parser_dir = vim.fn.expand("~/.local/share/nvim/site")
+if vim.uv.fs_stat(sys_parser_dir) then
+	vim.opt.runtimepath:append(sys_parser_dir)
+end

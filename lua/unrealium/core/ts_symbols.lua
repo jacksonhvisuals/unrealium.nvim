@@ -209,7 +209,10 @@ local function extract_members(body_node, bufnr, default_access)
 	local members = {}
 	local current_access = default_access
 
-	for child in body_node:iter_children() do
+	--- Process a single child node within a class/struct body.
+	--- Extracted as a local function so ERROR node recovery can reuse it.
+	---@param child userdata treesitter node
+	local function process_member_node(child)
 		local ctype = child:type()
 
 		if ctype == "access_specifier" then
@@ -290,7 +293,19 @@ local function extract_members(body_node, bufnr, default_access)
 					children = nested_children,
 				})
 			end
+		elseif ctype == "ERROR" then
+			-- WORKAROUND: GENERATED_BODY() and similar UE macros produce ERROR nodes in the
+			-- standard C++ treesitter grammar, which can absorb subsequent real declarations
+			-- as children. Recurse into the error node to recover them.
+			-- TODO: Replace with a custom UE-aware treesitter grammar/parser.
+			for err_child in child:iter_children() do
+				process_member_node(err_child)
+			end
 		end
+	end
+
+	for child in body_node:iter_children() do
+		process_member_node(child)
 	end
 
 	return members
@@ -303,7 +318,10 @@ end
 local function walk_top_level(root, bufnr)
 	local symbols = {}
 
-	for child in root:iter_children() do
+	--- Process a single top-level node.
+	--- Extracted as a local function so ERROR node recovery can reuse it.
+	---@param child userdata treesitter node
+	local function process_top_level_node(child)
 		local ctype = child:type()
 
 		if ctype == "declaration" then
@@ -439,7 +457,19 @@ local function walk_top_level(root, bufnr)
 					children = enum_children,
 				})
 			end
+		elseif ctype == "ERROR" then
+			-- WORKAROUND: UE macros (UCLASS, USTRUCT, etc.) at the top level can produce
+			-- ERROR nodes in the standard C++ treesitter grammar, which may absorb subsequent
+			-- real declarations as children. Recurse into the error node to recover them.
+			-- TODO: Replace with a custom UE-aware treesitter grammar/parser.
+			for err_child in child:iter_children() do
+				process_top_level_node(err_child)
+			end
 		end
+	end
+
+	for child in root:iter_children() do
+		process_top_level_node(child)
 	end
 
 	return symbols
