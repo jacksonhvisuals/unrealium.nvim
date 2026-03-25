@@ -189,8 +189,12 @@ local function run_build(preset, extra_args)
 		output.clear(term_buf, "--- Build: " .. preset.name .. " ---")
 	end
 
+	local unsub_progress
 	if progress_enabled then
 		progress.begin("Building: " .. preset.name)
+		unsub_progress = event.on(event.BUILD_PROGRESS, function(data)
+			progress.report(data.progress.percentage, data.progress.label)
+		end)
 	end
 
 	job.start({
@@ -224,6 +228,9 @@ local function run_build(preset, extra_args)
 					#handle.warnings
 				)
 
+				if unsub_progress then
+					unsub_progress()
+				end
 				if progress_enabled then
 					progress.finish(msg, level)
 				end
