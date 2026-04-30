@@ -268,15 +268,15 @@ end
 ### Success Criteria:
 
 #### Automated Verification:
-- [ ] `./scripts/test` passes (no regressions).
-- [ ] Stylua: `stylua --check lua/`
+- [x] `./scripts/test` passes (no regressions).
+- [x] Stylua: `stylua --check lua/`
 - [ ] New unit assertions added in Phase 5 for the Engine allow-list pass when wired up.
 
 #### Manual Verification:
-- [ ] On a source-build engine, `:UE tree solution` → expand `Engine` shows exactly five top-level entries: `Platforms`, `Plugins`, `Source`, `Config`, `Shaders`. No `Binaries`, `Build`, `DerivedDataCache`, `Saved`, `Documentation`, `Programs`, `Extras`.
-- [ ] Drilling into `Engine > Source > Runtime > Core` still works (children unfiltered below the top level).
-- [ ] `:lua require("unrealium.core.config").set("tree.engine_dirs", { "Source" })` then `:UE tree solution` → Engine still shows the curated five entries (decoupled).
-- [ ] `:UE tree files` still scopes Engine to `Source/` with `engine_dirs = { "Source" }` (unchanged behaviour).
+- [x] On a source-build engine, `:UE tree solution` → expand `Engine` shows exactly five top-level entries: `Platforms`, `Plugins`, `Source`, `Config`, `Shaders`. No `Binaries`, `Build`, `DerivedDataCache`, `Saved`, `Documentation`, `Programs`, `Extras`.
+- [x] Drilling into `Engine > Source > Runtime > Core` still works (children unfiltered below the top level).
+- [x] `:lua require("unrealium.core.config").set("tree.engine_dirs", { "Source" })` then `:UE tree solution` → Engine still shows the curated five entries (decoupled).
+- [x] `:UE tree files` still scopes Engine to `Source/` with `engine_dirs = { "Source" }` (unchanged behaviour).
 
 **Implementation Note**: Pause for manual confirmation before proceeding to Phase 3.
 

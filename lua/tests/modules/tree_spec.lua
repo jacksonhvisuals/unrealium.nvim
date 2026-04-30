@@ -42,8 +42,8 @@ describe("modules.tree", function()
 				Engine = { Folder = nil },
 				settings = { tree = { engine_dirs = { "Source" } } },
 			}
-			local result = tree._resolve_engine_root(cfg)
-			assert.is_nil(result)
+			assert.is_nil(tree._resolve_engine_root(cfg, "files"))
+			assert.is_nil(tree._resolve_engine_root(cfg, "solution"))
 		end)
 
 		it("returns nil when engine folder does not exist", function()
@@ -51,8 +51,32 @@ describe("modules.tree", function()
 				Engine = { Folder = "/nonexistent/path/to/engine" },
 				settings = { tree = { engine_dirs = { "Source" } } },
 			}
-			local result = tree._resolve_engine_root(cfg)
-			assert.is_nil(result)
+			assert.is_nil(tree._resolve_engine_root(cfg, "files"))
+			assert.is_nil(tree._resolve_engine_root(cfg, "solution"))
+		end)
+
+		it("solution view ignores engine_dirs and returns engine root", function()
+			local tmp = vim.fn.tempname()
+			vim.fn.mkdir(vim.fs.joinpath(tmp, "Engine", "Source"), "p")
+			local cfg = {
+				Engine = { Folder = tmp },
+				settings = { tree = { engine_dirs = { "Source" } } },
+			}
+			local result = tree._resolve_engine_root(cfg, "solution")
+			assert.equals(vim.fs.joinpath(tmp, "Engine"), result)
+			vim.fn.delete(tmp, "rf")
+		end)
+
+		it("files view honors engine_dirs and scopes to subdir", function()
+			local tmp = vim.fn.tempname()
+			vim.fn.mkdir(vim.fs.joinpath(tmp, "Engine", "Source"), "p")
+			local cfg = {
+				Engine = { Folder = tmp },
+				settings = { tree = { engine_dirs = { "Source" } } },
+			}
+			local result = tree._resolve_engine_root(cfg, "files")
+			assert.equals(vim.fs.joinpath(tmp, "Engine", "Source"), result)
+			vim.fn.delete(tmp, "rf")
 		end)
 	end)
 end)

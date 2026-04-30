@@ -12,19 +12,34 @@ M.name = "tree"
 local VIEW_MODES = { solution = true, files = true, symbols = true }
 
 --- Resolve the engine root path for the tree.
---- Uses engine_dirs config to determine which subdirectories to show.
+--- Solution view always points at `<engine>/Engine/` (curation handled
+--- downstream); Files view honors `engine_dirs` so users can scope
+--- the listing to a single subdir like `Source/`.
 ---@param cfg UnrealiumConfig
+---@param view string "solution"|"files"
 ---@return string|nil engine_root
-local function resolve_engine_root(cfg)
+local function resolve_engine_root(cfg, view)
 	if not cfg.Engine or not cfg.Engine.Folder then
 		log.warn("No engine path configured; tree will show project only")
 		return nil
 	end
 
 	local engine_folder = cfg.Engine.Folder
-	local tree_settings = cfg.settings.tree
+	local engine_root = vim.fs.joinpath(engine_folder, "Engine")
 
-	-- If engine_dirs has a single entry, point directly to that subdir
+	if view == "solution" then
+		if vim.fn.isdirectory(engine_root) == 1 then
+			return engine_root
+		end
+		if vim.fn.isdirectory(engine_folder) == 1 then
+			return engine_folder
+		end
+		log.warn("Engine directory does not exist: %s", engine_folder)
+		return nil
+	end
+
+	-- Files view: honor engine_dirs to scope the listing.
+	local tree_settings = cfg.settings.tree
 	if tree_settings.engine_dirs and #tree_settings.engine_dirs == 1 then
 		local subdir = vim.fs.joinpath(engine_folder, "Engine", tree_settings.engine_dirs[1])
 		if vim.fn.isdirectory(subdir) == 1 then
@@ -32,13 +47,10 @@ local function resolve_engine_root(cfg)
 		end
 	end
 
-	-- Otherwise use the engine root itself
-	local engine_root = vim.fs.joinpath(engine_folder, "Engine")
 	if vim.fn.isdirectory(engine_root) == 1 then
 		return engine_root
 	end
 
-	-- Fallback to the engine folder directly
 	if vim.fn.isdirectory(engine_folder) == 1 then
 		return engine_folder
 	end
@@ -79,7 +91,7 @@ function M.execute(action)
 	end
 
 	local project_root = cfg.Project.Folder
-	local engine_root = resolve_engine_root(cfg)
+	local engine_root = resolve_engine_root(cfg, view)
 	local allow_engine_mods = cfg.Engine.AllowEngineModifications or false
 
 	-- Discover plugins for fallback picker (Snacks solution view shows Plugins/ as a directory)

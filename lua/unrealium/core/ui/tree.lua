@@ -8,6 +8,17 @@ local log = require("unrealium.core.log").get("tree")
 
 local VIRTUAL_ROOT_PREFIX = "ue:tree:root:"
 
+--- Top-level entries kept under the Engine root in solution view.
+--- Everything else (Binaries, Build, DerivedDataCache, Saved, Documentation,
+--- Programs, Extras, etc.) is hidden.
+local ENGINE_ALLOW = {
+	Platforms = true,
+	Plugins = true,
+	Source = true,
+	Config = true,
+	Shaders = true,
+}
+
 --- Check if Snacks picker is available.
 ---@return boolean
 local function has_snacks()
@@ -448,12 +459,19 @@ local function make_solution_finder(project_root, engine_root, tree_opts)
 				end
 			end, filter_opts)
 
-			-- 2. Engine root (same as files view)
+			-- 2. Engine root: curated allow-list at the top level only.
+			-- Children below the top level pass through unfiltered, so users
+			-- can drill into Engine/Source/Runtime/Core/... as before.
 			if engine_root then
 				local engine_item = make_root_item(engine_root, "Engine", true, false)
 
 				Tree:get(engine_root, function(node)
 					if node.path == engine_root then
+						return
+					end
+					local rel = node.path:sub(#engine_root + 2)
+					local top_dir = rel:match("^([^/]+)")
+					if not top_dir or not ENGINE_ALLOW[top_dir] then
 						return
 					end
 					yield_node(node, engine_item)
