@@ -6,6 +6,8 @@ local M = {}
 
 local log = require("unrealium.core.log").get("tree")
 
+local VIRTUAL_ROOT_PREFIX = "ue:tree:root:"
+
 --- Check if Snacks picker is available.
 ---@return boolean
 local function has_snacks()
@@ -119,16 +121,19 @@ local function make_finder(project_root, engine_root, tree_opts)
 				ctx.picker.matcher.task:on("done", vim.schedule_wrap(on_find))
 			end
 
-			-- Master root: visible node labeled with project name
+			-- Master root: synthetic ID avoids path collision with the real
+			-- project root item rendered as its child.
 			local project_name = vim.fn.fnamemodify(project_root, ":t")
+			local virtual_root_id = VIRTUAL_ROOT_PREFIX .. project_root
 			---@type snacks.picker.explorer.Item
 			local virtual_root = {
-				file = project_root,
+				file = virtual_root_id,
 				dir = true,
 				open = true,
-				text = project_root,
+				text = virtual_root_id,
 				sort = "",
 				label = project_name,
+				is_ue_root_label = true,
 			}
 			cb(virtual_root)
 
@@ -165,6 +170,7 @@ local function make_finder(project_root, engine_root, tree_opts)
 					ignored = false,
 					type = "directory",
 					label = label,
+					is_ue_root_label = true,
 				}
 				items[root_path] = root_item
 				cb(root_item)
@@ -322,16 +328,19 @@ local function make_solution_finder(project_root, engine_root, tree_opts)
 				ctx.picker.matcher.task:on("done", vim.schedule_wrap(on_find))
 			end
 
-			-- Master root: visible node labeled with project name
+			-- Master root: synthetic ID avoids path collision with the real
+			-- project root item rendered as its child.
 			local project_name = vim.fn.fnamemodify(project_root, ":t")
+			local virtual_root_id = VIRTUAL_ROOT_PREFIX .. project_root
 			---@type snacks.picker.explorer.Item
 			local virtual_root = {
-				file = project_root,
+				file = virtual_root_id,
 				dir = true,
 				open = true,
-				text = project_root,
+				text = virtual_root_id,
 				sort = "",
 				label = project_name,
+				is_ue_root_label = true,
 			}
 			cb(virtual_root)
 
@@ -370,6 +379,7 @@ local function make_solution_finder(project_root, engine_root, tree_opts)
 					ignored = false,
 					type = "directory",
 					label = label,
+					is_ue_root_label = true,
 				}
 				items[root_path] = root_item
 				cb(root_item)
@@ -539,6 +549,26 @@ local function make_actions(project_root, engine_root, allow_engine_mods)
 	return actions
 end
 
+--- Build the tree picker's format callback. Renders root-label items as
+--- their label only (no path basename, no icon) while everything else
+--- continues to use Snacks' default file formatter.
+---@return fun(item: table, picker: table): table[]
+local function make_format_item()
+	local snacks_format = require("snacks.picker.format")
+
+	return function(item, picker)
+		if item.is_ue_root_label then
+			local ret = {}
+			if item.parent then
+				vim.list_extend(ret, snacks_format.tree(item, picker))
+			end
+			ret[#ret + 1] = { item.label or "", "SnacksPickerDir" }
+			return ret
+		end
+		return snacks_format.file(item, picker)
+	end
+end
+
 --- Open the Snacks multi-root tree picker.
 ---@param project_root string
 ---@param engine_root string|nil
@@ -561,6 +591,7 @@ function M.open_snacks(project_root, engine_root, allow_engine_mods, tree_opts)
 		source = "ue_tree",
 		title = "UE Tree",
 		finder = finder,
+		format = make_format_item(),
 		sort = { fields = { "sort" } },
 		supports_live = true,
 		tree = true,
