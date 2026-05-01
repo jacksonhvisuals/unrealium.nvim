@@ -30,10 +30,13 @@ No hard dependencies. Picker backends and fidget.nvim are optional.
   'jacksonhvisuals/unrealium.nvim',
   opts = {},
   -- Optional dependencies for enhanced UI:
-  -- { 'folke/snacks.nvim' }       -- Snacks picker
+  -- { 'folke/snacks.nvim' }       -- Snacks picker (also powers :UE tree)
   -- { 'nvim-telescope/telescope.nvim' }  -- Telescope picker
   -- { 'ibhagwan/fzf-lua' }        -- fzf-lua picker
   -- { 'j-hui/fidget.nvim' }       -- Build progress display
+  -- { 'nvim-mini/mini.nvim' }     -- mini.icons submodule provides filetype icons in :UE tree
+  --                               --   (call require("mini.icons").setup() after installing;
+  --                               --    alternative: 'nvim-tree/nvim-web-devicons')
 }
 ```
 
@@ -107,7 +110,7 @@ require("unrealium").setup({
   },
   tree = {
     default_view = "solution",   -- "solution" (dev-focused), "files" (flat filesystem), or "symbols" (C++ outline)
-    engine_dirs = { "Source" },  -- engine subdirs to show (single entry points directly to that subdir)
+    engine_dirs = { "Source" },  -- Files view only: engine subdirs to show (single entry scopes the Engine root to that subdir). Solution view ignores this and always uses the curated `<engine>/Engine/` allow-list.
     reveal_on_open = true,       -- expand and jump to current buffer's file when tree opens
     follow_file = true,          -- auto-reveal current buffer as you switch files
     show_hidden = false,         -- show hidden (dot) files
@@ -263,6 +266,8 @@ Switch between header and source files with UE Public/Private directory awarenes
 
 Multi-root file tree showing both the project and engine source as sibling roots in a sidebar. Requires [snacks.nvim](https://github.com/folke/snacks.nvim) for the full tree experience; falls back to `vim.ui.select` without it.
 
+For per-filetype icons (`.cpp`, `.h`, `.cs`, etc.), install an icon provider — either `mini.icons` (a submodule of [mini.nvim](https://github.com/nvim-mini/mini.nvim); call `require("mini.icons").setup()` after installing) or [nvim-web-devicons](https://github.com/nvim-tree/nvim-web-devicons). Without either, all files render with Snacks' generic file glyph. The `.uproject` / `.uplugin` JSON-brace icon is provided by unrealium itself and works regardless.
+
 - `:UE tree` — toggle the tree sidebar (default view mode)
 - `:UE tree solution` — toggle solution view (dev-focused hierarchy)
 - `:UE tree files` — toggle filesystem view (flat dual-root)
@@ -274,8 +279,12 @@ Multi-root file tree showing both the project and engine source as sibling roots
 
 **View modes:**
 
-- **Solution** (default): Reorganizes the tree into a development-focused hierarchy. A master root node shows the project name, with `Project` and `Engine` as children. The Project node shows `Config/`, `Source/`, `Plugins/`, and the `.uproject` file. Within `Plugins/`, build artifact directories (`Intermediate`, `Binaries`) are filtered out.
-- **Files**: Shows the raw filesystem tree with a master root node (project name) containing `Project` and `Engine` as children.
+- **Solution** (default): A Rider-style curated hierarchy. A master root node shows the project name, with `Project` and `Engine` as children.
+  - **Project** shows (in this order): `Plugins/`, `Source/`, `Config/`, the `.uproject` file, and any `*.Target.cs` files (hoisted from `Source/` so they sit beside the `.uproject`).
+  - **Plugins/** entries surface only `Source/`, `Config/`, `Resources/`, the plugin's `.uplugin`, plus `Content/Python/` and `Source/Python/`. Everything else (`Intermediate/`, `Binaries/`, `Docs/`, top-level `Content/` assets, etc.) is hidden.
+  - **Engine** is always rooted at `<engine>/Engine/` and curated to `Platforms/`, `Plugins/`, `Source/`, `Config/`, `Shaders/` — independent of the `engine_dirs` config (which only affects Files view).
+  - `.uproject` and `.uplugin` files render with a JSON brace icon (scoped to the tree picker; no global devicons override).
+- **Files**: Shows the raw filesystem tree with a master root node (project name) containing `Project` and `Engine` as children. The Engine root respects `tree.engine_dirs` (e.g. set to `{ "Source" }` to scope Engine to `<engine>/Engine/Source/`).
 - **Symbols**: Treesitter-based C++ symbol outline for the current buffer. Shows classes, structs, enums, functions, methods, and fields in a hierarchical tree with LSP kind icons. Detects UE macros (UCLASS, USTRUCT, UENUM, UFUNCTION, UPROPERTY) and tracks access specifiers (public/protected/private). Automatically merges header declarations with source implementations when a companion `.h`/`.cpp` file exists. The sidebar auto-refreshes when switching C++ buffers or saving.
 
 When toggling with a different view mode than the currently open tree, the tree closes and reopens with the new view.

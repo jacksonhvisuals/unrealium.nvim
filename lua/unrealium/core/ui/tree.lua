@@ -19,6 +19,98 @@ local ENGINE_ALLOW = {
 	Shaders = true,
 }
 
+--- Plugin-internal directories shown under each plugin root in solution view.
+--- Other top-level dirs (Intermediate, Binaries, Docs, Tests, etc.) are hidden.
+--- `Content/Python/` is the only path under `Content/` that is preserved.
+local PLUGIN_ALLOW_DIR = { Source = true, Config = true, Resources = true }
+
+--- Sort prefixes for top-level Project children (Rider-style domain order).
+--- `.uproject` uses prefix "4_", hoisted `.Target.cs` use "5_".
+local PROJECT_TOP_SORT = { Plugins = "1", Source = "2", Config = "3" }
+
+--- Decide whether a node directly under the project root (excluding `Plugins/`)
+--- should be rendered in solution view. `.Target.cs` files under `Source/` are
+--- excluded because they are hoisted as virtual children of the Project label.
+---@param segments string[] path segments relative to project root
+---@param basename string basename of the node
+---@return boolean keep
+local function project_top_filter(segments, basename)
+	local top = segments[1]
+	if not top or top == "" then
+		return false
+	end
+
+	if top == "Source" then
+		if #segments == 2 and segments[2]:match("%.Target%.cs$") then
+			return false
+		end
+		return true
+	end
+
+	if top == "Config" then
+		return true
+	end
+
+	if #segments == 1 and basename:match("%.uproject$") then
+		return true
+	end
+
+	return false
+end
+
+--- Decide whether a path inside a plugin's root should be shown.
+--- `sub_segments` is the path relative to the plugin's root directory.
+---@param sub_segments string[]
+---@return boolean keep
+local function plugin_internal_filter(sub_segments)
+	if #sub_segments == 0 then
+		return false
+	end
+	local top = sub_segments[1]
+	if PLUGIN_ALLOW_DIR[top] then
+		return true
+	end
+	if top == "Content" and sub_segments[2] == "Python" then
+		return true
+	end
+	if #sub_segments == 1 and top:match("%.uplugin$") then
+		return true
+	end
+	return false
+end
+
+--- Decide whether a node under the engine root should be shown in solution view.
+--- Only the top-level segment is checked; descendants of an allowed top-level
+--- entry pass through unfiltered (so users can still drill into `Source/Runtime`).
+---@param segments string[] path segments relative to engine root
+---@return boolean keep
+local function engine_top_filter(segments)
+	local top = segments[1]
+	if not top or top == "" then
+		return false
+	end
+	return ENGINE_ALLOW[top] == true
+end
+
+--- Compute the explicit sort prefix for a top-level Project child.
+--- Grandchildren return `nil` and inherit Snacks' default sibling order.
+---@param segments string[] path segments relative to project root
+---@param basename string basename of the node
+---@return string|nil sort_value
+local function project_sort(segments, basename)
+	if #segments ~= 1 then
+		return nil
+	end
+	local top = segments[1]
+	if PROJECT_TOP_SORT[top] then
+		return PROJECT_TOP_SORT[top] .. "_" .. top
+	end
+	if basename:match("%.uproject$") then
+		return "4_" .. basename
+	end
+	return nil
+end
+
 --- Check if Snacks picker is available.
 ---@return boolean
 local function has_snacks()
@@ -400,7 +492,8 @@ local function make_solution_finder(project_root, engine_root, tree_opts)
 			--- Helper: yield a tree node as an item under a given fallback parent.
 			---@param node table snacks explorer tree node
 			---@param fallback_parent snacks.picker.explorer.Item
-			local function yield_node(node, fallback_parent)
+			---@param sort_override string|nil explicit sort key (top-level project domain order)
+			local function yield_node(node, fallback_parent, sort_override)
 				local parent = node.parent and items[node.parent.path] or fallback_parent
 				local status = node.status
 				if not status and parent and parent.dir_status then
@@ -420,6 +513,7 @@ local function make_solution_finder(project_root, engine_root, tree_opts)
 					last = true,
 					type = node.type,
 					severity = (not node.dir or not node.open or opts.diagnostics_open) and node.severity or nil,
+					sort = sort_override,
 				}
 
 				if last[node.parent] then
@@ -435,29 +529,83 @@ local function make_solution_finder(project_root, engine_root, tree_opts)
 			local project_is_last = not has_engine
 			local project_item = make_root_item(project_root, "Project", project_is_last, true)
 
+			-- Discover plugin roots once so the plugin filter is structure-aware
+			-- (handles publisher-grouped layouts like Plugins/Epic/MyPlugin/).
+			local plugins_dir = vim.fs.joinpath(project_root, "Plugins")
+			local discover_plugins = require("unrealium.core.finder").discover_plugins
+			local plugin_paths_array = {}
+			local plugin_paths_set = {}
+			for _, p in ipairs(discover_plugins(project_root)) do
+				table.insert(plugin_paths_array, p.path)
+				plugin_paths_set[p.path] = true
+			end
+
 			Tree:get(project_root, function(node)
 				if node.path == project_root then
 					return
 				end
 
 				local rel = node.path:sub(#project_root + 2) -- strip project_root + "/"
-				local top_dir = rel:match("^([^/]+)")
+				local segments = vim.split(rel, "/", { plain = true })
+				local top = segments[1]
+				local basename = vim.fs.basename(node.path)
 
-				if top_dir == "Config" or top_dir == "Source" then
-					yield_node(node, project_item)
-				elseif top_dir == "Plugins" then
-					-- Filter out Intermediate/ and Binaries/ within Plugins/ (build artifacts)
-					for segment in rel:gmatch("[^/]+") do
-						if segment == "Intermediate" or segment == "Binaries" then
+				if top == "Plugins" then
+					-- The Plugins/ directory itself
+					if node.path == plugins_dir then
+						yield_node(node, project_item, project_sort(segments, basename))
+						return
+					end
+					-- A plugin root (handles direct + nested publisher layouts)
+					if plugin_paths_set[node.path] then
+						yield_node(node, project_item)
+						return
+					end
+					-- An ancestor of a plugin root (e.g. publisher group dir)
+					for _, p in ipairs(plugin_paths_array) do
+						if vim.startswith(p, node.path .. "/") then
+							yield_node(node, project_item)
 							return
 						end
 					end
-					yield_node(node, project_item)
-				elseif not rel:find("/") and rel:match("%.uproject$") then
-					-- .uproject files at project root level
-					yield_node(node, project_item)
+					-- A path inside a plugin root: apply the internal allow-list
+					for _, p in ipairs(plugin_paths_array) do
+						if vim.startswith(node.path, p .. "/") then
+							local sub_rel = node.path:sub(#p + 2)
+							local sub_segments = vim.split(sub_rel, "/", { plain = true })
+							if plugin_internal_filter(sub_segments) then
+								yield_node(node, project_item)
+							end
+							return
+						end
+					end
+					-- Orphan file under Plugins/ not inside any plugin: drop
+					return
+				end
+
+				if project_top_filter(segments, basename) then
+					yield_node(node, project_item, project_sort(segments, basename))
 				end
 			end, filter_opts)
+
+			-- Hoist .Target.cs files under the Project label as virtual children.
+			-- These are excluded from the Source/ walk above to avoid duplicates.
+			local targets = require("unrealium.core.target").discover(project_root)
+			for _, t in ipairs(targets) do
+				local target_basename = vim.fs.basename(t.file)
+				---@type snacks.picker.explorer.Item
+				local target_item = {
+					file = t.file,
+					dir = false,
+					text = t.file,
+					parent = project_item,
+					last = true,
+					type = "file",
+					sort = "5_" .. target_basename,
+				}
+				items[t.file] = target_item
+				cb(target_item)
+			end
 
 			-- 2. Engine root: curated allow-list at the top level only.
 			-- Children below the top level pass through unfiltered, so users
@@ -470,8 +618,8 @@ local function make_solution_finder(project_root, engine_root, tree_opts)
 						return
 					end
 					local rel = node.path:sub(#engine_root + 2)
-					local top_dir = rel:match("^([^/]+)")
-					if not top_dir or not ENGINE_ALLOW[top_dir] then
+					local segments = vim.split(rel, "/", { plain = true })
+					if not engine_top_filter(segments) then
 						return
 					end
 					yield_node(node, engine_item)
@@ -567,9 +715,35 @@ local function make_actions(project_root, engine_root, allow_engine_mods)
 	return actions
 end
 
+--- JSON brace glyph (Nerd Font: nf-cod-json, U+EB0F) used for `.uproject` /
+--- `.uplugin`. Encoded as raw UTF-8 bytes to survive copy/paste round-trips.
+local JSON_BRACE_ICON = "\xee\xac\x8f"
+local JSON_BRACE_HL = "SnacksPickerIcon"
+
+--- Replace the icon segment in a Snacks `file` formatter result. The icon is
+--- the first segment marked `virtual = true` whose text contains a non-space
+--- character (Snacks adds the file glyph that way at `picker.format.filename`).
+--- Width is preserved by re-aligning to the picker's `formatters.file.icon_width`.
+---@param segments table[]
+---@param glyph string
+---@param hl string
+---@param picker table
+local function swap_icon_segment(segments, glyph, hl, picker)
+	local picker_util = require("snacks.picker.util")
+	local width = (picker.opts.formatters.file or {}).icon_width or 2
+	for _, seg in ipairs(segments) do
+		if seg.virtual and type(seg[1]) == "string" and seg[1]:match("%S") then
+			seg[1] = picker_util.align(glyph, width)
+			seg[2] = hl
+			return
+		end
+	end
+end
+
 --- Build the tree picker's format callback. Renders root-label items as
---- their label only (no path basename, no icon) while everything else
---- continues to use Snacks' default file formatter.
+--- their label only (no path basename, no icon); renders `.uproject` and
+--- `.uplugin` files with a JSON brace icon (picker-scoped, no global devicon
+--- registration); everything else uses Snacks' default file formatter.
 ---@return fun(item: table, picker: table): table[]
 local function make_format_item()
 	local snacks_format = require("snacks.picker.format")
@@ -583,7 +757,17 @@ local function make_format_item()
 			ret[#ret + 1] = { item.label or "", "SnacksPickerDir" }
 			return ret
 		end
-		return snacks_format.file(item, picker)
+
+		local segments = snacks_format.file(item, picker)
+
+		if item.file and not item.dir then
+			local name = vim.fs.basename(item.file)
+			if name:match("%.uproject$") or name:match("%.uplugin$") then
+				swap_icon_segment(segments, JSON_BRACE_ICON, JSON_BRACE_HL, picker)
+			end
+		end
+
+		return segments
 	end
 end
 
@@ -1132,6 +1316,10 @@ if _TEST then
 	M._has_snacks = has_snacks
 	M._browse_dir = browse_dir
 	M._flatten_symbols = flatten_symbols
+	M._project_top_filter = project_top_filter
+	M._plugin_internal_filter = plugin_internal_filter
+	M._engine_top_filter = engine_top_filter
+	M._project_sort = project_sort
 end
 
 return M
