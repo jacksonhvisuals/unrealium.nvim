@@ -6,6 +6,7 @@ local config = require("unrealium.core.config")
 local log_mod = require("unrealium.core.log")
 local event = require("unrealium.core.event")
 local command = require("unrealium.core.command")
+local filetype = require("unrealium.core.filetype")
 
 ---@type table<string, UnrealiumCommandSpec>
 local _subcommands = {}
@@ -141,6 +142,7 @@ end
 ---@param user_config? UnrealiumUserConfig
 function M.setup(user_config)
 	vim.g.unrealium_setup_called = true
+	filetype.setup()
 	config.init(user_config)
 	log_mod.init(user_config and user_config.logging or nil)
 

@@ -7,6 +7,7 @@ A Neovim plugin for Unreal Engine 5 project development.
 ## Features
 
 - Auto-detects UE projects via `.uproject` files
+- Filetype defaults for `.uproject`, `.uplugin`, and `*.Build.cs` files with Unreal-style indentation
 - Engine file read-only enforcement to prevent accidental recompiles
 - Unified `:UE` command with subcommands (build, run, search, generate, intel, lint, diagnostics, debug, switch, tree)
 - UE5 snippet completions via [blink.cmp](https://github.com/Saghen/blink.cmp) (ULOG, ULOGFMT, UENUM, USTRUCT, UCLASS, UINTERFACE, UCAST, UFUNCTION, UPROPERTY) with smart log category and MODULE_API discovery
@@ -430,6 +431,7 @@ lua/unrealium/
     config.lua                           -- Hierarchical config (defaults -> user -> project -> runtime)
     log.lua                              -- Per-module logger factory (file + notify writers)
     event.lua                            -- Pub/sub event bus + vim User autocmd bridge
+    filetype.lua                         -- Unreal filetype detection + indentation defaults
     finder.lua                           -- .uproject discovery, engine path resolution
     platform.lua                         -- OS detection, pure command assembly
     command.lua                          -- Declarative command builder (:UE subcommands + completion)
